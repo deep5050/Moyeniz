@@ -2,8 +2,10 @@
 let investments = [];
 let liabilities = [];
 let borrowLent = [];
+let salaries = [];
 let searchQueryLiabilities = '';
 let searchQueryBorrowLent = '';
+let searchQuerySalaries = '';
 let currentBLFilter = 'all';
 
 const LIABILITY_TYPES = {
@@ -23,6 +25,21 @@ const SAMPLE_BORROW_LENT = [
   { id: 'bl-1', type: 'lent', person: 'Amit Sharma', amount: 15000, outstanding: 9000, date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], notes: 'Business advance helper', status: 'active', payments: [{ date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 6000, note: 'First part payment' }] },
   { id: 'bl-2', type: 'borrowed', person: 'Rohan Gupta', amount: 20000, outstanding: 20000, date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], notes: 'Laptop purchase advance', status: 'active', payments: [] },
   { id: 'bl-3', type: 'lent', person: 'Vikram Singh', amount: 5000, outstanding: 0, date: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], notes: 'Emergency medical cash', status: 'paid', payments: [{ date: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 5000, note: 'Settled full outstanding' }] }
+];
+
+const SAMPLE_SALARIES = [
+  { id: 'sal-1', month: '2025-06', inhand: 85000, deduction: 15000, notes: 'Joining salary' },
+  { id: 'sal-2', month: '2025-07', inhand: 85000, deduction: 15000, notes: '' },
+  { id: 'sal-3', month: '2025-08', inhand: 85000, deduction: 15000, notes: '' },
+  { id: 'sal-4', month: '2025-09', inhand: 85000, deduction: 15000, notes: '' },
+  { id: 'sal-5', month: '2025-10', inhand: 92000, deduction: 16200, notes: 'Increment & PF hike' },
+  { id: 'sal-6', month: '2025-11', inhand: 92000, deduction: 16200, notes: '' },
+  { id: 'sal-7', month: '2025-12', inhand: 105000, deduction: 18000, notes: 'Year-end performance bonus' },
+  { id: 'sal-8', month: '2026-01', inhand: 92000, deduction: 16200, notes: '' },
+  { id: 'sal-9', month: '2026-02', inhand: 92000, deduction: 16200, notes: '' },
+  { id: 'sal-10', month: '2026-03', inhand: 92000, deduction: 16200, notes: '' },
+  { id: 'sal-11', month: '2026-04', inhand: 98000, deduction: 17500, notes: 'FY appraisal' },
+  { id: 'sal-12', month: '2026-05', inhand: 98000, deduction: 17500, notes: '' }
 ];
 
 const ASSET_CATEGORIES = {
@@ -153,17 +170,20 @@ function saveToStorage() {
   localStorage.setItem('moyeniz_investments', JSON.stringify(investments));
   localStorage.setItem('moyeniz_liabilities', JSON.stringify(liabilities));
   localStorage.setItem('moyeniz_borrow_lent', JSON.stringify(borrowLent));
+  localStorage.setItem('moyeniz_salaries', JSON.stringify(salaries));
 }
 
 async function loadFromStorage() {
   const data = localStorage.getItem('moyeniz_investments');
   const lData = localStorage.getItem('moyeniz_liabilities');
   const blData = localStorage.getItem('moyeniz_borrow_lent');
+  const sData = localStorage.getItem('moyeniz_salaries');
   
   if (data !== null && lData !== null) {
     investments = JSON.parse(data);
     liabilities = JSON.parse(lData);
     borrowLent = blData !== null ? JSON.parse(blData) : [];
+    salaries = sData !== null ? JSON.parse(sData) : [];
     saveToStorage();
     return;
   }
@@ -177,6 +197,7 @@ async function loadFromStorage() {
         investments = backup.investments;
         liabilities = backup.liabilities;
         borrowLent = Array.isArray(backup.borrowLent) ? backup.borrowLent : [];
+        salaries = Array.isArray(backup.salaries) ? backup.salaries : [];
         saveToStorage();
         console.log('Successfully loaded config from server root.');
         return;
@@ -228,6 +249,10 @@ function initNavigation() {
         viewTitle.textContent = 'Borrow & Lent';
         viewSubtitle.textContent = 'Track personal borrowings and lendings, payments, and histories.';
         renderBorrowLent();
+      } else if (tabName === 'salary') {
+        viewTitle.textContent = 'Salary Tracker';
+        viewSubtitle.textContent = 'Track salary trends, credits, deductions, and increments over time.';
+        renderSalaries();
       }
     });
   });
@@ -749,6 +774,14 @@ function showTooltip(event, title, invested, current, pl, pct) {
   const tInvested = document.getElementById('chart-tooltip-invested');
   const tCurrent = document.getElementById('chart-tooltip-current');
   const tPl = document.getElementById('chart-tooltip-pl');
+  
+  // Reset labels to default
+  const l1 = document.getElementById('chart-tooltip-label-1');
+  const l2 = document.getElementById('chart-tooltip-label-2');
+  const l3 = document.getElementById('chart-tooltip-label-3');
+  if (l1) l1.textContent = 'Invested:';
+  if (l2) l2.textContent = 'Current:';
+  if (l3) l3.textContent = 'P&L:';
   
   tTitle.textContent = title;
   tInvested.textContent = formatCurrency(invested);
@@ -1512,7 +1545,8 @@ function downloadPortfolioJSON() {
   const backupData = {
     investments: investments,
     liabilities: liabilities,
-    borrowLent: borrowLent
+    borrowLent: borrowLent,
+    salaries: salaries
   };
   
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -1535,6 +1569,7 @@ function handleUploadJSON(file) {
         investments = data.investments;
         liabilities = data.liabilities;
         borrowLent = Array.isArray(data.borrowLent) ? data.borrowLent : [];
+        salaries = Array.isArray(data.salaries) ? data.salaries : [];
         saveToStorage();
         
         // Close welcome wizard if open
@@ -1550,6 +1585,7 @@ function handleUploadJSON(file) {
         if (activeTab === 'projections') renderProjections();
         if (activeTab === 'liabilities') renderLiabilities();
         if (activeTab === 'borrow-lent') renderBorrowLent();
+        if (activeTab === 'salary') renderSalaries();
         
         alert('Portfolio data loaded successfully!');
       } else {
@@ -1636,6 +1672,7 @@ function initModalHandlers() {
       investments = [...SAMPLE_PORTFOLIO];
       liabilities = [...SAMPLE_LIABILITIES];
       borrowLent = [...SAMPLE_BORROW_LENT];
+      salaries = [...SAMPLE_SALARIES];
       saveToStorage();
       renderDashboard();
     });
@@ -1648,6 +1685,7 @@ function initModalHandlers() {
       investments = [];
       liabilities = [];
       borrowLent = [];
+      salaries = [];
       saveToStorage();
       renderDashboard();
     });
@@ -1672,6 +1710,7 @@ function initModalHandlers() {
       investments = [...SAMPLE_PORTFOLIO];
       liabilities = [...SAMPLE_LIABILITIES];
       borrowLent = [...SAMPLE_BORROW_LENT];
+      salaries = [...SAMPLE_SALARIES];
       saveToStorage();
       
       const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
@@ -1680,6 +1719,7 @@ function initModalHandlers() {
       if (activeTab === 'projections') renderProjections();
       if (activeTab === 'liabilities') renderLiabilities();
       if (activeTab === 'borrow-lent') renderBorrowLent();
+      if (activeTab === 'salary') renderSalaries();
     }
   });
 
@@ -1709,9 +1749,11 @@ function initModalHandlers() {
         localStorage.removeItem('moyeniz_investments');
         localStorage.removeItem('moyeniz_liabilities');
         localStorage.removeItem('moyeniz_borrow_lent');
+        localStorage.removeItem('moyeniz_salaries');
         investments = [];
         liabilities = [];
         borrowLent = [];
+        salaries = [];
         
         // Hide settings menu
         if (settingsDropdown) settingsDropdown.style.display = 'none';
@@ -1790,6 +1832,30 @@ function initModalHandlers() {
     formPay.addEventListener('submit', (e) => {
       e.preventDefault();
       savePaymentForm();
+    });
+  }
+
+  // Salary Modal Handlers
+  const btnCloseS = document.getElementById('btn-close-salary-modal');
+  const btnCancelS = document.getElementById('btn-cancel-salary-modal');
+  const btnAddS = document.getElementById('btn-add-salary');
+  const formS = document.getElementById('salary-form');
+  
+  if (btnCloseS) btnCloseS.addEventListener('click', closeSalaryModal);
+  if (btnCancelS) btnCancelS.addEventListener('click', closeSalaryModal);
+  if (btnAddS) btnAddS.addEventListener('click', () => openSalaryModal());
+  if (formS) {
+    formS.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveSalaryForm();
+    });
+  }
+  
+  const searchS = document.getElementById('input-search-salaries');
+  if (searchS) {
+    searchS.addEventListener('input', (e) => {
+      searchQuerySalaries = e.target.value;
+      renderSalaries();
     });
   }
 }
@@ -3097,6 +3163,580 @@ function renderBorrowLent() {
   });
 }
 
+// ==========================================
+// SALARY TRACKER LOGIC
+// ==========================================
+
+function formatMonthLabel(monthStr) {
+  if (!monthStr) return '';
+  const [year, month] = monthStr.split('-');
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+}
+
+function formatMonthShort(monthStr) {
+  if (!monthStr) return '';
+  const [year, month] = monthStr.split('-');
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+}
+
+function showCustomTooltip(event, title, label1, val1, label2, val2, label3, val3) {
+  const tooltip = document.getElementById('chart-tooltip');
+  const tTitle = document.getElementById('chart-tooltip-title');
+  const tInvested = document.getElementById('chart-tooltip-invested');
+  const tCurrent = document.getElementById('chart-tooltip-current');
+  const tPl = document.getElementById('chart-tooltip-pl');
+  
+  const l1 = document.getElementById('chart-tooltip-label-1');
+  const l2 = document.getElementById('chart-tooltip-label-2');
+  const l3 = document.getElementById('chart-tooltip-label-3');
+  if (l1) l1.textContent = label1;
+  if (l2) l2.textContent = label2;
+  if (l3) l3.textContent = label3;
+  
+  tTitle.textContent = title;
+  tInvested.textContent = val1;
+  tCurrent.textContent = val2;
+  tPl.textContent = val3;
+  tPl.className = 'chart-tooltip-value';
+  
+  const container = document.querySelector('.main-wrapper');
+  const rect = container.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = (y - 12) + 'px';
+  tooltip.style.opacity = '1';
+}
+
+function openSalaryModal(sObj = null) {
+  const overlay = document.getElementById('salary-modal');
+  const titleText = document.getElementById('salary-modal-title-text');
+  
+  const inputId = document.getElementById('input-salary-id');
+  const inputMonth = document.getElementById('input-salary-month');
+  const inputInhand = document.getElementById('input-salary-inhand');
+  const inputDeduction = document.getElementById('input-salary-deduction');
+  const inputNotes = document.getElementById('input-salary-notes');
+  
+  if (sObj) {
+    titleText.textContent = 'Edit Salary Entry';
+    inputId.value = sObj.id;
+    inputMonth.value = sObj.month;
+    inputInhand.value = sObj.inhand;
+    inputDeduction.value = sObj.deduction;
+    inputNotes.value = sObj.notes || '';
+  } else {
+    titleText.textContent = 'Add Salary Entry';
+    inputId.value = '';
+    const now = new Date();
+    const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    inputMonth.value = monthStr;
+    inputInhand.value = '';
+    inputDeduction.value = '';
+    inputNotes.value = '';
+  }
+  overlay.classList.add('active-modal');
+}
+
+function closeSalaryModal() {
+  const overlay = document.getElementById('salary-modal');
+  overlay.classList.remove('active-modal');
+}
+
+function saveSalaryForm() {
+  const id = document.getElementById('input-salary-id').value;
+  const month = document.getElementById('input-salary-month').value;
+  const inhand = Number(document.getElementById('input-salary-inhand').value);
+  const deduction = Number(document.getElementById('input-salary-deduction').value);
+  const notes = document.getElementById('input-salary-notes').value;
+  
+  if (!month) {
+    alert('Please select a month!');
+    return;
+  }
+  
+  if (id) {
+    const idx = salaries.findIndex(s => s.id === id);
+    if (idx !== -1) {
+      salaries[idx] = {
+        ...salaries[idx],
+        month,
+        inhand,
+        deduction,
+        notes
+      };
+    }
+  } else {
+    const duplicate = salaries.find(s => s.month === month);
+    if (duplicate) {
+      if (!confirm(`An entry for ${formatMonthLabel(month)} already exists. Do you want to update it instead?`)) {
+        return;
+      }
+      duplicate.inhand = inhand;
+      duplicate.deduction = deduction;
+      duplicate.notes = notes;
+    } else {
+      const newId = 'sal-' + Math.random().toString(36).substring(2, 9);
+      salaries.push({
+        id: newId,
+        month,
+        inhand,
+        deduction,
+        notes
+      });
+    }
+  }
+  
+  saveToStorage();
+  closeSalaryModal();
+  renderSalaries();
+}
+
+function deleteSalary(id) {
+  if (confirm('Are you sure you want to delete this salary entry?')) {
+    salaries = salaries.filter(s => s.id !== id);
+    saveToStorage();
+    renderSalaries();
+  }
+}
+
+function renderSalaries() {
+  const container = document.getElementById('salary-list-container');
+  clearContainer(container);
+  
+  let totalGross = 0;
+  let totalInhand = 0;
+  let totalDeductions = 0;
+  
+  salaries.forEach(s => {
+    totalInhand += Number(s.inhand);
+    totalDeductions += Number(s.deduction);
+    totalGross += (Number(s.inhand) + Number(s.deduction));
+  });
+  
+  const count = salaries.length;
+  const avgInhand = count > 0 ? (totalInhand / count) : 0;
+  
+  document.getElementById('val-total-gross-salary').textContent = formatCurrency(totalGross);
+  document.getElementById('val-total-inhand-salary').textContent = formatCurrency(totalInhand);
+  document.getElementById('val-total-deductions-salary').textContent = formatCurrency(totalDeductions);
+  document.getElementById('val-avg-inhand-salary').textContent = formatCurrency(avgInhand);
+  
+  const filtered = salaries.filter(s => {
+    const monthLabel = formatMonthLabel(s.month).toLowerCase();
+    const notesMatch = (s.notes || '').toLowerCase().includes(searchQuerySalaries.toLowerCase());
+    return monthLabel.includes(searchQuerySalaries.toLowerCase()) || notesMatch;
+  });
+  
+  filtered.sort((a, b) => b.month.localeCompare(a.month));
+  
+  if (filtered.length === 0) {
+    const emptyState = document.createElement('div');
+    emptyState.classList.add('empty-state');
+    
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('stroke-width', '1.5');
+    icon.setAttribute('stroke-linecap', 'round');
+    icon.setAttribute('stroke-linejoin', 'round');
+    icon.classList.add('empty-icon');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6');
+    icon.appendChild(path);
+    
+    const title = document.createElement('h4');
+    title.classList.add('empty-title');
+    title.textContent = 'No salary entries found';
+    
+    const desc = document.createElement('p');
+    desc.classList.add('empty-desc');
+    desc.textContent = salaries.length === 0 
+      ? 'Start tracking your monthly credits and deductions by clicking "Add Salary Entry".'
+      : 'No active salary records match your search.';
+      
+    emptyState.appendChild(icon);
+    emptyState.appendChild(title);
+    emptyState.appendChild(desc);
+    
+    container.appendChild(emptyState);
+    
+    // Clear chart too
+    const chartContainer = document.getElementById('salary-chart-container');
+    clearContainer(chartContainer);
+    return;
+  }
+  
+  filtered.forEach(s => {
+    const gross = s.inhand + s.deduction;
+    const inhandPct = gross > 0 ? (s.inhand / gross) * 100 : 0;
+    
+    const card = document.createElement('div');
+    card.classList.add('investment-card');
+    
+    const colMain = document.createElement('div');
+    colMain.classList.add('asset-main-info');
+    
+    const monthText = document.createElement('span');
+    monthText.classList.add('asset-name');
+    monthText.textContent = formatMonthLabel(s.month);
+    colMain.appendChild(monthText);
+    
+    if (s.notes) {
+      const noteText = document.createElement('span');
+      noteText.style.fontSize = '0.75rem';
+      noteText.style.color = 'var(--text-secondary)';
+      noteText.style.fontStyle = 'italic';
+      noteText.style.marginTop = '4px';
+      noteText.textContent = s.notes;
+      colMain.appendChild(noteText);
+    }
+    
+    const colGross = document.createElement('div');
+    colGross.classList.add('asset-data-col');
+    const lblGross = document.createElement('span');
+    lblGross.classList.add('asset-data-label');
+    lblGross.textContent = 'Gross Salary';
+    const valGross = document.createElement('span');
+    valGross.classList.add('asset-data-value');
+    valGross.textContent = formatCurrency(gross);
+    colGross.appendChild(lblGross);
+    colGross.appendChild(valGross);
+    
+    const colInhand = document.createElement('div');
+    colInhand.classList.add('asset-data-col');
+    const lblInhand = document.createElement('span');
+    lblInhand.classList.add('asset-data-label');
+    lblInhand.textContent = 'In-hand Credited';
+    const valInhand = document.createElement('span');
+    valInhand.classList.add('asset-data-value');
+    valInhand.style.color = 'var(--color-success)';
+    valInhand.textContent = formatCurrency(s.inhand);
+    colInhand.appendChild(lblInhand);
+    colInhand.appendChild(valInhand);
+    
+    const colDed = document.createElement('div');
+    colDed.classList.add('asset-data-col');
+    const lblDed = document.createElement('span');
+    lblDed.classList.add('asset-data-label');
+    lblDed.textContent = 'Deductions';
+    const valDed = document.createElement('span');
+    valDed.classList.add('asset-data-value');
+    valDed.style.color = 'var(--color-danger)';
+    valDed.textContent = formatCurrency(s.deduction);
+    colDed.appendChild(lblDed);
+    colDed.appendChild(valDed);
+    
+    const colActions = document.createElement('div');
+    colActions.classList.add('card-actions');
+    
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'icon-btn';
+    btnEdit.setAttribute('aria-label', 'Edit Salary Entry');
+    const editSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    editSvg.setAttribute('viewBox', '0 0 24 24');
+    editSvg.setAttribute('fill', 'none');
+    editSvg.setAttribute('stroke', 'currentColor');
+    editSvg.setAttribute('stroke-width', '2');
+    editSvg.setAttribute('width', '16');
+    editSvg.setAttribute('height', '16');
+    const editPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    editPath.setAttribute('d', 'M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z');
+    editSvg.appendChild(editPath);
+    btnEdit.appendChild(editSvg);
+    btnEdit.addEventListener('click', () => openSalaryModal(s));
+    
+    const btnDelete = document.createElement('button');
+    btnDelete.className = 'icon-btn';
+    btnDelete.setAttribute('aria-label', 'Delete Salary Entry');
+    btnDelete.style.color = 'var(--color-danger)';
+    const deleteSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    deleteSvg.setAttribute('viewBox', '0 0 24 24');
+    deleteSvg.setAttribute('fill', 'none');
+    deleteSvg.setAttribute('stroke', 'currentColor');
+    deleteSvg.setAttribute('stroke-width', '2');
+    deleteSvg.setAttribute('width', '16');
+    deleteSvg.setAttribute('height', '16');
+    const deletePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    deletePath.setAttribute('d', 'M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2');
+    deleteSvg.appendChild(deletePath);
+    btnDelete.appendChild(deleteSvg);
+    btnDelete.addEventListener('click', () => deleteSalary(s.id));
+    
+    colActions.appendChild(btnEdit);
+    colActions.appendChild(btnDelete);
+    
+    card.appendChild(colMain);
+    card.appendChild(colGross);
+    card.appendChild(colInhand);
+    card.appendChild(colDed);
+    card.appendChild(colActions);
+    
+    // Progress/Ratio Bar Row
+    const progressRow = document.createElement('div');
+    progressRow.classList.add('loan-progress-row');
+    
+    const progressTextRow = document.createElement('div');
+    progressTextRow.classList.add('loan-progress-text-row');
+    
+    const progressLabel = document.createElement('span');
+    progressLabel.classList.add('loan-progress-label');
+    progressLabel.textContent = `Ratio: In-hand ${inhandPct.toFixed(0)}% vs. Deductions ${(100 - inhandPct).toFixed(0)}%`;
+    progressTextRow.appendChild(progressLabel);
+    
+    const progressTrack = document.createElement('div');
+    progressTrack.classList.add('loan-progress-track');
+    
+    const progressFill = document.createElement('div');
+    progressFill.classList.add('loan-progress-fill');
+    progressFill.style.width = `${inhandPct}%`;
+    progressFill.style.background = 'var(--grad-emerald)';
+    
+    progressTrack.appendChild(progressFill);
+    progressRow.appendChild(progressTextRow);
+    progressRow.appendChild(progressTrack);
+    
+    card.appendChild(progressRow);
+    container.appendChild(card);
+  });
+  
+  // Render dual line chart
+  renderSalaryChart(salaries);
+}
+
+function renderSalaryChart(data) {
+  const container = document.getElementById('salary-chart-container');
+  clearContainer(container);
+  
+  if (data.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No salary chart data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    container.appendChild(emptyMsg);
+    return;
+  }
+  
+  // Sort oldest first for linear time progression
+  const chartData = [...data].sort((a, b) => a.month.localeCompare(b.month));
+  
+  const svgWidth = 740;
+  const svgHeight = 280;
+  const margin = { top: 20, right: 30, bottom: 40, left: 70 };
+  const chartWidth = svgWidth - margin.left - margin.right;
+  const chartHeight = svgHeight - margin.top - margin.bottom;
+  
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+  svg.classList.add('svg-chart');
+  
+  // Custom Area Fill Gradients
+  const defs = createSVGElement('defs');
+  
+  const inhandGrad = createSVGElement('linearGradient');
+  inhandGrad.setAttribute('id', 'grad-inhand-area');
+  inhandGrad.setAttribute('x1', '0%'); inhandGrad.setAttribute('y1', '0%');
+  inhandGrad.setAttribute('x2', '0%'); inhandGrad.setAttribute('y2', '100%');
+  const ihStop1 = createSVGElement('stop'); ihStop1.setAttribute('offset', '0%'); ihStop1.setAttribute('stop-color', '#10b981'); ihStop1.setAttribute('stop-opacity', '0.15');
+  const ihStop2 = createSVGElement('stop'); ihStop2.setAttribute('offset', '100%'); ihStop2.setAttribute('stop-color', '#10b981'); ihStop2.setAttribute('stop-opacity', '0.00');
+  inhandGrad.appendChild(ihStop1); inhandGrad.appendChild(ihStop2);
+  defs.appendChild(inhandGrad);
+  
+  const dedGrad = createSVGElement('linearGradient');
+  dedGrad.setAttribute('id', 'grad-ded-area');
+  dedGrad.setAttribute('x1', '0%'); dedGrad.setAttribute('y1', '0%');
+  dedGrad.setAttribute('x2', '0%'); dedGrad.setAttribute('y2', '100%');
+  const dedStop1 = createSVGElement('stop'); dedStop1.setAttribute('offset', '0%'); dedStop1.setAttribute('stop-color', '#f43f5e'); dedStop1.setAttribute('stop-opacity', '0.12');
+  const dedStop2 = createSVGElement('stop'); dedStop2.setAttribute('offset', '100%'); dedStop2.setAttribute('stop-color', '#f43f5e'); dedStop2.setAttribute('stop-opacity', '0.00');
+  dedGrad.appendChild(dedStop1); dedGrad.appendChild(dedStop2);
+  defs.appendChild(dedGrad);
+  
+  svg.appendChild(defs);
+  
+  // Find maximum values for Y axis scaling
+  let maxVal = 0;
+  chartData.forEach(s => {
+    if (s.inhand > maxVal) maxVal = s.inhand;
+    if (s.dedRules > maxVal) maxVal = s.deduction; // Wait, s.dedRules is a typo, it should be s.deduction
+    if (s.deduction > maxVal) maxVal = s.deduction;
+  });
+  maxVal = Math.max(10000, maxVal * 1.1); // Add a 10% safety margin and enforce minimum Y-bound
+  
+  // Draw Y grid lines and labels
+  const ticks = 4;
+  for (let i = 0; i <= ticks; i++) {
+    const ratio = i / ticks;
+    const yVal = maxVal * ratio;
+    const y = margin.top + chartHeight - (ratio * chartHeight);
+    
+    if (i > 0) {
+      const line = createSVGElement('line');
+      line.setAttribute('x1', margin.left.toString());
+      line.setAttribute('y1', y.toString());
+      line.setAttribute('x2', (margin.left + chartWidth).toString());
+      line.setAttribute('y2', y.toString());
+      line.classList.add('chart-grid-line');
+      svg.appendChild(line);
+    }
+    
+    const text = createSVGElement('text');
+    text.setAttribute('x', (margin.left - 10).toString());
+    text.setAttribute('y', (y + 4).toString());
+    text.setAttribute('text-anchor', 'end');
+    text.classList.add('chart-axis-text');
+    
+    let label = '';
+    if (yVal >= 100000) {
+      label = '₹' + (yVal / 100000).toFixed(1) + 'L';
+    } else if (yVal >= 1000) {
+      label = '₹' + (yVal / 1000).toFixed(0) + 'k';
+    } else {
+      label = '₹' + yVal.toFixed(0);
+    }
+    text.textContent = label;
+    svg.appendChild(text);
+  }
+  
+  const pointsCount = chartData.length;
+  
+  // Draw X axis grid and labels
+  chartData.forEach((s, idx) => {
+    const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
+    const x = margin.left + (rx * chartWidth);
+    
+    // Label X (limit to maximum 6 labels for clean aesthetic spacing)
+    const labelStep = Math.max(1, Math.ceil(pointsCount / 6));
+    if (idx % labelStep === 0) {
+      const text = createSVGElement('text');
+      text.setAttribute('x', x.toString());
+      text.setAttribute('y', (margin.top + chartHeight + 20).toString());
+      text.setAttribute('text-anchor', 'middle');
+      text.classList.add('chart-axis-text');
+      text.textContent = formatMonthShort(s.month);
+      svg.appendChild(text);
+    }
+  });
+  
+  // Coordinate scaling logic
+  const scalePoint = (s, idx) => {
+    const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
+    const ryInhand = s.inhand / maxVal;
+    const ryDed = s.deduction / maxVal;
+    
+    return {
+      x: margin.left + (rx * chartWidth),
+      yInhand: margin.top + chartHeight - (ryInhand * chartHeight),
+      yDed: margin.top + chartHeight - (ryDed * chartHeight),
+      inhand: s.inhand,
+      deduction: s.deduction,
+      month: s.month,
+      notes: s.notes
+    };
+  };
+  
+  const mapped = chartData.map(scalePoint);
+  
+  if (pointsCount > 1) {
+    // Area fill under Inhand
+    const areaPathInhand = `M ${mapped[0].x} ${margin.top + chartHeight} ` + 
+                         mapped.map(p => `L ${p.x} ${p.yInhand}`).join(' ') + 
+                         ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
+    const areaInhand = createSVGElement('path');
+    areaInhand.setAttribute('d', areaPathInhand);
+    areaInhand.setAttribute('fill', 'url(#grad-inhand-area)');
+    svg.appendChild(areaInhand);
+    
+    // Area fill under Deductions
+    const areaPathDed = `M ${mapped[0].x} ${margin.top + chartHeight} ` + 
+                       mapped.map(p => `L ${p.x} ${p.yDed}`).join(' ') + 
+                       ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
+    const areaDed = createSVGElement('path');
+    areaDed.setAttribute('d', areaPathDed);
+    areaDed.setAttribute('fill', 'url(#grad-ded-area)');
+    svg.appendChild(areaDed);
+    
+    // Polyline coordinates
+    const polylineStrInhand = mapped.map(p => `${p.x},${p.yInhand}`).join(' ');
+    const polylineStrDed = mapped.map(p => `${p.x},${p.yDed}`).join(' ');
+    
+    // Draw In-hand Line (Emerald)
+    const lineInhand = createSVGElement('polyline');
+    lineInhand.setAttribute('points', polylineStrInhand);
+    lineInhand.setAttribute('fill', 'none');
+    lineInhand.setAttribute('stroke', '#10b981');
+    lineInhand.setAttribute('stroke-width', '3');
+    svg.appendChild(lineInhand);
+    
+    // Draw Deductions Line (Rose)
+    const lineDed = createSVGElement('polyline');
+    lineDed.setAttribute('points', polylineStrDed);
+    lineDed.setAttribute('fill', 'none');
+    lineDed.setAttribute('stroke', '#f43f5e');
+    lineDed.setAttribute('stroke-width', '3');
+    svg.appendChild(lineDed);
+  }
+  
+  // Draw points/dots and tooltips
+  mapped.forEach(p => {
+    // In-hand Point
+    const dotInhand = createSVGElement('circle');
+    dotInhand.setAttribute('cx', p.x.toString());
+    dotInhand.setAttribute('cy', p.yInhand.toString());
+    dotInhand.setAttribute('r', '5');
+    dotInhand.setAttribute('fill', '#10b981');
+    dotInhand.setAttribute('stroke', '#070913');
+    dotInhand.setAttribute('stroke-width', '2');
+    dotInhand.style.cursor = 'pointer';
+    dotInhand.style.transition = 'transform 0.15s ease';
+    
+    dotInhand.addEventListener('mouseenter', () => dotInhand.setAttribute('r', '7'));
+    dotInhand.addEventListener('mouseleave', () => {
+      dotInhand.setAttribute('r', '5');
+      hideTooltip();
+    });
+    
+    dotInhand.addEventListener('mousemove', (e) => {
+      const title = formatMonthLabel(p.month);
+      const gross = p.inhand + p.deduction;
+      const ratio = gross > 0 ? ((p.deduction / gross) * 100).toFixed(0) + '%' : '0%';
+      showCustomTooltip(e, title, 'In-hand Credited:', formatCurrency(p.inhand), 'Deductions:', formatCurrency(p.deduction), `Gross Income: ${formatCurrency(gross)} (${ratio} deductions)`);
+    });
+    
+    svg.appendChild(dotInhand);
+    
+    // Deduction Point
+    const dotDed = createSVGElement('circle');
+    dotDed.setAttribute('cx', p.x.toString());
+    dotDed.setAttribute('cy', p.yDed.toString());
+    dotDed.setAttribute('r', '5');
+    dotDed.setAttribute('fill', '#f43f5e');
+    dotDed.setAttribute('stroke', '#070913');
+    dotDed.setAttribute('stroke-width', '2');
+    dotDed.style.cursor = 'pointer';
+    dotDed.style.transition = 'transform 0.15s ease';
+    
+    dotDed.addEventListener('mouseenter', () => dotDed.setAttribute('r', '7'));
+    dotDed.addEventListener('mouseleave', () => {
+      dotDed.setAttribute('r', '5');
+      hideTooltip();
+    });
+    
+    dotDed.addEventListener('mousemove', (e) => {
+      const title = formatMonthLabel(p.month);
+      const gross = p.inhand + p.deduction;
+      const ratio = gross > 0 ? ((p.deduction / gross) * 100).toFixed(0) + '%' : '0%';
+      showCustomTooltip(e, title, 'In-hand Credited:', formatCurrency(p.inhand), 'Deductions:', formatCurrency(p.deduction), `Gross Income: ${formatCurrency(gross)} (${ratio} deductions)`);
+    });
+    
+    svg.appendChild(dotDed);
+  });
+  
+  container.appendChild(svg);
+}
+
 function initCalculatorSliders() {
   const sSip = document.getElementById('slider-sip');
   const sYears = document.getElementById('slider-years');
@@ -3119,6 +3759,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   initModalHandlers();
   initCalculatorSliders();
   
-  // Render active dashboard view
-  renderDashboard();
+  // Render active view
+  const activeTabLink = document.querySelector('.nav-link.active');
+  const activeTabName = activeTabLink ? activeTabLink.getAttribute('data-tab') : 'dashboard';
+  if (activeTabName === 'dashboard') renderDashboard();
+  else if (activeTabName === 'investments') renderInvestments();
+  else if (activeTabName === 'projections') renderProjections();
+  else if (activeTabName === 'liabilities') renderLiabilities();
+  else if (activeTabName === 'borrow-lent') renderBorrowLent();
+  else if (activeTabName === 'salary') renderSalaries();
 });

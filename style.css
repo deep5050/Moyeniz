@@ -1571,3 +1571,35 @@ input[type="range"].slider::-webkit-slider-thumb:hover {
     gap: 16px;
   }
 }
+
+/* Global App Footer */
+.app-footer {
+  padding: 24px 40px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-light);
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  margin-top: auto;
+  width: 100%;
+}
+.app-footer a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition-smooth);
+}
+.app-footer a:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
+/* Salary Tracker Styles */
+.legend-row {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
