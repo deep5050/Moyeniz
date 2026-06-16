@@ -205,14 +205,13 @@
             </svg>
             <span class="btn-text">Download Portfolio</span>
           </button>
-          <button class="btn btn-primary" id="btn-add-investment">
+          <!-- <button class="btn btn-primary btn-icon-only" id="btn-add-investment" style="display: none;" title="Add Investment">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus">
               <path d="M5 12h14" />
               <path d="M12 5v14" />
             </svg>
-            <span class="btn-text">Add Investment</span>
-          </button>
+          </button> -->
         </div>
       </header>
 
@@ -665,6 +664,15 @@
         <div class="investments-container" id="investments-list-container">
           <!-- Investment items generated dynamically -->
         </div>
+
+        <!-- Floating Add Button for Investment -->
+        <button class="floating-add-btn" id="btn-add-investment-float" title="Add Investment">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+        </button>
       </section>
 
       <!-- VIEW 3: Projections -->
@@ -829,9 +837,6 @@
 
         <!-- Liabilities filters/actions -->
         <div class="filters-bar">
-          <div class="asset-filters">
-            <button class="filter-chip active" id="btn-add-liability">Add New Liability / Loan</button>
-          </div>
           <div class="search-wrapper">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
@@ -845,6 +850,15 @@
         <div class="investments-container" id="liabilities-list-container">
           <!-- Liabilities items generated dynamically -->
         </div>
+
+        <!-- Floating Add Button for Liabilities -->
+        <button class="floating-add-btn" id="btn-add-liability" title="Add Liability / Loan">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+        </button>
       </section>
 
       <!-- VIEW 5: Borrow & Lent -->
@@ -927,14 +941,21 @@
               <input type="text" class="search-input" id="input-search-borrow-lent" placeholder="Search cashflow..."
                 style="padding-left: 32px;">
             </div>
-            <button class="btn btn-primary" id="btn-add-borrow-lent" style="white-space: nowrap;">Add
-              Transaction</button>
           </div>
         </div>
 
         <div class="investments-container" id="borrow-lent-list-container">
           <!-- Dynamically generated borrow & lent cards -->
         </div>
+
+        <!-- Floating Add Button for Borrow & Lent -->
+        <button class="floating-add-btn" id="btn-add-borrow-lent" title="Add Borrow / Lent Transaction">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+        </button>
       </section>
 
       <!-- VIEW 6: Salary Tracker -->
@@ -1050,9 +1071,6 @@
 
         <!-- Filters & Action Bar -->
         <div class="filters-bar">
-          <div class="asset-filters">
-            <button class="filter-chip active" id="btn-add-salary">Add Salary Entry</button>
-          </div>
           <div class="search-wrapper">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
@@ -1067,6 +1085,15 @@
         <div class="investments-container" id="salary-list-container">
           <!-- Salary items generated dynamically -->
         </div>
+
+        <!-- Floating Add Button for Salary Entry -->
+        <button class="floating-add-btn" id="btn-add-salary" title="Add Salary Entry">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+        </button>
       </section>
 
       <!-- Interactive Tooltip Overlay -->

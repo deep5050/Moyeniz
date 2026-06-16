@@ -232,6 +232,29 @@ async function loadFromStorage() {
   }
 }
 
+// Update Visibility of Top Action Buttons (Download Portfolio / Add Investment)
+function updateTopActions(tabName) {
+  const btnDownloadTop = document.getElementById('btn-download-portfolio-top');
+  const btnAddInvestment = document.getElementById('btn-add-investment');
+  const dataInitialized = localStorage.getItem('moyeniz_investments') !== null;
+
+  if (btnDownloadTop) {
+    if (tabName === 'dashboard' && dataInitialized) {
+      btnDownloadTop.style.display = 'inline-flex';
+    } else {
+      btnDownloadTop.style.display = 'none';
+    }
+  }
+
+  if (btnAddInvestment) {
+    if (tabName === 'investments') {
+      btnAddInvestment.style.display = 'inline-flex';
+    } else {
+      btnAddInvestment.style.display = 'none';
+    }
+  }
+}
+
 // Tab Navigation logic
 function initNavigation() {
   const links = document.querySelectorAll('.nav-link');
@@ -278,6 +301,8 @@ function initNavigation() {
         // viewSubtitle.textContent = 'Track salary trends, credits, deductions, and increments over time.';
         renderSalaries();
       }
+
+      updateTopActions(tabName);
     });
   });
 }
@@ -319,7 +344,11 @@ function renderDashboard() {
   } else {
     if (activeContent) activeContent.style.display = 'block';
     if (emptyContent) emptyContent.style.display = 'none';
-    if (btnDownloadTop) btnDownloadTop.style.display = 'inline-flex';
+    const activeTabLink = document.querySelector('.nav-link.active');
+    const activeTabName = activeTabLink ? activeTabLink.getAttribute('data-tab') : 'dashboard';
+    if (btnDownloadTop) {
+      btnDownloadTop.style.display = activeTabName === 'dashboard' ? 'inline-flex' : 'none';
+    }
   }
 
   const summary = getPortfolioSummary();
@@ -2266,6 +2295,8 @@ function handleUploadJSON(file) {
         if (activeTab === 'borrow-lent') renderBorrowLent();
         if (activeTab === 'salary') renderSalaries();
 
+        updateTopActions(activeTab);
+
         alert('Portfolio data loaded successfully!');
       } else {
         alert('Invalid data format. JSON must contain "investments" and "liabilities" arrays.');
@@ -2354,6 +2385,7 @@ function initModalHandlers() {
       salaries = [...SAMPLE_SALARIES];
       saveToStorage();
       renderDashboard();
+      updateTopActions('dashboard');
     });
   }
 
@@ -2367,12 +2399,15 @@ function initModalHandlers() {
       salaries = [];
       saveToStorage();
       renderDashboard();
+      updateTopActions('dashboard');
     });
   }
 
-  btnClose.addEventListener('click', closeModal);
-  btnCancel.addEventListener('click', closeModal);
-  addBtn.addEventListener('click', () => openModal());
+  if (btnClose) btnClose.addEventListener('click', closeModal);
+  if (btnCancel) btnCancel.addEventListener('click', closeModal);
+  if (addBtn) addBtn.addEventListener('click', () => openModal());
+  const addBtnFloat = document.getElementById('btn-add-investment-float');
+  if (addBtnFloat) addBtnFloat.addEventListener('click', () => openModal());
 
   selectClass.addEventListener('change', (e) => {
     updateSubtypeOptions(e.target.value);
@@ -2399,6 +2434,8 @@ function initModalHandlers() {
       if (activeTab === 'liabilities') renderLiabilities();
       if (activeTab === 'borrow-lent') renderBorrowLent();
       if (activeTab === 'salary') renderSalaries();
+
+      updateTopActions(activeTab);
     }
   });
 
@@ -4556,4 +4593,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   else if (activeTabName === 'liabilities') renderLiabilities();
   else if (activeTabName === 'borrow-lent') renderBorrowLent();
   else if (activeTabName === 'salary') renderSalaries();
+
+  updateTopActions(activeTabName);
 });
