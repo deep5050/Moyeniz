@@ -235,6 +235,7 @@ async function loadFromStorage() {
 // Update Visibility of Top Action Buttons (Download Portfolio / Add Investment)
 function updateTopActions(tabName) {
   const btnDownloadTop = document.getElementById('btn-download-portfolio-top');
+  const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
   const btnAddInvestment = document.getElementById('btn-add-investment');
   const dataInitialized = localStorage.getItem('moyeniz_investments') !== null;
 
@@ -243,6 +244,14 @@ function updateTopActions(tabName) {
       btnDownloadTop.style.display = 'inline-flex';
     } else {
       btnDownloadTop.style.display = 'none';
+    }
+  }
+
+  if (btnDownloadPdfTop) {
+    if (tabName === 'dashboard' && dataInitialized) {
+      btnDownloadPdfTop.style.display = 'inline-flex';
+    } else {
+      btnDownloadPdfTop.style.display = 'none';
     }
   }
 
@@ -340,6 +349,8 @@ function renderDashboard() {
     if (activeContent) activeContent.style.display = 'none';
     if (emptyContent) emptyContent.style.display = 'block';
     if (btnDownloadTop) btnDownloadTop.style.display = 'none';
+    const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
+    if (btnDownloadPdfTop) btnDownloadPdfTop.style.display = 'none';
     return;
   } else {
     if (activeContent) activeContent.style.display = 'block';
@@ -348,6 +359,10 @@ function renderDashboard() {
     const activeTabName = activeTabLink ? activeTabLink.getAttribute('data-tab') : 'dashboard';
     if (btnDownloadTop) {
       btnDownloadTop.style.display = activeTabName === 'dashboard' ? 'inline-flex' : 'none';
+    }
+    const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
+    if (btnDownloadPdfTop) {
+      btnDownloadPdfTop.style.display = activeTabName === 'dashboard' ? 'inline-flex' : 'none';
     }
   }
 
@@ -2339,6 +2354,14 @@ function initModalHandlers() {
   if (btnDownloadTop) {
     btnDownloadTop.addEventListener('click', () => {
       downloadPortfolioJSON();
+    });
+  }
+
+  // Dashboard Header PDF Report Action
+  const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
+  if (btnDownloadPdfTop) {
+    btnDownloadPdfTop.addEventListener('click', () => {
+      generatePDFReport();
     });
   }
 
@@ -4573,6 +4596,700 @@ function initDashboardSectionToggles() {
     });
   }
 }
+
+// Generate Standalone PDF Portfolio Wealth Report
+function generatePDFReport() {
+  const summary = getPortfolioSummary();
+  const now = new Date();
+  const dateString = now.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // Calculate Net Worth Metrics
+  let totalLiabilitiesVal = 0;
+  liabilities.forEach(l => {
+    totalLiabilitiesVal += Number(l.outstanding);
+  });
+
+  let totalLentVal = 0;
+  let totalBorrowedVal = 0;
+  borrowLent.forEach(bl => {
+    if (bl.status !== 'paid') {
+      const outstandingAmt = Number(bl.outstanding);
+      if (bl.type === 'lent') {
+        totalLentVal += outstandingAmt;
+      } else if (bl.type === 'borrowed') {
+        totalBorrowedVal += outstandingAmt;
+      }
+    }
+  });
+
+  const netWorthVal = summary.currentValue + totalLentVal - totalLiabilitiesVal - totalBorrowedVal;
+  const portfolioCagrText = document.getElementById('val-portfolio-cagr')?.textContent || '0.0%';
+
+  // SVG Allocation Pie chart HTML extraction
+  const pieChartContainer = document.getElementById('allocation-chart-container');
+  let pieChartSvgHtml = '';
+  if (pieChartContainer) {
+    const svgEl = pieChartContainer.querySelector('svg');
+    if (svgEl) {
+      const clonedSvg = svgEl.cloneNode(true);
+      clonedSvg.removeAttribute('style');
+      clonedSvg.style.width = '240px';
+      clonedSvg.style.height = '240px';
+      pieChartSvgHtml = clonedSvg.outerHTML;
+    }
+  }
+
+  // Calculate Asset Class allocations
+  const classTotals = {};
+  investments.forEach(inv => {
+    const val = Number(inv.currentAmount);
+    classTotals[inv.assetClass] = (classTotals[inv.assetClass] || 0) + val;
+  });
+
+  const sortedClasses = Object.keys(classTotals).map(key => ({
+    key,
+    value: classTotals[key],
+    pct: summary.currentValue > 0 ? (classTotals[key] / summary.currentValue) * 100 : 0
+  })).sort((a, b) => b.value - a.value);
+
+  let allocationTableHtml = '';
+  sortedClasses.forEach(c => {
+    const cat = ASSET_CATEGORIES[c.key];
+    const label = cat ? cat.label : c.key;
+    const color = cat ? cat.color : '#6366f1';
+    allocationTableHtml += `
+      <tr>
+        <td style="font-weight: 500;">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${color}; margin-right: 6px;"></span>
+          ${label}
+        </td>
+        <td style="text-align: right; font-weight: 500;">${formatCurrency(c.value)}</td>
+        <td style="text-align: right; font-weight: 600; color: var(--color-primary);">${c.pct.toFixed(1)}%</td>
+      </tr>
+    `;
+  });
+
+  // Calculate emergency fund coverage / active liabilities emi
+  let liquidAssets = 0;
+  investments.forEach(inv => {
+    if (inv.assetClass === 'savings' || inv.assetClass === 'fd') {
+      liquidAssets += Number(inv.currentAmount);
+    }
+  });
+
+  let totalMonthlyEMIs = 0;
+  liabilities.forEach(l => {
+    totalMonthlyEMIs += Number(l.emi);
+  });
+
+  // Build AI Insights List
+  const insights = [];
+  const totalVal = summary.currentValue;
+  const equityVal = (classTotals['indian-stock'] || 0) + (classTotals['us-stock'] || 0) + ((classTotals['indian-mutual-fund'] || 0) * 0.85);
+  const debtVal = (classTotals['fd'] || 0) + (classTotals['bonds'] || 0) + (classTotals['epfo'] || 0) + (classTotals['savings'] || 0) + ((classTotals['indian-mutual-fund'] || 0) * 0.15);
+  const goldVal = classTotals['gold'] || 0;
+
+  const equityPct = totalVal > 0 ? (equityVal / totalVal) * 100 : 0;
+  const goldPct = totalVal > 0 ? (goldVal / totalVal) * 100 : 0;
+  const debtPct = totalVal > 0 ? (debtVal / totalVal) * 100 : 0;
+
+  let bestAsset = null;
+  let worstAsset = null;
+  let bestPct = -Infinity;
+  let worstPct = Infinity;
+
+  investments.forEach(inv => {
+    const invAmt = Number(inv.investedAmount);
+    const curAmt = Number(inv.currentAmount);
+    if (invAmt > 5000) {
+      const retPct = ((curAmt - invAmt) / invAmt) * 100;
+      if (retPct > bestPct) {
+        bestPct = retPct;
+        bestAsset = inv;
+      }
+      if (retPct < worstPct) {
+        worstPct = retPct;
+        worstAsset = inv;
+      }
+    }
+  });
+
+  if (equityPct > 65) {
+    insights.push({ type: 'warning', title: 'Aggressive Equity Exposure', desc: `Equities represent ${equityPct.toFixed(0)}% of your portfolio. While great for inflation-beating long-term growth, be prepared for high volatility.` });
+  } else if (equityPct >= 40 && equityPct <= 65) {
+    insights.push({ type: 'positive', title: 'Balanced Growth Profile', desc: `Your equity exposure is at a healthy ${equityPct.toFixed(0)}%. This provides a solid balance between capital appreciation and risk mitigation.` });
+  } else if (equityPct > 0 && equityPct < 40) {
+    insights.push({ type: 'info', title: 'Conservative Wealth Profile', desc: `Equities make up only ${equityPct.toFixed(0)}% of your capital. Consider increasing stock/mutual fund exposure to avoid purchasing power erosion from inflation.` });
+  }
+
+  if (goldPct >= 5 && goldPct <= 15) {
+    insights.push({ type: 'positive', title: 'Optimal Gold Allocation', desc: `Gold represents ${goldPct.toFixed(0)}% of your portfolio. This forms an excellent hedge against currency depreciation and market corrections.` });
+  } else if (goldPct > 15) {
+    insights.push({ type: 'warning', title: 'Overweight in Precious Metals', desc: `Precious metals comprise ${goldPct.toFixed(0)}% of your assets. Gold is stable but lacks compounding yields; consider reallocating to growth assets.` });
+  } else {
+    insights.push({ type: 'info', title: 'Low Inflation Hedge', desc: `Gold is less than 5% of your portfolio. Consider allocating a small portion (e.g. 5-10% in SGBs or Gold ETFs) as portfolio insurance.` });
+  }
+
+  if (bestAsset && bestPct > 10) {
+    insights.push({ type: 'positive', title: `Top Performer: ${bestAsset.name}`, desc: `Your investment has achieved a return of ${formatPercent(bestPct)}, growing to ${formatCurrency(bestAsset.currentAmount)}.` });
+  }
+  if (worstAsset && worstPct < -5) {
+    insights.push({ type: 'negative', title: `Underperformer Alert: ${worstAsset.name}`, desc: `This asset is currently down by ${formatPercent(worstPct)} (Current Value: ${formatCurrency(worstAsset.currentAmount)}). Monitor for potential changes in fundamentals.` });
+  }
+
+  const savingsVal = classTotals['savings'] || 0;
+  const savingsPct = totalVal > 0 ? (savingsVal / totalVal) * 100 : 0;
+  if (savingsPct > 20) {
+    insights.push({ type: 'info', title: 'High Liquid Cash Balance', desc: `Savings account represents ${savingsPct.toFixed(0)}% of your assets. Move excess liquidity to arbitrage funds or short-term FDs for higher tax-adjusted yields.` });
+  } else if (savingsPct > 0 && savingsPct < 3) {
+    insights.push({ type: 'warning', title: 'Low Liquidity Buffer', desc: `Your cash account holds only ${savingsPct.toFixed(1)}% of your net worth. Ensure you maintain at least 3-6 months of expenses in highly liquid bank balances.` });
+  }
+
+  const usStockVal = classTotals['us-stock'] || 0;
+  const usStockPct = totalVal > 0 ? (usStockVal / totalVal) * 100 : 0;
+  if (usStockPct > 15) {
+    insights.push({ type: 'positive', title: 'Strong Global Hedge', desc: `US stocks make up ${usStockPct.toFixed(0)}% of your portfolio, providing geographical diversification and protecting your wealth against local currency depreciation.` });
+  } else if (usStockPct > 0 && usStockPct <= 15) {
+    insights.push({ type: 'info', title: 'International Exposure Active', desc: `You have a ${usStockPct.toFixed(1)}% allocation to international equities. Increasing this towards 10-15% can further lower overall portfolio correlation.` });
+  } else {
+    insights.push({ type: 'warning', title: 'Zero International Diversification', desc: `You have 0% allocated to global markets. Consider adding US equities or international mutual funds to hedge against geographical concentration risks.` });
+  }
+
+  if (totalVal > 0) {
+    insights.push({ type: 'info', title: `Equity-to-Debt Mix: ${equityPct.toFixed(0)}:${debtPct.toFixed(0)}`, desc: `Your asset mix is ${equityPct.toFixed(0)}% equities and ${debtPct.toFixed(0)}% fixed income/debt. Ensure this fits your risk tolerance.` });
+  }
+
+  const classCount = Object.keys(classTotals).length;
+  if (classCount < 4) {
+    insights.push({ type: 'warning', title: 'Under-diversified Portfolio', desc: `Your capital spans only ${classCount} distinct asset classes. Spreading allocations into fixed deposits, gold, or debt mutual funds can reduce volatility.` });
+  } else if (classCount >= 6) {
+    insights.push({ type: 'positive', title: 'Excellent Asset Class Variety', desc: `Your holdings are spread over ${classCount} different asset classes, creating a robust shield against major single-sector corrections.` });
+  }
+
+  const debtAssetRatio = totalVal > 0 ? (totalLiabilitiesVal / totalVal) * 100 : 0;
+  if (totalLiabilitiesVal > 0) {
+    if (debtAssetRatio > 50) {
+      insights.push({ type: 'negative', title: `High Debt Leverage (${debtAssetRatio.toFixed(0)}%)`, desc: `Your outstanding debt is over 50% of your current asset value. Consider prepaying high-interest loans.` });
+    } else if (debtAssetRatio >= 20 && debtAssetRatio <= 50) {
+      insights.push({ type: 'warning', title: `Moderate Debt Leverage (${debtAssetRatio.toFixed(0)}%)`, desc: `Your debt-to-asset ratio is at a moderate level of ${debtAssetRatio.toFixed(0)}%. Focus on paying down existing loans.` });
+    } else {
+      insights.push({ type: 'positive', title: `Healthy Debt Leverage (${debtAssetRatio.toFixed(0)}%)`, desc: `Your debt-to-asset ratio is a very healthy ${debtAssetRatio.toFixed(0)}%.` });
+    }
+  } else {
+    insights.push({ type: 'positive', title: '100% Debt-Free Portfolio', desc: 'You have no outstanding liabilities or loan EMIs. Your assets represent pure wealth.' });
+  }
+
+  if (totalMonthlyEMIs > 0) {
+    const monthsCoverage = liquidAssets / totalMonthlyEMIs;
+    if (monthsCoverage < 3) {
+      insights.push({ type: 'negative', title: 'Emergency Reserve Gap', desc: `Your liquid reserves (Savings + FDs) cover only ${monthsCoverage.toFixed(1)} months of EMIs. Build up liquid assets to cover at least 6 months.` });
+    } else if (monthsCoverage >= 6) {
+      insights.push({ type: 'positive', title: 'Robust Emergency Buffer', desc: `Your liquid assets cover ${monthsCoverage.toFixed(0)} months of EMI commitments. Solid emergency security.` });
+    }
+  }
+
+  let insightsHtml = '';
+  insights.forEach(ins => {
+    let typeClass = '';
+    let emoji = '';
+    if (ins.type === 'positive') {
+      typeClass = 'insight-positive';
+      emoji = '🟢';
+    } else if (ins.type === 'warning') {
+      typeClass = 'insight-warning';
+      emoji = '🟡';
+    } else if (ins.type === 'negative') {
+      typeClass = 'insight-negative';
+      emoji = '🔴';
+    } else {
+      typeClass = 'insight-info';
+      emoji = '🔵';
+    }
+    insightsHtml += `
+      <div class="insight-item ${typeClass}" style="margin-bottom: 8px; padding: 10px 14px; border-radius: 6px; border-left: 4px solid; line-height: 1.4;">
+        <strong style="display: block; font-size: 0.9rem; margin-bottom: 2px;">${emoji} ${ins.title}</strong>
+        <span style="font-size: 0.8rem; color: #475569;">${ins.desc}</span>
+      </div>
+    `;
+  });
+
+  // Group holdings summary rows
+  let holdingsTableRowsHtml = '';
+  const sortedInvestments = [...investments].sort((a, b) => {
+    if (a.assetClass !== b.assetClass) {
+      return a.assetClass.localeCompare(b.assetClass);
+    }
+    return Number(b.investedAmount) - Number(a.investedAmount);
+  });
+
+  sortedInvestments.forEach(inv => {
+    const cat = ASSET_CATEGORIES[inv.assetClass];
+    const categoryLabel = cat ? cat.label : inv.assetClass;
+    const invested = Number(inv.investedAmount);
+    const current = Number(inv.currentAmount);
+    const returns = current - invested;
+    const returnPct = invested > 0 ? (returns / invested) * 100 : 0;
+    const colorClass = returns >= 0 ? 'color-success' : 'color-danger';
+    const returnSign = returns >= 0 ? '+' : '';
+
+    holdingsTableRowsHtml += `
+      <tr>
+        <td style="font-weight: 600; color: #334155;">${inv.name}</td>
+        <td>${categoryLabel}</td>
+        <td style="text-align: right; font-family: monospace;">${formatCurrency(invested)}</td>
+        <td style="text-align: right; font-family: monospace;">${formatCurrency(current)}</td>
+        <td style="text-align: right; font-weight: 600; font-family: monospace;" class="${colorClass}">${returnSign}${formatCurrency(returns)} (${returnSign}${returnPct.toFixed(1)}%)</td>
+      </tr>
+    `;
+  });
+
+  // Liabilities block
+  let liabilitiesHtml = '';
+  if (liabilities.length > 0) {
+    let liabilitiesTableRowsHtml = '';
+    liabilities.forEach(l => {
+      const rate = Number(l.rate);
+      const emi = Number(l.emi);
+      const outstanding = Number(l.outstanding);
+      liabilitiesTableRowsHtml += `
+        <tr>
+          <td style="font-weight: 600; color: #334155;">${l.name}</td>
+          <td>${l.type === 'loan' ? 'Loan / EMI' : 'Credit Card Outstanding'}</td>
+          <td style="text-align: right;">${rate.toFixed(1)}%</td>
+          <td style="text-align: right; font-family: monospace;">${formatCurrency(emi)}</td>
+          <td style="text-align: right; font-weight: 600; font-family: monospace; color: #f43f5e;">${formatCurrency(outstanding)}</td>
+        </tr>
+      `;
+    });
+
+    liabilitiesHtml = `
+      <div style="margin-top: 24px;">
+        <h2 class="section-title">Liabilities & EMI Commitments</h2>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Liability Name</th>
+              <th style="text-align: left;">Type</th>
+              <th style="text-align: right;">Interest Rate</th>
+              <th style="text-align: right;">Monthly EMI</th>
+              <th style="text-align: right;">Outstanding Principal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${liabilitiesTableRowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // Borrow/Lent block
+  let borrowLentHtml = '';
+  const activeBL = borrowLent.filter(bl => bl.status !== 'paid');
+  if (activeBL.length > 0) {
+    let blTableRowsHtml = '';
+    activeBL.forEach(bl => {
+      const outstanding = Number(bl.outstanding);
+      const typeLabel = bl.type === 'lent' ? 'Lent (Receivable)' : 'Borrowed (Payable)';
+      const typeColor = bl.type === 'lent' ? '#10b981' : '#f43f5e';
+      blTableRowsHtml += `
+        <tr>
+          <td style="font-weight: 600; color: #334155;">${bl.person}</td>
+          <td style="color: ${typeColor}; font-weight: 600;">${typeLabel}</td>
+          <td>${bl.date}</td>
+          <td style="text-align: right; font-family: monospace; font-weight: 600;">${formatCurrency(outstanding)}</td>
+        </tr>
+      `;
+    });
+
+    borrowLentHtml = `
+      <div style="margin-top: 24px;">
+        <h2 class="section-title">Personal Borrow & Lent Accounts</h2>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Contact / Person Name</th>
+              <th style="text-align: left;">Transaction Type</th>
+              <th style="text-align: left;">Date Logged</th>
+              <th style="text-align: right;">Receivable / Payable Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${blTableRowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // Compile final HTML
+  const reportHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Moyeniz Portfolio Report</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+      <style>
+        :root {
+          --color-primary: #6366f1;
+          --color-success: #10b981;
+          --color-danger: #f43f5e;
+          --color-info: #0ea5e9;
+          --color-warning: #f59e0b;
+          --text-main: #1e293b;
+          --text-muted: #64748b;
+          --border-color: #e2e8f0;
+          --bg-light: #f8fafc;
+        }
+        
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+        
+        body {
+          font-family: 'Inter', sans-serif;
+          color: var(--text-main);
+          background-color: #ffffff;
+          padding: 24px;
+          line-height: 1.5;
+          font-size: 13px;
+        }
+        
+        @page {
+          size: A4 portrait;
+          margin: 12mm;
+        }
+        
+        .report-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          border-bottom: 2.5px solid var(--color-primary);
+          padding-bottom: 12px;
+          margin-bottom: 20px;
+        }
+        
+        .logo-area h1 {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.7rem;
+          font-weight: 700;
+          color: var(--color-primary);
+        }
+        
+        .logo-area p {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+        }
+        
+        .meta-area {
+          text-align: right;
+          font-size: 0.8rem;
+          color: var(--text-muted);
+          line-height: 1.4;
+        }
+        
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+        
+        .metric-card {
+          background-color: var(--bg-light);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 12px;
+        }
+        
+        .metric-label {
+          font-size: 0.7rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--text-muted);
+          margin-bottom: 4px;
+        }
+        
+        .metric-value {
+          font-size: 1.15rem;
+          font-weight: 700;
+          color: var(--text-main);
+          margin-bottom: 2px;
+        }
+        
+        .metric-footer {
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+        
+        .allocation-section {
+          display: flex;
+          gap: 24px;
+          margin-bottom: 24px;
+        }
+        
+        .allocation-chart-wrapper {
+          flex: 1;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background-color: var(--bg-light);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 12px;
+          max-width: 280px;
+        }
+        
+        .allocation-details {
+          flex: 1.5;
+        }
+        
+        h2.section-title {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: var(--color-primary);
+          margin-bottom: 10px;
+          border-bottom: 1.5px solid var(--border-color);
+          padding-bottom: 4px;
+        }
+        
+        .report-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 16px;
+          font-size: 0.8rem;
+        }
+        
+        .report-table th, .report-table td {
+          padding: 8px 10px;
+          border-bottom: 1px solid var(--border-color);
+        }
+        
+        .report-table th {
+          background-color: var(--bg-light);
+          font-weight: 600;
+          color: var(--text-muted);
+        }
+        
+        .insight-item.insight-positive {
+          border-left-color: var(--color-success);
+          background-color: #f0fdf4;
+        }
+        
+        .insight-item.insight-warning {
+          border-left-color: var(--color-warning);
+          background-color: #fffbeb;
+        }
+        
+        .insight-item.insight-negative {
+          border-left-color: var(--color-danger);
+          background-color: #fff1f2;
+        }
+        
+        .insight-item.insight-info {
+          border-left-color: var(--color-info);
+          background-color: #f0f9ff;
+        }
+        
+        .color-success { color: var(--color-success) !important; }
+        .color-danger { color: var(--color-danger) !important; }
+        
+        .page-break {
+          page-break-before: always;
+        }
+        
+        .report-footer {
+          margin-top: 30px;
+          border-top: 1px solid var(--border-color);
+          padding-top: 10px;
+          text-align: center;
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+      </style>
+    </head>
+    <body>
+      <header class="report-header">
+        <div class="logo-area">
+          <h1>Moyeniz</h1>
+          <p>Privacy-First Portfolio Analytics</p>
+        </div>
+        <div class="meta-area">
+          <strong>Portfolio Wealth Report</strong><br>
+          Generated: ${dateString}<br>
+        </div>
+      </header>
+
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Net Worth</div>
+          <div class="metric-value" style="color: var(--color-primary);">${formatCurrency(netWorthVal)}</div>
+          <div class="metric-footer" style="color: var(--text-muted);">Assets minus Liabilities</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Assets</div>
+          <div class="metric-value">${formatCurrency(summary.currentValue + totalLentVal)}</div>
+          <div class="metric-footer" style="color: var(--text-muted);">Invested + Personal Receivables</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Return</div>
+          <div class="metric-value ${summary.totalGain >= 0 ? 'color-success' : 'color-danger'}">
+            ${summary.totalGain >= 0 ? '+' : ''}${formatCurrency(summary.totalGain)}
+          </div>
+          <div class="metric-footer ${summary.totalGain >= 0 ? 'color-success' : 'color-danger'}">
+            ${summary.totalGain >= 0 ? '+' : ''}${summary.returnPct.toFixed(1)}%
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">CAGR / XIRR</div>
+          <div class="metric-value" style="color: var(--color-info);">${portfolioCagrText}</div>
+          <div class="metric-footer" style="color: var(--text-muted);">Annualized Growth Rate</div>
+        </div>
+      </section>
+
+      <div class="allocation-section">
+        <div class="allocation-chart-wrapper">
+          ${pieChartSvgHtml || '<div style="color: var(--text-muted);">Chart Preview</div>'}
+        </div>
+        <div class="allocation-details">
+          <h2 class="section-title">Asset Category Allocations</h2>
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th style="text-align: left;">Category Class</th>
+                <th style="text-align: right;">Current Value</th>
+                <th style="text-align: right;">Allocation</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allocationTableHtml}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-top: 10px; margin-bottom: 24px;">
+        <h2 class="section-title">Portfolio Insights & Recommendations</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+          <div>
+            ${insights.slice(0, Math.ceil(insights.length / 2)).length > 0 ?
+      insights.slice(0, Math.ceil(insights.length / 2)).map(ins => {
+        let typeClass = '';
+        let emoji = '';
+        if (ins.type === 'positive') { typeClass = 'insight-positive'; emoji = '🟢'; }
+        else if (ins.type === 'warning') { typeClass = 'insight-warning'; emoji = '🟡'; }
+        else if (ins.type === 'negative') { typeClass = 'insight-negative'; emoji = '🔴'; }
+        else { typeClass = 'insight-info'; emoji = '🔵'; }
+        return `
+                  <div class="insight-item ${typeClass}" style="margin-bottom: 8px; padding: 10px 14px; border-radius: 6px; border-left: 4px solid; line-height: 1.4;">
+                    <strong style="display: block; font-size: 0.9rem; margin-bottom: 2px;">${emoji} ${ins.title}</strong>
+                    <span style="font-size: 0.8rem; color: #475569;">${ins.desc}</span>
+                  </div>
+                `;
+      }).join('') : '<div style="color: var(--text-muted); font-size: 0.85rem;">No insights available.</div>'
+    }
+          </div>
+          <div>
+            ${insights.slice(Math.ceil(insights.length / 2)).length > 0 ?
+      insights.slice(Math.ceil(insights.length / 2)).map(ins => {
+        let typeClass = '';
+        let emoji = '';
+        if (ins.type === 'positive') { typeClass = 'insight-positive'; emoji = '🟢'; }
+        else if (ins.type === 'warning') { typeClass = 'insight-warning'; emoji = '🟡'; }
+        else if (ins.type === 'negative') { typeClass = 'insight-negative'; emoji = '🔴'; }
+        else { typeClass = 'insight-info'; emoji = '🔵'; }
+        return `
+                  <div class="insight-item ${typeClass}" style="margin-bottom: 8px; padding: 10px 14px; border-radius: 6px; border-left: 4px solid; line-height: 1.4;">
+                    <strong style="display: block; font-size: 0.9rem; margin-bottom: 2px;">${emoji} ${ins.title}</strong>
+                    <span style="font-size: 0.8rem; color: #475569;">${ins.desc}</span>
+                  </div>
+                `;
+      }).join('') : ''
+    }
+          </div>
+        </div>
+      </div>
+
+      <div class="page-break"></div>
+
+      <header class="report-header">
+        <div class="logo-area">
+          <h1>Moyeniz</h1>
+          <p>Detailed Asset Breakdown</p>
+        </div>
+        <div class="meta-area">
+          <strong>Portfolio Holdings Details</strong><br>
+          Generated: ${dateString}
+        </div>
+      </header>
+
+      <div>
+        <h2 class="section-title">Individual Holdings & Valuation</h2>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Asset Name</th>
+              <th style="text-align: left;">Category</th>
+              <th style="text-align: right;">Invested Amount</th>
+              <th style="text-align: right;">Current Value</th>
+              <th style="text-align: right;">Total Return / Gain</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${holdingsTableRowsHtml || '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No assets recorded in portfolio.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+
+      ${liabilitiesHtml}
+      ${borrowLentHtml}
+
+      <footer class="report-footer">
+        <p>This report was generated locally inside your web browser. Moyeniz does not store, transmit, or process your portfolio data on external servers.</p>
+        <p style="margin-top: 4px; font-weight: 500; color: var(--color-primary);">deep5050.github.io/Moyeniz/ &copy; ${now.getFullYear()}</p>
+      </footer>
+    </body>
+    </html>
+  `;
+
+  // Create iframe for printing
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow.document;
+  doc.write(reportHtml);
+  doc.close();
+
+  // Print execution
+  iframe.contentWindow.focus();
+  setTimeout(() => {
+    iframe.contentWindow.print();
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
+  }, 600);
+}
+
 
 // Initializer
 document.addEventListener('DOMContentLoaded', async () => {
