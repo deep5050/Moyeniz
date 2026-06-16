@@ -66,21 +66,23 @@ const SUBTYPES = {
   ]
 };
 
+const relativeDate = (yearsAgo) => new Date(Date.now() - yearsAgo * 365.25 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 // Realistic Pre-populated Demo Data
 const SAMPLE_PORTFOLIO = [
-  { id: 'stock-tcs', assetClass: 'indian-stock', name: 'TCS Ltd.', subtype: 'none', investedAmount: 150000, currentAmount: 185000, lastUpdated: new Date().toISOString() },
-  { id: 'stock-hdfc', assetClass: 'indian-stock', name: 'HDFC Bank Ltd.', subtype: 'none', investedAmount: 120000, currentAmount: 115000, lastUpdated: new Date().toISOString() },
-  { id: 'mf-parag', assetClass: 'indian-mutual-fund', name: 'Parag Parikh Flexi Cap Fund', subtype: 'flexi', investedAmount: 200000, currentAmount: 265000, lastUpdated: new Date().toISOString() },
-  { id: 'mf-quant', assetClass: 'indian-mutual-fund', name: 'Quant Mid Cap Fund', subtype: 'mid', investedAmount: 80000, currentAmount: 105000, lastUpdated: new Date().toISOString() },
-  { id: 'mf-nippon', assetClass: 'indian-mutual-fund', name: 'Nippon India Small Cap Fund', subtype: 'small', investedAmount: 50000, currentAmount: 72000, lastUpdated: new Date().toISOString() },
-  { id: 'us-aapl', assetClass: 'us-stock', name: 'Apple Inc. (AAPL)', subtype: 'none', investedAmount: 75000, currentAmount: 92000, lastUpdated: new Date().toISOString() },
-  { id: 'us-tsla', assetClass: 'us-stock', name: 'Tesla Inc. (TSLA)', subtype: 'none', investedAmount: 50000, currentAmount: 45000, lastUpdated: new Date().toISOString() },
-  { id: 'fd-sbi', assetClass: 'fd', name: 'SBI Fixed Deposit @ 6.8%', subtype: 'none', investedAmount: 300000, currentAmount: 318000, lastUpdated: new Date().toISOString() },
-  { id: 'gold-sgb', assetClass: 'gold', name: 'Sovereign Gold Bonds 2021', subtype: 'physical', investedAmount: 100000, currentAmount: 135000, lastUpdated: new Date().toISOString() },
-  { id: 'gold-bees', assetClass: 'gold', name: 'Nippon Gold ETF BeES', subtype: 'etf', investedAmount: 50000, currentAmount: 62000, lastUpdated: new Date().toISOString() },
-  { id: 'bonds-nhai', assetClass: 'bonds', name: 'NHAI Tax Free Bonds', subtype: 'none', investedAmount: 100000, currentAmount: 105000, lastUpdated: new Date().toISOString() },
-  { id: 'epf-acct', assetClass: 'epfo', name: 'EPFO Employee Share', subtype: 'none', investedAmount: 250000, currentAmount: 285000, lastUpdated: new Date().toISOString() },
-  { id: 'savings-icici', assetClass: 'savings', name: 'ICICI Savings Account Balance', subtype: 'none', investedAmount: 120000, currentAmount: 120000, lastUpdated: new Date().toISOString() }
+  { id: 'stock-tcs', assetClass: 'indian-stock', name: 'TCS Ltd.', subtype: 'none', investedAmount: 150000, currentAmount: 185000, purchaseDate: relativeDate(2.2), lastUpdated: new Date().toISOString() },
+  { id: 'stock-hdfc', assetClass: 'indian-stock', name: 'HDFC Bank Ltd.', subtype: 'none', investedAmount: 120000, currentAmount: 115000, purchaseDate: relativeDate(1.5), lastUpdated: new Date().toISOString() },
+  { id: 'mf-parag', assetClass: 'indian-mutual-fund', name: 'Parag Parikh Flexi Cap Fund', subtype: 'flexi', investedAmount: 200000, currentAmount: 265000, purchaseDate: relativeDate(3.0), lastUpdated: new Date().toISOString() },
+  { id: 'mf-quant', assetClass: 'indian-mutual-fund', name: 'Quant Mid Cap Fund', subtype: 'mid', investedAmount: 80000, currentAmount: 105000, purchaseDate: relativeDate(1.0), lastUpdated: new Date().toISOString() },
+  { id: 'mf-nippon', assetClass: 'indian-mutual-fund', name: 'Nippon India Small Cap Fund', subtype: 'small', investedAmount: 50000, currentAmount: 72000, purchaseDate: relativeDate(0.8), lastUpdated: new Date().toISOString() },
+  { id: 'us-aapl', assetClass: 'us-stock', name: 'Apple Inc. (AAPL)', subtype: 'none', investedAmount: 75000, currentAmount: 92000, purchaseDate: relativeDate(1.2), lastUpdated: new Date().toISOString() },
+  { id: 'us-tsla', assetClass: 'us-stock', name: 'Tesla Inc. (TSLA)', subtype: 'none', investedAmount: 50000, currentAmount: 45000, purchaseDate: relativeDate(0.6), lastUpdated: new Date().toISOString() },
+  { id: 'fd-sbi', assetClass: 'fd', name: 'SBI Fixed Deposit @ 6.8%', subtype: 'none', investedAmount: 300000, currentAmount: 318000, purchaseDate: relativeDate(0.9), lastUpdated: new Date().toISOString() },
+  { id: 'gold-sgb', assetClass: 'gold', name: 'Sovereign Gold Bonds 2021', subtype: 'physical', investedAmount: 100000, currentAmount: 135000, purchaseDate: relativeDate(2.5), lastUpdated: new Date().toISOString() },
+  { id: 'gold-bees', assetClass: 'gold', name: 'Nippon Gold ETF BeES', subtype: 'etf', investedAmount: 50000, currentAmount: 62000, purchaseDate: relativeDate(1.1), lastUpdated: new Date().toISOString() },
+  { id: 'bonds-nhai', assetClass: 'bonds', name: 'NHAI Tax Free Bonds', subtype: 'none', investedAmount: 100000, currentAmount: 105000, purchaseDate: relativeDate(1.8), lastUpdated: new Date().toISOString() },
+  { id: 'epf-acct', assetClass: 'epfo', name: 'EPFO Employee Share', subtype: 'none', investedAmount: 250000, currentAmount: 285000, purchaseDate: relativeDate(2.0), lastUpdated: new Date().toISOString() },
+  { id: 'savings-icici', assetClass: 'savings', name: 'ICICI Savings Account Balance', subtype: 'none', investedAmount: 120000, currentAmount: 120000, purchaseDate: relativeDate(0.5), lastUpdated: new Date().toISOString() }
 ];
 
 // Helper Functions for Safe Element Creation
@@ -95,12 +97,34 @@ function clearContainer(container) {
 }
 
 // Format numbers as currency
+// Format numbers as currency shorthand (K, L, Cr)
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0
-  }).format(amount);
+  const num = Number(amount);
+  if (isNaN(num)) return '₹0';
+  const sign = num < 0 ? '-' : '';
+  const absNum = Math.abs(num);
+
+  let formatted = '';
+  if (absNum >= 10000000) {
+    // Crores
+    formatted = (absNum / 10000000).toFixed(2) + 'Cr';
+  } else if (absNum >= 100000) {
+    // Lakhs
+    formatted = (absNum / 100000).toFixed(2) + 'L';
+  } else if (absNum >= 1000) {
+    // Thousands
+    formatted = (absNum / 1000).toFixed(2) + 'K';
+  } else {
+    // Less than 1000
+    formatted = absNum.toFixed(0);
+  }
+
+  // Remove unnecessary trailing zeroes after decimal point, e.g. "1.50L" -> "1.5L", "15.00K" -> "15K"
+  if (formatted.includes('.')) {
+    formatted = formatted.replace(/\.?0+(?=[A-Za-z]+$)/, '');
+  }
+
+  return `${sign}₹${formatted}`;
 }
 
 function formatPercent(val) {
@@ -110,7 +134,7 @@ function formatPercent(val) {
 // Generate secure dynamic gradient definition
 function appendSVGDefs(svgEl) {
   const defs = createSVGElement('defs');
-  
+
   // Define color gradients matching JS setup
   Object.keys(ASSET_CATEGORIES).forEach(key => {
     const cat = ASSET_CATEGORIES[key];
@@ -120,20 +144,20 @@ function appendSVGDefs(svgEl) {
     grad.setAttribute('y1', '0%');
     grad.setAttribute('x2', '100%');
     grad.setAttribute('y2', '100%');
-    
+
     const stop1 = createSVGElement('stop');
     stop1.setAttribute('offset', '0%');
     stop1.setAttribute('stop-color', cat.color);
-    
+
     const stop2 = createSVGElement('stop');
     stop2.setAttribute('offset', '100%');
     stop2.setAttribute('stop-color', cat.colorDark);
-    
+
     grad.appendChild(stop1);
     grad.appendChild(stop2);
     defs.appendChild(grad);
   });
-  
+
   // Extra gradient definitions for general purposes
   const upGrad = createSVGElement('linearGradient');
   upGrad.setAttribute('id', 'grad-up');
@@ -178,7 +202,7 @@ async function loadFromStorage() {
   const lData = localStorage.getItem('moyeniz_liabilities');
   const blData = localStorage.getItem('moyeniz_borrow_lent');
   const sData = localStorage.getItem('moyeniz_salaries');
-  
+
   if (data !== null && lData !== null) {
     investments = JSON.parse(data);
     liabilities = JSON.parse(lData);
@@ -187,7 +211,7 @@ async function loadFromStorage() {
     saveToStorage();
     return;
   }
-  
+
   // Try to fetch custom "moyeniz.json" from server root
   try {
     const response = await fetch('moyeniz.json');
@@ -218,40 +242,40 @@ function initNavigation() {
   links.forEach(link => {
     link.addEventListener('click', () => {
       const tabName = link.getAttribute('data-tab');
-      
+
       // Toggle active link
       links.forEach(l => l.classList.remove('active'));
       link.classList.add('active');
-      
+
       // Toggle active viewport
       views.forEach(v => v.classList.remove('active-view'));
       const activeView = document.getElementById(`view-${tabName}`);
       if (activeView) activeView.classList.add('active-view');
-      
+
       // Update headings
       if (tabName === 'dashboard') {
         viewTitle.textContent = 'Dashboard';
-        viewSubtitle.textContent = 'An overview of your complete financial portfolio.';
+        // viewSubtitle.textContent = 'An overview of your complete financial portfolio.';
         renderDashboard();
       } else if (tabName === 'investments') {
         viewTitle.textContent = 'Investments';
-        viewSubtitle.textContent = 'View, filter, and manage individual assets.';
+        // viewSubtitle.textContent = 'View, filter, and manage individual assets.';
         renderInvestments();
       } else if (tabName === 'projections') {
         viewTitle.textContent = 'Projections';
-        viewSubtitle.textContent = 'Simulate future wealth based on compound assumptions.';
+        // viewSubtitle.textContent = 'Simulate future wealth based on compound assumptions.';
         renderProjections();
       } else if (tabName === 'liabilities') {
         viewTitle.textContent = 'Liabilities & EMIs';
-        viewSubtitle.textContent = 'Track your loans, monthly outflows, and overall leverage.';
+        // viewSubtitle.textContent = 'Track your loans, monthly outflows, and overall leverage.';
         renderLiabilities();
       } else if (tabName === 'borrow-lent') {
         viewTitle.textContent = 'Borrow & Lent';
-        viewSubtitle.textContent = 'Track personal borrowings and lendings, payments, and histories.';
+        // viewSubtitle.textContent = 'Track personal borrowings and lendings, payments, and histories.';
         renderBorrowLent();
       } else if (tabName === 'salary') {
         viewTitle.textContent = 'Salary Tracker';
-        viewSubtitle.textContent = 'Track salary trends, credits, deductions, and increments over time.';
+        // viewSubtitle.textContent = 'Track salary trends, credits, deductions, and increments over time.';
         renderSalaries();
       }
     });
@@ -262,15 +286,15 @@ function initNavigation() {
 function getPortfolioSummary() {
   let totalInvested = 0;
   let currentVal = 0;
-  
+
   investments.forEach(inv => {
     totalInvested += Number(inv.investedAmount);
     currentVal += Number(inv.currentAmount);
   });
-  
+
   const totalGain = currentVal - totalInvested;
   const returnPct = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
-  
+
   return {
     totalInvested,
     currentValue: currentVal,
@@ -282,11 +306,11 @@ function getPortfolioSummary() {
 // Dashboard Page Rendering
 function renderDashboard() {
   const dataInitialized = localStorage.getItem('moyeniz_investments') !== null;
-  
+
   const activeContent = document.getElementById('dashboard-active-content');
   const emptyContent = document.getElementById('dashboard-empty-content');
   const btnDownloadTop = document.getElementById('btn-download-portfolio-top');
-  
+
   if (!dataInitialized) {
     if (activeContent) activeContent.style.display = 'none';
     if (emptyContent) emptyContent.style.display = 'block';
@@ -299,17 +323,17 @@ function renderDashboard() {
   }
 
   const summary = getPortfolioSummary();
-  
+
   // Bind simple text properties
   document.getElementById('val-total-invested').textContent = formatCurrency(summary.totalInvested);
   document.getElementById('val-current-value').textContent = formatCurrency(summary.currentValue);
-  
+
   // Calculate total debt and net worth for dashboard
   let totalLiabilitiesVal = 0;
   liabilities.forEach(l => {
     totalLiabilitiesVal += Number(l.outstanding);
   });
-  
+
   let totalLentVal = 0;
   let totalBorrowedVal = 0;
   borrowLent.forEach(bl => {
@@ -322,27 +346,27 @@ function renderDashboard() {
       }
     }
   });
-  
+
   const netWorthVal = summary.currentValue + totalLentVal - totalLiabilitiesVal - totalBorrowedVal;
-  
+
   document.getElementById('val-total-liabilities-dash').textContent = formatCurrency(totalLiabilitiesVal);
   document.getElementById('val-total-borrowed-dash').textContent = formatCurrency(totalBorrowedVal);
   document.getElementById('val-total-lent-dash').textContent = formatCurrency(totalLentVal);
   document.getElementById('val-net-worth').textContent = formatCurrency(netWorthVal);
-  
+
   const gainEl = document.getElementById('val-total-return');
   gainEl.textContent = formatCurrency(summary.totalGain);
-  
+
   const returnBadge = document.getElementById('badge-total-return-pct');
   returnBadge.textContent = formatPercent(summary.returnPct);
-  
+
   // Return card status styling
   const returnCard = document.getElementById('card-total-return');
   const returnIcon = document.getElementById('icon-total-return');
-  
+
   returnCard.classList.remove('success', 'warning', 'blue');
   returnBadge.classList.remove('up', 'down', 'neutral');
-  
+
   if (summary.totalGain > 0) {
     returnCard.classList.add('success');
     returnBadge.classList.add('up');
@@ -390,48 +414,60 @@ function renderDashboard() {
     dash.appendChild(path);
     returnIcon.appendChild(dash);
   }
-  
-  // Calculate weighted approximate CAGR based on asset allocations
-  // Custom estimates based on average durations
-  let weightedRor = 0;
-  if (summary.currentValue > 0) {
-    let equitySum = 0;
-    let debtSum = 0;
-    let goldSum = 0;
+
+  // Calculate dynamic Portfolio CAGR based on actual invested values, current values and holding periods
+  let portfolioCagr = 0;
+  if (summary.totalInvested > 0 && summary.currentValue > 0) {
+    let weightedCagrSum = 0;
+    let totalCurrentForCagr = 0;
+    const now = new Date();
+
     investments.forEach(inv => {
-      const cur = Number(inv.currentAmount);
-      if (inv.assetClass === 'indian-stock' || inv.assetClass === 'us-stock' || (inv.assetClass === 'indian-mutual-fund' && inv.subtype !== 'flexi')) {
-        equitySum += cur;
-      } else if (inv.assetClass === 'indian-mutual-fund' && inv.subtype === 'flexi') {
-        equitySum += cur * 0.7;
-        debtSum += cur * 0.3;
-      } else if (inv.assetClass === 'gold') {
-        goldSum += cur;
-      } else {
-        debtSum += cur;
+      const invested = Number(inv.investedAmount);
+      const current = Number(inv.currentAmount);
+      if (invested > 0) {
+        // Enforce fallback date if purchaseDate is missing
+        const purchase = inv.purchaseDate ? new Date(inv.purchaseDate) : (inv.lastUpdated ? new Date(inv.lastUpdated) : now);
+        let durationInYears = (now - purchase) / (1000 * 60 * 60 * 24 * 365.25);
+        // Enforce minimum holding period of 1 month (0.083 years) to prevent extreme annualized returns on brand new entries
+        durationInYears = Math.max(0.083, durationInYears);
+
+        // Compute individual CAGR: (current / invested) ^ (1 / years) - 1
+        const cagr = Math.pow(current / invested, 1 / durationInYears) - 1;
+
+        weightedCagrSum += (cagr * current);
+        totalCurrentForCagr += current;
       }
     });
-    
-    // Average return expectations: Equity 14%, Gold 8%, Debt 6.8%
-    const totalVal = summary.currentValue;
-    weightedRor = ((equitySum * 14.2) + (goldSum * 8.5) + (debtSum * 6.9)) / totalVal;
+
+    if (totalCurrentForCagr > 0) {
+      portfolioCagr = (weightedCagrSum / totalCurrentForCagr) * 100;
+    }
   }
-  
-  document.getElementById('val-portfolio-cagr').textContent = weightedRor > 0 ? weightedRor.toFixed(1) + '%' : '0.0%';
-  
+
+  // Render calculated XIRR (CAGR Equivalent)
+  const cagrEl = document.getElementById('val-portfolio-cagr');
+  if (cagrEl) {
+    cagrEl.textContent = (portfolioCagr >= 0 ? '+' : '') + portfolioCagr.toFixed(1) + '%';
+  }
+
   // Render Allocation Chart
   renderAllocationChart(summary.currentValue);
-  
+
   // Render Performance Bar Chart
   renderPerformanceChart();
-  
+
   // Render Wealth vs Debt History Chart
   const historyData = getPortfolioHistory();
   renderDashboardHistoryChart(historyData);
-  
+
+  // Render Net Worth History Chart
+  const netWorthData = getNetWorthHistory();
+  renderNetWorthChart(netWorthData);
+
   // Render Insights and Score
   renderInsights(summary);
-  
+
   // Render Profit and Loss Heatmaps
   renderHeatmaps();
 }
@@ -442,7 +478,7 @@ function renderAllocationChart(totalPortfolioVal) {
   const legend = document.getElementById('allocation-legend');
   clearContainer(container);
   clearContainer(legend);
-  
+
   if (totalPortfolioVal === 0) {
     const emptyMsg = document.createElement('div');
     emptyMsg.textContent = 'No asset allocation data available.';
@@ -450,27 +486,27 @@ function renderAllocationChart(totalPortfolioVal) {
     container.appendChild(emptyMsg);
     return;
   }
-  
+
   // Calculate allocation sizes by class
   const classTotals = {};
   investments.forEach(inv => {
     const val = Number(inv.currentAmount);
     classTotals[inv.assetClass] = (classTotals[inv.assetClass] || 0) + val;
   });
-  
+
   const sortedClasses = Object.keys(classTotals).map(key => ({
     key,
     value: classTotals[key],
     pct: (classTotals[key] / totalPortfolioVal) * 100
   })).sort((a, b) => b.value - a.value);
-  
+
   // Build SVG Doughnut (expanded radii to reduce blank space and maximize size)
   const size = 400;
   const cx = size / 2;
   const cy = size / 2;
   const r_out = 190;
   const r_in = 110;
-  
+
   const svg = createSVGElement('svg');
   svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
   svg.classList.add('svg-chart');
@@ -478,38 +514,38 @@ function renderAllocationChart(totalPortfolioVal) {
   svg.style.height = 'auto';
   svg.style.maxWidth = '370px';
   svg.style.maxHeight = '370px';
-  
+
   appendSVGDefs(svg);
-  
+
   let currentAngle = -Math.PI / 2; // start from top
-  
+
   sortedClasses.forEach((catData) => {
     const category = ASSET_CATEGORIES[catData.key];
     const angleRange = (catData.pct / 100) * 2 * Math.PI;
     const endAngle = currentAngle + angleRange;
-    
+
     // Draw doughnut slice
     const path = createSVGElement('path');
     path.classList.add('chart-slice');
-    
+
     // Math coordinates
     const x1_out = cx + r_out * Math.cos(currentAngle);
     const y1_out = cy + r_out * Math.sin(currentAngle);
     const x2_out = cx + r_out * Math.cos(endAngle);
     const y2_out = cy + r_out * Math.sin(endAngle);
-    
+
     const x1_in = cx + r_in * Math.cos(currentAngle);
     const y1_in = cy + r_in * Math.sin(currentAngle);
     const x2_in = cx + r_in * Math.cos(endAngle);
     const y2_in = cy + r_in * Math.sin(endAngle);
-    
+
     const largeArc = angleRange > Math.PI ? 1 : 0;
-    
+
     const d = `M ${x1_out} ${y1_out} A ${r_out} ${r_out} 0 ${largeArc} 1 ${x2_out} ${y2_out} L ${x2_in} ${y2_in} A ${r_in} ${r_in} 0 ${largeArc} 0 ${x1_in} ${y1_in} Z`;
-    
+
     path.setAttribute('d', d);
     path.setAttribute('fill', `url(#grad-${catData.key})`);
-    
+
     // Calculate category investments details for tooltip
     let catInvested = 0;
     let catCurrent = 0;
@@ -519,53 +555,53 @@ function renderAllocationChart(totalPortfolioVal) {
         catCurrent += Number(inv.currentAmount);
       }
     });
-    
+
     const catGain = catCurrent - catInvested;
     const catReturnPct = catInvested > 0 ? (catGain / catInvested) * 100 : 0;
-    
+
     // Event bindings for Tooltip
     path.addEventListener('mousemove', (e) => {
       showTooltip(e, category.label, catInvested, catCurrent, catGain, catReturnPct);
     });
     path.addEventListener('mouseleave', hideTooltip);
-    
+
     svg.appendChild(path);
     currentAngle = endAngle;
-    
+
     // Append Legend Item
     const legItem = document.createElement('div');
     legItem.classList.add('legend-item');
-    
+
     const infoCol = document.createElement('div');
     infoCol.classList.add('legend-info');
-    
+
     const dot = document.createElement('span');
     dot.classList.add('legend-color-box');
     dot.style.background = `linear-gradient(135deg, ${category.color}, ${category.colorDark})`;
-    
+
     const textLabel = document.createElement('span');
     textLabel.classList.add('legend-name');
     textLabel.textContent = category.label;
-    
+
     infoCol.appendChild(dot);
     infoCol.appendChild(textLabel);
-    
+
     const valCol = document.createElement('div');
     valCol.classList.add('legend-val');
-    
+
     const numSpan = document.createElement('span');
     numSpan.textContent = formatCurrency(catData.value);
-    
+
     const pctSpan = document.createElement('span');
     pctSpan.classList.add('legend-pct');
     pctSpan.textContent = catData.pct.toFixed(1) + '%';
-    
+
     valCol.appendChild(numSpan);
     valCol.appendChild(pctSpan);
-    
+
     legItem.appendChild(infoCol);
     legItem.appendChild(valCol);
-    
+
     // Match legend hover with chart slice hover
     legItem.addEventListener('mouseenter', () => {
       path.style.transform = 'scale(1.05)';
@@ -575,10 +611,10 @@ function renderAllocationChart(totalPortfolioVal) {
       path.style.transform = '';
       path.style.filter = '';
     });
-    
+
     legend.appendChild(legItem);
   });
-  
+
   // Center circle helper (glassmorphic overlay inside)
   const innerCircle = createSVGElement('circle');
   innerCircle.setAttribute('cx', cx.toString());
@@ -586,7 +622,7 @@ function renderAllocationChart(totalPortfolioVal) {
   innerCircle.setAttribute('r', (r_in - 2).toString());
   innerCircle.setAttribute('fill', 'var(--bg-inner-circle, #ffffff)');
   svg.appendChild(innerCircle);
-  
+
   container.appendChild(svg);
 }
 
@@ -594,23 +630,23 @@ function renderAllocationChart(totalPortfolioVal) {
 function renderPerformanceChart() {
   const container = document.getElementById('performance-chart-container');
   clearContainer(container);
-  
+
   // Calculate performance by class
   const classData = {};
   Object.keys(ASSET_CATEGORIES).forEach(key => {
     classData[key] = { invested: 0, current: 0 };
   });
-  
+
   investments.forEach(inv => {
     if (classData[inv.assetClass]) {
       classData[inv.assetClass].invested += Number(inv.investedAmount);
       classData[inv.assetClass].current += Number(inv.currentAmount);
     }
   });
-  
+
   // Filter out classes with 0 invested
   const activeKeys = Object.keys(classData).filter(key => classData[key].invested > 0);
-  
+
   if (activeKeys.length === 0) {
     const emptyMsg = document.createElement('div');
     emptyMsg.textContent = 'No performance data available.';
@@ -618,20 +654,23 @@ function renderPerformanceChart() {
     container.appendChild(emptyMsg);
     return;
   }
-  
+
   // SVG setups
-  const svgWidth = 840;
-  const svgHeight = 280;
-  const margin = { top: 20, right: 20, bottom: 40, left: 65 };
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 480 : 840;
+  const svgHeight = isMobile ? 240 : 280;
+  const margin = isMobile
+    ? { top: 15, right: 10, bottom: 30, left: 45 }
+    : { top: 20, right: 20, bottom: 40, left: 65 };
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
-  
+
   const svg = createSVGElement('svg');
   svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
   svg.classList.add('svg-chart');
-  
+
   appendSVGDefs(svg);
-  
+
   // Find max value to scale Y axis
   let maxVal = 0;
   activeKeys.forEach(key => {
@@ -640,14 +679,14 @@ function renderPerformanceChart() {
   // Pad the max value for aesthetics
   maxVal = maxVal * 1.15;
   if (maxVal === 0) maxVal = 10000;
-  
+
   // Draw Y grid lines and ticks
   const ticksCount = 4;
   for (let i = 0; i <= ticksCount; i++) {
     const ratio = i / ticksCount;
     const yVal = maxVal * ratio;
     const y = margin.top + chartHeight - (ratio * chartHeight);
-    
+
     // Grid Line
     if (i > 0) {
       const grid = createSVGElement('line');
@@ -658,14 +697,14 @@ function renderPerformanceChart() {
       grid.classList.add('chart-grid-line');
       svg.appendChild(grid);
     }
-    
+
     // Y Label
     const text = createSVGElement('text');
     text.setAttribute('x', (margin.left - 10).toString());
     text.setAttribute('y', (y + 4).toString());
     text.setAttribute('text-anchor', 'end');
     text.classList.add('chart-axis-text');
-    
+
     // Custom compact labeling
     let cleanText = '';
     if (yVal >= 10000000) {
@@ -680,7 +719,7 @@ function renderPerformanceChart() {
     text.textContent = cleanText;
     svg.appendChild(text);
   }
-  
+
   // X axis line
   const xAxis = createSVGElement('line');
   xAxis.setAttribute('x1', margin.left.toString());
@@ -689,40 +728,40 @@ function renderPerformanceChart() {
   xAxis.setAttribute('y2', (margin.top + chartHeight).toString());
   xAxis.classList.add('chart-axis-line');
   svg.appendChild(xAxis);
-  
+
   // Draw bars
   const groupCount = activeKeys.length;
   const groupWidth = chartWidth / groupCount;
-  const barPadding = 4;
-  
+  const barPadding = isMobile ? 2 : 4;
+
   // Cap max bar width to prevent bloated bars on wide layouts
-  let barWidth = (groupWidth - 24) / 2;
-  const maxBarWidth = 36;
+  let barWidth = (groupWidth - (isMobile ? 10 : 24)) / 2;
+  const maxBarWidth = isMobile ? 20 : 36;
   if (barWidth > maxBarWidth) {
     barWidth = maxBarWidth;
   }
-  
+
   activeKeys.forEach((key, idx) => {
     const label = ASSET_CATEGORIES[key].label;
     const invested = classData[key].invested;
     const current = classData[key].current;
-    
+
     // Center the bar pair inside the category group space
     const groupInsideWidth = (barWidth * 2) + barPadding;
     const offset = (groupWidth - groupInsideWidth) / 2;
     const xGroupStart = margin.left + (idx * groupWidth) + offset;
-    
+
     // Heights
     const hInvested = (invested / maxVal) * chartHeight;
     const hCurrent = (current / maxVal) * chartHeight;
-    
+
     // Bar coordinates
     const xInvested = xGroupStart;
     const yInvested = margin.top + chartHeight - hInvested;
-    
+
     const xCurrent = xGroupStart + barWidth + barPadding;
     const yCurrent = margin.top + chartHeight - hCurrent;
-    
+
     // Draw Invested Bar (Linear Gradient Slate Gray / Indigo Mix)
     const rectInv = createSVGElement('rect');
     rectInv.setAttribute('x', xInvested.toString());
@@ -732,7 +771,7 @@ function renderPerformanceChart() {
     rectInv.setAttribute('rx', '4');
     rectInv.setAttribute('fill', 'url(#grad-indian-stock)'); // Indigo gradient
     rectInv.classList.add('chart-bar');
-    
+
     // Draw Current Bar (Green Gradient if gain, Rose Gradient if loss)
     const rectCur = createSVGElement('rect');
     rectCur.setAttribute('x', xCurrent.toString());
@@ -742,34 +781,34 @@ function renderPerformanceChart() {
     rectCur.setAttribute('rx', '4');
     rectCur.setAttribute('fill', current >= invested ? 'url(#grad-up)' : 'url(#grad-down)');
     rectCur.classList.add('chart-bar');
-    
+
     // Tooltip event attachments
     const plAmount = current - invested;
     const plPct = invested > 0 ? (plAmount / invested) * 100 : 0;
-    
+
     rectInv.addEventListener('mousemove', (e) => {
       showTooltip(e, `${label} (Invested)`, invested, current, plAmount, plPct);
     });
     rectInv.addEventListener('mouseleave', hideTooltip);
-    
+
     rectCur.addEventListener('mousemove', (e) => {
       showTooltip(e, `${label} (Current)`, invested, current, plAmount, plPct);
     });
     rectCur.addEventListener('mouseleave', hideTooltip);
-    
+
     svg.appendChild(rectInv);
     svg.appendChild(rectCur);
-    
+
     // X Label text
     const labelText = createSVGElement('text');
     labelText.setAttribute('x', (xGroupStart + barWidth + (barPadding / 2)).toString());
-    labelText.setAttribute('y', (margin.top + chartHeight + 20).toString());
+    labelText.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
     labelText.setAttribute('text-anchor', 'middle');
     labelText.classList.add('chart-axis-text');
     labelText.textContent = label;
     svg.appendChild(labelText);
   });
-  
+
   container.appendChild(svg);
 }
 
@@ -777,29 +816,29 @@ function renderPerformanceChart() {
 function getPortfolioHistory() {
   const history = [];
   const now = new Date();
-  
+
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthLabel = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
     const fullMonthLabel = d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-    
+
     // Reconstruct investments
     let totalInvestments = 0;
     investments.forEach(inv => {
       const currentAmount = Number(inv.currentAmount) || 0;
       let monthlyRate = 0.008; // default to stocks/MF
       const assetClass = inv.assetClass;
-      
+
       if (assetClass === 'fd' || assetClass === 'savings') {
         monthlyRate = 0.005;
       } else if (assetClass === 'gold' || assetClass === 'bonds' || assetClass === 'epfo') {
         monthlyRate = 0.006;
       }
-      
+
       const val = currentAmount / Math.pow(1 + monthlyRate, i);
       totalInvestments += val;
     });
-    
+
     // Reconstruct liabilities
     let totalLiabilities = 0;
     liabilities.forEach(l => {
@@ -809,7 +848,7 @@ function getPortfolioHistory() {
       const monthlyRate = (annualRate / 100) / 12;
       const totalTenure = Number(l.totalTenure || l.tenure || 1);
       const tenureLeft = Number(l.tenure) || 0;
-      
+
       let outstanding = outstandingCurrent;
       for (let step = 1; step <= i; step++) {
         if (tenureLeft + step > totalTenure) {
@@ -820,7 +859,7 @@ function getPortfolioHistory() {
       }
       totalLiabilities += outstanding;
     });
-    
+
     history.push({
       monthLabel,
       fullMonthLabel,
@@ -829,7 +868,7 @@ function getPortfolioHistory() {
       netWorth: Math.round(totalInvestments - totalLiabilities)
     });
   }
-  
+
   return history;
 }
 
@@ -838,7 +877,7 @@ function renderDashboardHistoryChart(historyData) {
   const container = document.getElementById('history-chart-container');
   if (!container) return;
   clearContainer(container);
-  
+
   if (!historyData || historyData.length === 0) {
     const emptyMsg = document.createElement('div');
     emptyMsg.textContent = 'No historical data available.';
@@ -846,20 +885,23 @@ function renderDashboardHistoryChart(historyData) {
     container.appendChild(emptyMsg);
     return;
   }
-  
-  const svgWidth = 840;
-  const svgHeight = 280;
-  const margin = { top: 20, right: 20, bottom: 40, left: 75 };
+
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 480 : 840;
+  const svgHeight = isMobile ? 240 : 280;
+  const margin = isMobile
+    ? { top: 15, right: 10, bottom: 30, left: 45 }
+    : { top: 20, right: 20, bottom: 40, left: 75 };
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
-  
+
   const svg = createSVGElement('svg');
   svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
   svg.classList.add('svg-chart');
-  
+
   // Custom Area Fill Gradients
   const defs = createSVGElement('defs');
-  
+
   const invGrad = createSVGElement('linearGradient');
   invGrad.setAttribute('id', 'grad-inv-trend-area');
   invGrad.setAttribute('x1', '0%'); invGrad.setAttribute('y1', '0%');
@@ -868,7 +910,7 @@ function renderDashboardHistoryChart(historyData) {
   const invStop2 = createSVGElement('stop'); invStop2.setAttribute('offset', '100%'); invStop2.setAttribute('stop-color', '#6366f1'); invStop2.setAttribute('stop-opacity', '0.00');
   invGrad.appendChild(invStop1); invGrad.appendChild(invStop2);
   defs.appendChild(invGrad);
-  
+
   const liabGrad = createSVGElement('linearGradient');
   liabGrad.setAttribute('id', 'grad-liab-trend-area');
   liabGrad.setAttribute('x1', '0%'); liabGrad.setAttribute('y1', '0%');
@@ -877,9 +919,9 @@ function renderDashboardHistoryChart(historyData) {
   const liabStop2 = createSVGElement('stop'); liabStop2.setAttribute('offset', '100%'); liabStop2.setAttribute('stop-color', '#f43f5e'); liabStop2.setAttribute('stop-opacity', '0.00');
   liabGrad.appendChild(liabStop1); liabGrad.appendChild(liabStop2);
   defs.appendChild(liabGrad);
-  
+
   svg.appendChild(defs);
-  
+
   // Find maximum value for scaling Y
   let maxVal = 0;
   historyData.forEach(d => {
@@ -887,14 +929,14 @@ function renderDashboardHistoryChart(historyData) {
     if (d.liabilities > maxVal) maxVal = d.liabilities;
   });
   maxVal = Math.max(10000, maxVal * 1.15); // 15% padding, min 10k
-  
+
   // Draw Y grid and labels
   const ticks = 4;
   for (let i = 0; i <= ticks; i++) {
     const ratio = i / ticks;
     const yVal = maxVal * ratio;
     const y = margin.top + chartHeight - (ratio * chartHeight);
-    
+
     if (i > 0) {
       const line = createSVGElement('line');
       line.setAttribute('x1', margin.left.toString());
@@ -904,13 +946,13 @@ function renderDashboardHistoryChart(historyData) {
       line.classList.add('chart-grid-line');
       svg.appendChild(line);
     }
-    
+
     const text = createSVGElement('text');
     text.setAttribute('x', (margin.left - 10).toString());
     text.setAttribute('y', (y + 4).toString());
     text.setAttribute('text-anchor', 'end');
     text.classList.add('chart-axis-text');
-    
+
     let label = '';
     if (yVal >= 10000000) {
       label = '₹' + (yVal / 10000000).toFixed(1) + 'Cr';
@@ -924,14 +966,14 @@ function renderDashboardHistoryChart(historyData) {
     text.textContent = label;
     svg.appendChild(text);
   }
-  
+
   const pointsCount = historyData.length;
-  
+
   // Draw X axis grid and labels
   historyData.forEach((d, idx) => {
     const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
     const x = margin.left + (rx * chartWidth);
-    
+
     // Vertical dotted lines (grid)
     if (idx > 0 && idx < pointsCount - 1) {
       const line = createSVGElement('line');
@@ -942,22 +984,22 @@ function renderDashboardHistoryChart(historyData) {
       line.classList.add('chart-grid-line');
       svg.appendChild(line);
     }
-    
+
     const text = createSVGElement('text');
     text.setAttribute('x', x.toString());
-    text.setAttribute('y', (margin.top + chartHeight + 20).toString());
+    text.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
     text.setAttribute('text-anchor', 'middle');
     text.classList.add('chart-axis-text');
     text.textContent = d.monthLabel;
     svg.appendChild(text);
   });
-  
+
   // Coordinate scaling logic
   const scalePoint = (d, idx) => {
     const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
     const ryInv = d.investments / maxVal;
     const ryLiab = d.liabilities / maxVal;
-    
+
     return {
       x: margin.left + (rx * chartWidth),
       yInv: margin.top + chartHeight - (ryInv * chartHeight),
@@ -969,32 +1011,32 @@ function renderDashboardHistoryChart(historyData) {
       fullMonthLabel: d.fullMonthLabel
     };
   };
-  
+
   const mapped = historyData.map(scalePoint);
-  
+
   if (pointsCount > 1) {
     // Area fill under Investments
-    const areaPathInv = `M ${mapped[0].x} ${margin.top + chartHeight} ` + 
-                        mapped.map(p => `L ${p.x} ${p.yInv}`).join(' ') + 
-                        ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
+    const areaPathInv = `M ${mapped[0].x} ${margin.top + chartHeight} ` +
+      mapped.map(p => `L ${p.x} ${p.yInv}`).join(' ') +
+      ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
     const areaInv = createSVGElement('path');
     areaInv.setAttribute('d', areaPathInv);
     areaInv.setAttribute('fill', 'url(#grad-inv-trend-area)');
     svg.appendChild(areaInv);
-    
+
     // Area fill under Liabilities
-    const areaPathLiab = `M ${mapped[0].x} ${margin.top + chartHeight} ` + 
-                         mapped.map(p => `L ${p.x} ${p.yLiab}`).join(' ') + 
-                         ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
+    const areaPathLiab = `M ${mapped[0].x} ${margin.top + chartHeight} ` +
+      mapped.map(p => `L ${p.x} ${p.yLiab}`).join(' ') +
+      ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
     const areaLiab = createSVGElement('path');
     areaLiab.setAttribute('d', areaPathLiab);
     areaLiab.setAttribute('fill', 'url(#grad-liab-trend-area)');
     svg.appendChild(areaLiab);
-    
+
     // Polyline coordinates
     const polylineStrInv = mapped.map(p => `${p.x},${p.yInv}`).join(' ');
     const polylineStrLiab = mapped.map(p => `${p.x},${p.yLiab}`).join(' ');
-    
+
     // Draw Investments Line (Indigo)
     const lineInv = createSVGElement('polyline');
     lineInv.setAttribute('points', polylineStrInv);
@@ -1002,7 +1044,7 @@ function renderDashboardHistoryChart(historyData) {
     lineInv.setAttribute('stroke', '#6366f1');
     lineInv.setAttribute('stroke-width', '3');
     svg.appendChild(lineInv);
-    
+
     // Draw Liabilities Line (Rose)
     const lineLiab = createSVGElement('polyline');
     lineLiab.setAttribute('points', polylineStrLiab);
@@ -1011,7 +1053,7 @@ function renderDashboardHistoryChart(historyData) {
     lineLiab.setAttribute('stroke-width', '3');
     svg.appendChild(lineLiab);
   }
-  
+
   // Draw points/dots and tooltips
   mapped.forEach(p => {
     // Investments Point
@@ -1024,13 +1066,13 @@ function renderDashboardHistoryChart(historyData) {
     dotInv.setAttribute('stroke-width', '2');
     dotInv.style.cursor = 'pointer';
     dotInv.style.transition = 'transform 0.15s ease';
-    
+
     dotInv.addEventListener('mouseenter', () => dotInv.setAttribute('r', '7'));
     dotInv.addEventListener('mouseleave', () => {
       dotInv.setAttribute('r', '5');
       hideTooltip();
     });
-    
+
     dotInv.addEventListener('mousemove', (e) => {
       showCustomTooltip(
         e,
@@ -1048,7 +1090,7 @@ function renderDashboardHistoryChart(historyData) {
       }
     });
     svg.appendChild(dotInv);
-    
+
     // Liabilities Point
     const dotLiab = createSVGElement('circle');
     dotLiab.setAttribute('cx', p.x.toString());
@@ -1059,13 +1101,13 @@ function renderDashboardHistoryChart(historyData) {
     dotLiab.setAttribute('stroke-width', '2');
     dotLiab.style.cursor = 'pointer';
     dotLiab.style.transition = 'transform 0.15s ease';
-    
+
     dotLiab.addEventListener('mouseenter', () => dotLiab.setAttribute('r', '7'));
     dotLiab.addEventListener('mouseleave', () => {
       dotLiab.setAttribute('r', '5');
       hideTooltip();
     });
-    
+
     dotLiab.addEventListener('mousemove', (e) => {
       showCustomTooltip(
         e,
@@ -1084,18 +1126,331 @@ function renderDashboardHistoryChart(historyData) {
     });
     svg.appendChild(dotLiab);
   });
-  
+
   container.appendChild(svg);
+}
+
+// Generate Net Worth History walking backward 12 months, incorporating salary credits & EMI payments
+function getNetWorthHistory() {
+  const history = [];
+  const now = new Date();
+
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthLabel = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+    const fullMonthLabel = d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    const monthKey = d.toISOString().slice(0, 7); // "YYYY-MM"
+
+    // Reconstruct investments
+    let totalInvestments = 0;
+    investments.forEach(inv => {
+      const currentAmount = Number(inv.currentAmount) || 0;
+      let monthlyRate = 0.008; // default to stocks/MF
+      const assetClass = inv.assetClass;
+
+      if (assetClass === 'fd' || assetClass === 'savings') {
+        monthlyRate = 0.005;
+      } else if (assetClass === 'gold' || assetClass === 'bonds' || assetClass === 'epfo') {
+        monthlyRate = 0.006;
+      }
+
+      const val = currentAmount / Math.pow(1 + monthlyRate, i);
+      totalInvestments += val;
+    });
+
+    // Reconstruct liabilities & count active EMIs
+    let totalLiabilities = 0;
+    let totalEmisPaid = 0;
+    liabilities.forEach(l => {
+      const outstandingCurrent = Number(l.outstanding) || 0;
+      const emi = Number(l.emi) || 0;
+      const annualRate = Number(l.rate) || 0;
+      const monthlyRate = (annualRate / 100) / 12;
+      const totalTenure = Number(l.totalTenure || l.tenure || 1);
+      const tenureLeft = Number(l.tenure) || 0;
+
+      let outstanding = outstandingCurrent;
+      for (let step = 1; step <= i; step++) {
+        if (tenureLeft + step > totalTenure) {
+          outstanding = 0;
+          break;
+        }
+        outstanding = (outstanding + emi) / (1 + monthlyRate);
+      }
+      totalLiabilities += outstanding;
+
+      // Check if this liability had EMIs paid i months ago
+      if (tenureLeft + i <= totalTenure) {
+        totalEmisPaid += emi;
+      }
+    });
+
+    // Find salary credited in that month
+    const sal = salaries.find(s => s.month === monthKey);
+    const salaryCredited = sal ? Number(sal.inhand) : 0;
+
+    history.push({
+      monthLabel,
+      fullMonthLabel,
+      investments: Math.round(totalInvestments),
+      liabilities: Math.round(totalLiabilities),
+      netWorth: Math.round(totalInvestments - totalLiabilities),
+      salaryCredited: Math.round(salaryCredited),
+      emisPaid: Math.round(totalEmisPaid)
+    });
+  }
+
+  return history;
+}
+
+// Render Net Worth Line Chart
+function renderNetWorthChart(netWorthData) {
+  const container = document.getElementById('networth-chart-container');
+  if (!container) return;
+  clearContainer(container);
+
+  if (!netWorthData || netWorthData.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No historical net worth data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 480 : 840;
+  const svgHeight = isMobile ? 240 : 280;
+  const margin = isMobile
+    ? { top: 15, right: 10, bottom: 30, left: 45 }
+    : { top: 20, right: 20, bottom: 40, left: 75 };
+  const chartWidth = svgWidth - margin.left - margin.right;
+  const chartHeight = svgHeight - margin.top - margin.bottom;
+
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+  svg.classList.add('svg-chart');
+
+  // Custom Area Fill Gradients
+  const defs = createSVGElement('defs');
+
+  const nwGrad = createSVGElement('linearGradient');
+  nwGrad.setAttribute('id', 'grad-nw-trend-area');
+  nwGrad.setAttribute('x1', '0%'); nwGrad.setAttribute('y1', '0%');
+  nwGrad.setAttribute('x2', '0%'); nwGrad.setAttribute('y2', '100%');
+  const nwStop1 = createSVGElement('stop'); nwStop1.setAttribute('offset', '0%'); nwStop1.setAttribute('stop-color', '#8b5cf6'); nwStop1.setAttribute('stop-opacity', '0.25');
+  const nwStop2 = createSVGElement('stop'); nwStop2.setAttribute('offset', '100%'); nwStop2.setAttribute('stop-color', '#8b5cf6'); nwStop2.setAttribute('stop-opacity', '0.00');
+  nwGrad.appendChild(nwStop1); nwGrad.appendChild(nwStop2);
+  defs.appendChild(nwGrad);
+
+  svg.appendChild(defs);
+
+  // Find max and min values for Y axis scaling
+  let maxVal = -Infinity;
+  let minVal = Infinity;
+  netWorthData.forEach(d => {
+    if (d.netWorth > maxVal) maxVal = d.netWorth;
+    if (d.netWorth < minVal) minVal = d.netWorth;
+  });
+
+  const range = maxVal - minVal;
+  maxVal = maxVal + Math.max(10000, range * 0.1);
+  minVal = minVal - Math.max(10000, range * 0.1);
+  if (minVal > 0 && minVal < maxVal * 0.2) {
+    minVal = 0;
+  }
+
+  // Draw Y grid and labels
+  const ticks = 4;
+  for (let i = 0; i <= ticks; i++) {
+    const ratio = i / ticks;
+    const yVal = minVal + ratio * (maxVal - minVal);
+    const y = margin.top + chartHeight - (ratio * chartHeight);
+
+    if (i > 0 && i < ticks) {
+      const line = createSVGElement('line');
+      line.setAttribute('x1', margin.left.toString());
+      line.setAttribute('y1', y.toString());
+      line.setAttribute('x2', (margin.left + chartWidth).toString());
+      line.setAttribute('y2', y.toString());
+      line.classList.add('chart-grid-line');
+      svg.appendChild(line);
+    }
+
+    const text = createSVGElement('text');
+    text.setAttribute('x', (margin.left - 10).toString());
+    text.setAttribute('y', (y + 4).toString());
+    text.setAttribute('text-anchor', 'end');
+    text.classList.add('chart-axis-text');
+    text.textContent = formatCurrency(yVal);
+    svg.appendChild(text);
+  }
+
+  const pointsCount = netWorthData.length;
+
+  // Draw X axis grid and labels
+  netWorthData.forEach((d, idx) => {
+    const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
+    const x = margin.left + (rx * chartWidth);
+
+    // Vertical dotted lines (grid)
+    if (idx > 0 && idx < pointsCount - 1) {
+      const line = createSVGElement('line');
+      line.setAttribute('x1', x.toString());
+      line.setAttribute('y1', margin.top.toString());
+      line.setAttribute('x2', x.toString());
+      line.setAttribute('y2', (margin.top + chartHeight).toString());
+      line.classList.add('chart-grid-line');
+      svg.appendChild(line);
+    }
+
+    // Label X (show every 2nd label on mobile to avoid overcrowding)
+    if (!isMobile || idx % 2 === 0) {
+      const text = createSVGElement('text');
+      text.setAttribute('x', x.toString());
+      text.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
+      text.setAttribute('text-anchor', 'middle');
+      text.classList.add('chart-axis-text');
+      text.textContent = d.monthLabel;
+      svg.appendChild(text);
+    }
+  });
+
+  // Coordinate scaling logic
+  const scalePoint = (d, idx) => {
+    const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
+    const valRatio = (d.netWorth - minVal) / (maxVal - minVal || 1);
+    return {
+      x: margin.left + (rx * chartWidth),
+      y: margin.top + chartHeight - (valRatio * chartHeight),
+      netWorth: d.netWorth,
+      investments: d.investments,
+      liabilities: d.liabilities,
+      salaryCredited: d.salaryCredited,
+      emisPaid: d.emisPaid,
+      monthLabel: d.monthLabel,
+      fullMonthLabel: d.fullMonthLabel
+    };
+  };
+
+  const mapped = netWorthData.map(scalePoint);
+
+  if (pointsCount > 1) {
+    // Area fill under Net Worth line
+    const areaPath = `M ${mapped[0].x} ${margin.top + chartHeight} ` +
+      mapped.map(p => `L ${p.x} ${p.y}`).join(' ') +
+      ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
+    const area = createSVGElement('path');
+    area.setAttribute('d', areaPath);
+    area.setAttribute('fill', 'url(#grad-nw-trend-area)');
+    svg.appendChild(area);
+
+    // Draw Net Worth Line (Violet)
+    const polylineStr = mapped.map(p => `${p.x},${p.y}`).join(' ');
+    const line = createSVGElement('polyline');
+    line.setAttribute('points', polylineStr);
+    line.setAttribute('fill', 'none');
+    line.setAttribute('stroke', '#8b5cf6');
+    line.setAttribute('stroke-width', '3');
+    svg.appendChild(line);
+  }
+
+  // Draw points/dots and tooltips
+  mapped.forEach(p => {
+    const dot = createSVGElement('circle');
+    dot.setAttribute('cx', p.x.toString());
+    dot.setAttribute('cy', p.y.toString());
+    dot.setAttribute('r', '5');
+    dot.setAttribute('fill', '#8b5cf6');
+    dot.setAttribute('stroke', '#070913');
+    dot.setAttribute('stroke-width', '2');
+    dot.style.cursor = 'pointer';
+    dot.style.transition = 'transform 0.15s ease';
+
+    dot.addEventListener('mouseenter', () => dot.setAttribute('r', '7'));
+    dot.addEventListener('mouseleave', () => {
+      dot.setAttribute('r', '5');
+      hideTooltip();
+    });
+
+    dot.addEventListener('mousemove', (e) => {
+      showNetWorthTooltip(
+        e,
+        p.fullMonthLabel,
+        p.netWorth,
+        p.investments,
+        p.liabilities,
+        p.salaryCredited,
+        p.emisPaid
+      );
+    });
+    svg.appendChild(dot);
+  });
+
+  container.appendChild(svg);
+}
+
+// Show custom detailed tooltip for Net Worth Chart
+function showNetWorthTooltip(event, title, netWorth, assets, liabilities, salary, emi) {
+  const tooltip = document.getElementById('chart-tooltip');
+  tooltip.innerHTML = `
+    <div class="chart-tooltip-title">${title}</div>
+    <div class="chart-tooltip-row">
+      <span>Net Worth:</span>
+      <strong class="chart-tooltip-value" style="color: var(--color-primary); font-weight: 700;">${formatCurrency(netWorth)}</strong>
+    </div>
+    <div class="chart-tooltip-row">
+      <span>Assets:</span>
+      <span class="chart-tooltip-value" style="color: #6366f1;">${formatCurrency(assets)}</span>
+    </div>
+    <div class="chart-tooltip-row">
+      <span>Liabilities:</span>
+      <span class="chart-tooltip-value" style="color: var(--color-danger);">${formatCurrency(liabilities)}</span>
+    </div>
+    <div class="chart-tooltip-row">
+      <span>Salary Credited:</span>
+      <span class="chart-tooltip-value" style="color: var(--color-success);">${formatCurrency(salary)}</span>
+    </div>
+    <div class="chart-tooltip-row">
+      <span>EMIs Paid:</span>
+      <span class="chart-tooltip-value" style="color: var(--color-danger);">${formatCurrency(emi)}</span>
+    </div>
+  `;
+
+  const container = document.querySelector('.main-wrapper');
+  const rect = container.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = (y - 12) + 'px';
+  tooltip.style.opacity = '1';
 }
 
 // Interactive Tooltip Helpers
 function showTooltip(event, title, invested, current, pl, pct) {
   const tooltip = document.getElementById('chart-tooltip');
+  if (!document.getElementById('chart-tooltip-title')) {
+    tooltip.innerHTML = `
+      <div id="chart-tooltip-title" class="chart-tooltip-title">Category</div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-1">Invested:</span>
+        <span id="chart-tooltip-invested" class="chart-tooltip-value">₹0</span>
+      </div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-2">Current:</span>
+        <span id="chart-tooltip-current" class="chart-tooltip-value">₹0</span>
+      </div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-3">P&amp;L:</span>
+        <span id="chart-tooltip-pl" class="chart-tooltip-value">₹0 (+0%)</span>
+      </div>
+    `;
+  }
   const tTitle = document.getElementById('chart-tooltip-title');
   const tInvested = document.getElementById('chart-tooltip-invested');
   const tCurrent = document.getElementById('chart-tooltip-current');
   const tPl = document.getElementById('chart-tooltip-pl');
-  
+
   // Reset labels to default
   const l1 = document.getElementById('chart-tooltip-label-1');
   const l2 = document.getElementById('chart-tooltip-label-2');
@@ -1103,20 +1458,20 @@ function showTooltip(event, title, invested, current, pl, pct) {
   if (l1) l1.textContent = 'Invested:';
   if (l2) l2.textContent = 'Current:';
   if (l3) l3.textContent = 'P&L:';
-  
+
   tTitle.textContent = title;
   tInvested.textContent = formatCurrency(invested);
   tCurrent.textContent = formatCurrency(current);
-  
+
   tPl.textContent = formatCurrency(pl) + ` (${formatPercent(pct)})`;
   tPl.className = 'chart-tooltip-value ' + (pl > 0 ? 'positive' : pl < 0 ? 'negative' : '');
-  
+
   // Position tooltip relative to container boundaries
   const container = document.querySelector('.main-wrapper');
   const rect = container.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-  
+
   tooltip.style.left = x + 'px';
   tooltip.style.top = (y - 12) + 'px';
   tooltip.style.opacity = '1';
@@ -1131,42 +1486,42 @@ function hideTooltip() {
 function renderInsights(summary) {
   const insightsList = document.getElementById('insights-list-container');
   clearContainer(insightsList);
-  
+
   if (investments.length === 0) {
     const emptyItem = document.createElement('div');
     emptyItem.textContent = 'Add investments to unlock wealth insights.';
     emptyItem.style.color = 'var(--text-muted)';
     emptyItem.style.fontSize = '0.9rem';
     insightsList.appendChild(emptyItem);
-    
+
     // Default score
     updateHealthGauge(0, 'No Data');
     return;
   }
-  
+
   const classTotals = {};
   investments.forEach(inv => {
     const cur = Number(inv.currentAmount);
     classTotals[inv.assetClass] = (classTotals[inv.assetClass] || 0) + cur;
   });
-  
+
   const totalVal = summary.currentValue;
-  
+
   // Calculate exposures
   const equityVal = (classTotals['indian-stock'] || 0) + (classTotals['us-stock'] || 0) + ((classTotals['indian-mutual-fund'] || 0) * 0.85); // assume 85% equity in MFs
   const debtVal = (classTotals['fd'] || 0) + (classTotals['bonds'] || 0) + (classTotals['epfo'] || 0) + (classTotals['savings'] || 0) + ((classTotals['indian-mutual-fund'] || 0) * 0.15);
   const goldVal = classTotals['gold'] || 0;
-  
+
   const equityPct = totalVal > 0 ? (equityVal / totalVal) * 100 : 0;
   const goldPct = totalVal > 0 ? (goldVal / totalVal) * 100 : 0;
   const debtPct = totalVal > 0 ? (debtVal / totalVal) * 100 : 0;
-  
+
   // Find top performing and bottom performing individual assets
   let bestAsset = null;
   let worstAsset = null;
   let bestPct = -Infinity;
   let worstPct = Infinity;
-  
+
   investments.forEach(inv => {
     const invAmt = Number(inv.investedAmount);
     const curAmt = Number(inv.currentAmount);
@@ -1182,9 +1537,9 @@ function renderInsights(summary) {
       }
     }
   });
-  
+
   const insights = [];
-  
+
   // Insight 1: Equity Profiling
   if (equityPct > 65) {
     insights.push({
@@ -1205,7 +1560,7 @@ function renderInsights(summary) {
       desc: `Equities make up only ${equityPct.toFixed(0)}% of your capital. Consider increasing stock/mutual fund exposure to avoid purchasing power erosion from inflation.`
     });
   }
-  
+
   // Insight 2: Gold Hedge Checking
   if (goldPct >= 5 && goldPct <= 15) {
     insights.push({
@@ -1226,7 +1581,7 @@ function renderInsights(summary) {
       desc: `Gold is less than 5% of your portfolio. Consider allocating a small portion (e.g. 5-10% in SGBs or Gold ETFs) as portfolio insurance.`
     });
   }
-  
+
   // Insight 3: Performance Highlights
   if (bestAsset && bestPct > 10) {
     insights.push({
@@ -1242,7 +1597,7 @@ function renderInsights(summary) {
       desc: `This asset is currently down by ${formatPercent(worstPct)} (Current Value: ${formatCurrency(worstAsset.currentAmount)}). Monitor for potential changes in fundamentals.`
     });
   }
-  
+
   // Insight 4: Liquidity / Cash Buffer
   const savingsVal = classTotals['savings'] || 0;
   const savingsPct = totalVal > 0 ? (savingsVal / totalVal) * 100 : 0;
@@ -1259,7 +1614,7 @@ function renderInsights(summary) {
       desc: `Your cash account holds only ${savingsPct.toFixed(1)}% of your net worth. Ensure you maintain at least 3-6 months of expenses in highly liquid bank balances.`
     });
   }
-  
+
   // Insight 5: Global Diversification Check
   const usStockVal = classTotals['us-stock'] || 0;
   const usStockPct = totalVal > 0 ? (usStockVal / totalVal) * 100 : 0;
@@ -1312,13 +1667,13 @@ function renderInsights(summary) {
   let totalLiabilitiesVal = 0;
   let totalMonthlyEMIs = 0;
   let weightedInterestSum = 0;
-  
+
   liabilities.forEach(l => {
     totalLiabilitiesVal += Number(l.outstanding);
     totalMonthlyEMIs += Number(l.emi);
     weightedInterestSum += (Number(l.outstanding) * Number(l.rate));
   });
-  
+
   const avgDebtRate = totalLiabilitiesVal > 0 ? (weightedInterestSum / totalLiabilitiesVal) : 0;
   const debtAssetRatio = totalVal > 0 ? (totalLiabilitiesVal / totalVal) * 100 : 0;
 
@@ -1358,7 +1713,7 @@ function renderInsights(summary) {
       liquidAssets += Number(inv.currentAmount);
     }
   });
-  
+
   if (totalMonthlyEMIs > 0) {
     const monthsCoverage = liquidAssets / totalMonthlyEMIs;
     if (monthsCoverage < 3) {
@@ -1390,15 +1745,15 @@ function renderInsights(summary) {
       desc: `Your weighted average interest rate is high. Consider making lump-sum prepayments or looking for lower-interest balance transfer options.`
     });
   }
-  
+
   // Bind insights list to the DOM safely
   insights.forEach(insight => {
     const item = document.createElement('div');
     item.className = `insight-item ${insight.type}`;
-    
+
     const iconWrapper = document.createElement('div');
     iconWrapper.classList.add('insight-icon');
-    
+
     // Custom inline SVGs for insight alert icons
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 24 24');
@@ -1408,7 +1763,7 @@ function renderInsights(summary) {
     svg.setAttribute('width', '18');
     svg.setAttribute('height', '18');
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    
+
     if (insight.type === 'positive') {
       path.setAttribute('d', 'M22 11.08V12a10 10 0 1 1-5.93-9.14');
       const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
@@ -1434,38 +1789,38 @@ function renderInsights(summary) {
       svg.appendChild(line1);
       svg.appendChild(line2);
     }
-    
+
     iconWrapper.appendChild(svg);
-    
+
     const textCol = document.createElement('div');
     textCol.classList.add('insight-text-wrapper');
-    
+
     const labelTitle = document.createElement('span');
     labelTitle.classList.add('insight-title');
     labelTitle.textContent = insight.title;
-    
+
     const labelDesc = document.createElement('span');
     labelDesc.classList.add('insight-desc');
     labelDesc.textContent = insight.desc;
-    
+
     textCol.appendChild(labelTitle);
     textCol.appendChild(labelDesc);
-    
+
     item.appendChild(iconWrapper);
     item.appendChild(textCol);
     insightsList.appendChild(item);
   });
-  
+
   // Calculate Wealth Diversification Score
   // Logic: points given for distribution + asset count
   let score = classCount * 10; // e.g., 6 classes = 60 points
-  
+
   // Check concentration (no single class should exceed 45%)
   let maxConc = 0;
   Object.keys(classTotals).forEach(key => {
     maxConc = Math.max(maxConc, (classTotals[key] / totalVal) * 100);
   });
-  
+
   if (maxConc <= 30) {
     score += 40;
   } else if (maxConc <= 45) {
@@ -1473,10 +1828,10 @@ function renderInsights(summary) {
   } else if (maxConc <= 60) {
     score += 10;
   }
-  
+
   // Cap at 100
   score = Math.min(100, score);
-  
+
   let healthDescText = '';
   if (score > 80) {
     healthDescText = 'Your portfolio is <span>Highly Diversified</span>, minimizing category-specific shocks.';
@@ -1485,7 +1840,7 @@ function renderInsights(summary) {
   } else {
     healthDescText = 'Your portfolio is <span>Concentrated</span>. High risk of volatility due to cluster holdings.';
   }
-  
+
   updateHealthGauge(score, healthDescText);
 }
 
@@ -1494,9 +1849,9 @@ function updateHealthGauge(score, descHTMLText) {
   const gaugeFill = document.getElementById('health-gauge-fill');
   const scoreText = document.getElementById('health-score-text');
   const scoreDesc = document.getElementById('health-score-desc');
-  
+
   scoreText.textContent = score.toString();
-  
+
   // Wait, standard XSS check: description contains html (span). We can insert span securely by creating it, or parsing safely.
   // Instead of innerHTML, let's parse description string or set via secure element helpers
   clearContainer(scoreDesc);
@@ -1508,21 +1863,21 @@ function updateHealthGauge(score, descHTMLText) {
     span.textContent = highlightParts[0];
     span.style.color = score > 80 ? 'var(--color-success)' : score >= 50 ? 'var(--color-warning)' : 'var(--color-danger)';
     const afterText = document.createTextNode(highlightParts[1]);
-    
+
     scoreDesc.appendChild(beforeText);
     scoreDesc.appendChild(span);
     scoreDesc.appendChild(afterText);
   } else {
     scoreDesc.textContent = descHTMLText;
   }
-  
+
   // Circle circumference is 2 * Math.PI * r = 2 * 3.14159 * 55 = 345.57
   const circumference = 345.57;
   const strokeOffset = circumference - (score / 100) * circumference;
-  
+
   gaugeFill.style.strokeDasharray = circumference.toString();
   gaugeFill.style.strokeDashoffset = strokeOffset.toString();
-  
+
   // Change color of gauge dynamically
   if (score > 80) {
     gaugeFill.style.stroke = 'var(--color-success)';
@@ -1540,19 +1895,19 @@ let searchQuery = '';
 function renderInvestments() {
   const container = document.getElementById('investments-list-container');
   clearContainer(container);
-  
+
   // Filter investments
   const filtered = investments.filter(inv => {
     const matchesFilter = currentFilter === 'all' || inv.assetClass === currentFilter;
-    const matchesSearch = inv.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          ((ASSET_CATEGORIES[inv.assetClass] && ASSET_CATEGORIES[inv.assetClass].label) || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = inv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ((ASSET_CATEGORIES[inv.assetClass] && ASSET_CATEGORIES[inv.assetClass].label) || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
-  
+
   if (filtered.length === 0) {
     const emptyState = document.createElement('div');
     emptyState.classList.add('empty-state');
-    
+
     const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     icon.setAttribute('viewBox', '0 0 24 24');
     icon.setAttribute('fill', 'none');
@@ -1564,52 +1919,52 @@ function renderInvestments() {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z');
     icon.appendChild(path);
-    
+
     const title = document.createElement('h4');
     title.classList.add('empty-title');
     title.textContent = 'No investments found';
-    
+
     const desc = document.createElement('p');
     desc.classList.add('empty-desc');
-    desc.textContent = investments.length === 0 
+    desc.textContent = investments.length === 0
       ? 'Start by adding your stocks, mutual funds, gold, fixed deposits, and other savings.'
       : 'No active holdings match your filter criteria or search query.';
-      
+
     const cta = document.createElement('button');
     cta.classList.add('btn', 'btn-primary');
     cta.textContent = 'Add Investment';
     cta.addEventListener('click', () => openModal());
-    
+
     emptyState.appendChild(icon);
     emptyState.appendChild(title);
     emptyState.appendChild(desc);
     if (investments.length === 0) {
       emptyState.appendChild(cta);
     }
-    
+
     container.appendChild(emptyState);
     return;
   }
-  
+
   // Generate list cards
   filtered.forEach(inv => {
     const card = document.createElement('div');
     card.classList.add('investment-card');
-    
+
     // Main column
     const colMain = document.createElement('div');
     colMain.classList.add('asset-main-info');
-    
+
     const badgeRow = document.createElement('div');
     badgeRow.style.display = 'flex';
     badgeRow.style.alignItems = 'center';
     badgeRow.style.gap = '8px';
-    
+
     const badge = document.createElement('span');
     badge.className = `asset-badge ${inv.assetClass}`;
     badge.textContent = (ASSET_CATEGORIES[inv.assetClass] && ASSET_CATEGORIES[inv.assetClass].label) || inv.assetClass;
     badgeRow.appendChild(badge);
-    
+
     if (inv.subtype && inv.subtype !== 'none') {
       const subtypeMap = {
         'large': 'Large Cap', 'mid': 'Mid Cap', 'small': 'Small Cap', 'flexi': 'Flexi Cap',
@@ -1622,14 +1977,14 @@ function renderInvestments() {
       subBadge.textContent = subtypeMap[inv.subtype] || inv.subtype;
       badgeRow.appendChild(subBadge);
     }
-    
+
     const nameText = document.createElement('span');
     nameText.classList.add('asset-name');
     nameText.textContent = inv.name;
-    
+
     colMain.appendChild(badgeRow);
     colMain.appendChild(nameText);
-    
+
     // Invested Amount Column
     const colInvested = document.createElement('div');
     colInvested.classList.add('asset-data-col');
@@ -1641,7 +1996,7 @@ function renderInvestments() {
     valInvested.textContent = formatCurrency(inv.investedAmount);
     colInvested.appendChild(lblInvested);
     colInvested.appendChild(valInvested);
-    
+
     // Current Amount Column
     const colCurrent = document.createElement('div');
     colCurrent.classList.add('asset-data-col');
@@ -1653,24 +2008,24 @@ function renderInvestments() {
     valCurrent.textContent = formatCurrency(inv.currentAmount);
     colCurrent.appendChild(lblCurrent);
     colCurrent.appendChild(valCurrent);
-    
+
     // P&L Column
     const plAmt = inv.currentAmount - inv.investedAmount;
     const plPct = inv.investedAmount > 0 ? (plAmt / inv.investedAmount) * 100 : 0;
-    
+
     const colPl = document.createElement('div');
     colPl.classList.add('pl-col');
     const valPl = document.createElement('span');
     valPl.className = 'pl-val ' + (plAmt > 0 ? 'positive' : plAmt < 0 ? 'negative' : 'neutral');
     valPl.textContent = formatCurrency(plAmt);
-    
+
     const pctPl = document.createElement('span');
     pctPl.className = 'pl-pct ' + (plAmt > 0 ? 'positive' : plAmt < 0 ? 'negative' : 'neutral');
     pctPl.textContent = formatPercent(plPct);
-    
+
     colPl.appendChild(valPl);
     colPl.appendChild(pctPl);
-    
+
     // Last Updated Column
     const colDate = document.createElement('div');
     colDate.classList.add('asset-data-col');
@@ -1687,11 +2042,11 @@ function renderInvestments() {
     });
     colDate.appendChild(lblDate);
     colDate.appendChild(valDate);
-    
+
     // Action column
     const colActions = document.createElement('div');
     colActions.classList.add('card-actions');
-    
+
     const btnEdit = document.createElement('button');
     btnEdit.className = 'icon-btn';
     btnEdit.setAttribute('aria-label', 'Edit Investment');
@@ -1707,7 +2062,7 @@ function renderInvestments() {
     editSvg.appendChild(editPath);
     btnEdit.appendChild(editSvg);
     btnEdit.addEventListener('click', () => openModal(inv));
-    
+
     const btnDelete = document.createElement('button');
     btnDelete.className = 'icon-btn';
     btnDelete.setAttribute('aria-label', 'Delete Investment');
@@ -1730,10 +2085,10 @@ function renderInvestments() {
         deleteInvestment(inv.id);
       }
     });
-    
+
     colActions.appendChild(btnEdit);
     colActions.appendChild(btnDelete);
-    
+
     // Assemble card
     card.appendChild(colMain);
     card.appendChild(colInvested);
@@ -1741,7 +2096,7 @@ function renderInvestments() {
     card.appendChild(colPl);
     card.appendChild(colDate);
     card.appendChild(colActions);
-    
+
     container.appendChild(card);
   });
 }
@@ -1749,7 +2104,7 @@ function renderInvestments() {
 function initFilterHandlers() {
   const container = document.getElementById('asset-filters-container');
   const chips = container.querySelectorAll('.filter-chip');
-  
+
   chips.forEach(chip => {
     chip.addEventListener('click', () => {
       chips.forEach(c => c.classList.remove('active'));
@@ -1758,7 +2113,7 @@ function initFilterHandlers() {
       renderInvestments();
     });
   });
-  
+
   const searchInput = document.getElementById('input-search');
   searchInput.addEventListener('input', (e) => {
     searchQuery = e.target.value;
@@ -1792,7 +2147,7 @@ function initFilterHandlers() {
 function openModal(invObj = null) {
   const overlay = document.getElementById('investment-modal');
   const titleText = document.getElementById('modal-title-text');
-  
+
   // Form inputs
   const inputId = document.getElementById('input-id');
   const inputClass = document.getElementById('input-asset-class');
@@ -1800,21 +2155,23 @@ function openModal(invObj = null) {
   const inputName = document.getElementById('input-name');
   const inputInvested = document.getElementById('input-invested-amount');
   const inputCurrent = document.getElementById('input-current-amount');
-  
+  const inputPurchaseDate = document.getElementById('input-purchase-date');
+
   if (invObj) {
     titleText.textContent = 'Edit Investment';
     inputId.value = invObj.id;
     inputClass.value = invObj.assetClass;
-    
+
     // Load subtypes first
     updateSubtypeOptions(invObj.assetClass);
     if (invObj.subtype && invObj.subtype !== 'none') {
       inputSubtype.value = invObj.subtype;
     }
-    
+
     inputName.value = invObj.name;
     inputInvested.value = invObj.investedAmount;
     inputCurrent.value = invObj.currentAmount;
+    inputPurchaseDate.value = invObj.purchaseDate || new Date().toISOString().slice(0, 10);
   } else {
     titleText.textContent = 'Add Investment';
     inputId.value = '';
@@ -1823,8 +2180,9 @@ function openModal(invObj = null) {
     inputName.value = '';
     inputInvested.value = '';
     inputCurrent.value = '';
+    inputPurchaseDate.value = new Date().toISOString().slice(0, 10);
   }
-  
+
   overlay.classList.add('active-modal');
 }
 
@@ -1837,11 +2195,11 @@ function updateSubtypeOptions(assetClass) {
   const group = document.getElementById('group-subtype');
   const select = document.getElementById('input-subtype');
   clearContainer(select);
-  
+
   if (SUBTYPES[assetClass]) {
     group.style.display = 'flex';
     select.required = true;
-    
+
     // Empty default option
     const def = document.createElement('option');
     def.value = '';
@@ -1849,7 +2207,7 @@ function updateSubtypeOptions(assetClass) {
     def.selected = true;
     def.textContent = 'Select Subtype';
     select.appendChild(def);
-    
+
     SUBTYPES[assetClass].forEach(opt => {
       const el = document.createElement('option');
       el.value = opt.value;
@@ -1869,7 +2227,7 @@ function downloadPortfolioJSON() {
     borrowLent: borrowLent,
     salaries: salaries
   };
-  
+
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1883,7 +2241,7 @@ function downloadPortfolioJSON() {
 
 function handleUploadJSON(file) {
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     try {
       const data = JSON.parse(e.target.result);
       if (Array.isArray(data.investments) && Array.isArray(data.liabilities)) {
@@ -1892,13 +2250,13 @@ function handleUploadJSON(file) {
         borrowLent = Array.isArray(data.borrowLent) ? data.borrowLent : [];
         salaries = Array.isArray(data.salaries) ? data.salaries : [];
         saveToStorage();
-        
+
         // Close welcome wizard if open
         const welcome = document.getElementById('welcome-overlay');
         if (welcome) {
           welcome.classList.remove('active-modal');
         }
-        
+
         // Re-render currently active view
         const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
         if (activeTab === 'dashboard') renderDashboard();
@@ -1907,12 +2265,12 @@ function handleUploadJSON(file) {
         if (activeTab === 'liabilities') renderLiabilities();
         if (activeTab === 'borrow-lent') renderBorrowLent();
         if (activeTab === 'salary') renderSalaries();
-        
+
         alert('Portfolio data loaded successfully!');
       } else {
         alert('Invalid data format. JSON must contain "investments" and "liabilities" arrays.');
       }
-    } catch(err) {
+    } catch (err) {
       alert('Error parsing JSON file. Please ensure it is a valid JSON document.');
     }
   };
@@ -1926,7 +2284,7 @@ function initModalHandlers() {
   const selectClass = document.getElementById('input-asset-class');
   const form = document.getElementById('investment-form');
   const btnReset = document.getElementById('btn-reset-data');
-  
+
   // JSON Backup Actions
   const btnDownload = document.getElementById('btn-download-json');
   if (btnDownload) {
@@ -1956,27 +2314,27 @@ function initModalHandlers() {
   // Inline Setup panel file dropper triggers
   const setupDropper = document.getElementById('setup-dropper');
   const setupFileInput = document.getElementById('setup-file-input');
-  
+
   if (setupDropper && setupFileInput) {
     setupDropper.addEventListener('click', () => {
       setupFileInput.click();
     });
-    
+
     setupFileInput.addEventListener('change', (e) => {
       if (e.target.files.length > 0) {
         handleUploadJSON(e.target.files[0]);
       }
     });
-    
+
     setupDropper.addEventListener('dragover', (e) => {
       e.preventDefault();
       setupDropper.classList.add('dragover');
     });
-    
+
     setupDropper.addEventListener('dragleave', () => {
       setupDropper.classList.remove('dragover');
     });
-    
+
     setupDropper.addEventListener('drop', (e) => {
       e.preventDefault();
       setupDropper.classList.remove('dragover');
@@ -2011,20 +2369,20 @@ function initModalHandlers() {
       renderDashboard();
     });
   }
-  
+
   btnClose.addEventListener('click', closeModal);
   btnCancel.addEventListener('click', closeModal);
   addBtn.addEventListener('click', () => openModal());
-  
+
   selectClass.addEventListener('change', (e) => {
     updateSubtypeOptions(e.target.value);
   });
-  
+
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     saveInvestmentForm();
   });
-  
+
   btnReset.addEventListener('click', (e) => {
     e.stopPropagation();
     if (confirm('This will restore the beautiful pre-populated sample portfolio. All custom edits will be lost. Proceed?')) {
@@ -2033,7 +2391,7 @@ function initModalHandlers() {
       borrowLent = [...SAMPLE_BORROW_LENT];
       salaries = [...SAMPLE_SALARIES];
       saveToStorage();
-      
+
       const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
       if (activeTab === 'dashboard') renderDashboard();
       if (activeTab === 'investments') renderInvestments();
@@ -2075,27 +2433,27 @@ function initModalHandlers() {
         liabilities = [];
         borrowLent = [];
         salaries = [];
-        
+
         // Hide settings menu
         if (settingsDropdown) settingsDropdown.style.display = 'none';
-        
+
         // Return to first tab and re-render empty dashboard
         const links = document.querySelectorAll('.nav-link');
         const views = document.querySelectorAll('.page-view');
         const viewTitle = document.getElementById('view-title');
         const viewSubtitle = document.getElementById('view-subtitle');
-        
+
         links.forEach(l => l.classList.remove('active'));
         const tabDash = document.getElementById('tab-dashboard');
         if (tabDash) tabDash.classList.add('active');
-        
+
         views.forEach(v => v.classList.remove('active-view'));
         const activeView = document.getElementById('view-dashboard');
         if (activeView) activeView.classList.add('active-view');
-        
+
         if (viewTitle) viewTitle.textContent = 'Dashboard';
         if (viewSubtitle) viewSubtitle.textContent = 'An overview of your complete financial portfolio.';
-        
+
         renderDashboard();
         alert('Cached browser data cleared successfully.');
       }
@@ -2107,7 +2465,7 @@ function initModalHandlers() {
   const btnCancelL = document.getElementById('btn-cancel-liability-modal');
   const btnAddL = document.getElementById('btn-add-liability');
   const formL = document.getElementById('liability-form');
-  
+
   if (btnCloseL) btnCloseL.addEventListener('click', closeLiabilityModal);
   if (btnCancelL) btnCancelL.addEventListener('click', closeLiabilityModal);
   if (btnAddL) btnAddL.addEventListener('click', () => openLiabilityModal());
@@ -2117,7 +2475,7 @@ function initModalHandlers() {
       saveLiabilityForm();
     });
   }
-  
+
   const searchL = document.getElementById('input-search-liabilities');
   if (searchL) {
     searchL.addEventListener('input', (e) => {
@@ -2131,7 +2489,7 @@ function initModalHandlers() {
   const btnCancelBL = document.getElementById('btn-cancel-borrow-lent-modal');
   const btnAddBL = document.getElementById('btn-add-borrow-lent');
   const formBL = document.getElementById('borrow-lent-form');
-  
+
   if (btnCloseBL) btnCloseBL.addEventListener('click', closeBorrowLentModal);
   if (btnCancelBL) btnCancelBL.addEventListener('click', closeBorrowLentModal);
   if (btnAddBL) btnAddBL.addEventListener('click', () => openBorrowLentModal());
@@ -2146,7 +2504,7 @@ function initModalHandlers() {
   const btnClosePay = document.getElementById('btn-close-payment-modal');
   const btnCancelPay = document.getElementById('btn-cancel-payment-modal');
   const formPay = document.getElementById('payment-log-form');
-  
+
   if (btnClosePay) btnClosePay.addEventListener('click', closePaymentModal);
   if (btnCancelPay) btnCancelPay.addEventListener('click', closePaymentModal);
   if (formPay) {
@@ -2161,7 +2519,7 @@ function initModalHandlers() {
   const btnCancelS = document.getElementById('btn-cancel-salary-modal');
   const btnAddS = document.getElementById('btn-add-salary');
   const formS = document.getElementById('salary-form');
-  
+
   if (btnCloseS) btnCloseS.addEventListener('click', closeSalaryModal);
   if (btnCancelS) btnCancelS.addEventListener('click', closeSalaryModal);
   if (btnAddS) btnAddS.addEventListener('click', () => openSalaryModal());
@@ -2171,7 +2529,7 @@ function initModalHandlers() {
       saveSalaryForm();
     });
   }
-  
+
   const searchS = document.getElementById('input-search-salaries');
   if (searchS) {
     searchS.addEventListener('input', (e) => {
@@ -2188,7 +2546,8 @@ function saveInvestmentForm() {
   const name = document.getElementById('input-name').value;
   const investedAmount = Number(document.getElementById('input-invested-amount').value);
   const currentAmount = Number(document.getElementById('input-current-amount').value);
-  
+  const purchaseDate = document.getElementById('input-purchase-date').value || new Date().toISOString().slice(0, 10);
+
   if (id) {
     // Edit mode
     const idx = investments.findIndex(inv => inv.id === id);
@@ -2200,6 +2559,7 @@ function saveInvestmentForm() {
         name,
         investedAmount,
         currentAmount,
+        purchaseDate,
         lastUpdated: new Date().toISOString()
       };
     }
@@ -2213,13 +2573,14 @@ function saveInvestmentForm() {
       name,
       investedAmount,
       currentAmount,
+      purchaseDate,
       lastUpdated: new Date().toISOString()
     });
   }
-  
+
   saveToStorage();
   closeModal();
-  
+
   // Re-render current active view
   const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
   if (activeTab === 'dashboard') renderDashboard();
@@ -2237,46 +2598,46 @@ function deleteInvestment(id) {
 function renderProjections() {
   const summary = getPortfolioSummary();
   const baseAmt = summary.currentValue;
-  
+
   document.getElementById('span-proj-base-amt').textContent = formatCurrency(baseAmt);
-  
+
   const sipAmt = Number(document.getElementById('slider-sip').value);
   const years = Number(document.getElementById('slider-years').value);
   const ror = Number(document.getElementById('slider-ror').value);
-  
+
   // Update numerical labels
   document.getElementById('val-sip-amt').textContent = formatCurrency(sipAmt);
   document.getElementById('val-years').textContent = `${years} Year${years > 1 ? 's' : ''}`;
   document.getElementById('val-ror').textContent = `${ror}%`;
-  
+
   // Compound Math
   const monthlyRate = ror / 100 / 12;
   const totalMonths = years * 12;
-  
+
   let currentProj = baseAmt;
   let currentInvested = baseAmt;
   const pointsProj = [{ year: 0, value: baseAmt }];
   const pointsInvested = [{ year: 0, value: baseAmt }];
-  
+
   for (let month = 1; month <= totalMonths; month++) {
     currentProj = currentProj * (1 + monthlyRate) + sipAmt;
     currentInvested += sipAmt;
-    
+
     // Log data boundaries annually
     if (month % 12 === 0) {
       pointsProj.push({ year: month / 12, value: currentProj });
       pointsInvested.push({ year: month / 12, value: currentInvested });
     }
   }
-  
+
   const totalProjVal = currentProj;
   const totalInvestedVal = currentInvested;
   const wealthGains = totalProjVal - totalInvestedVal;
-  
+
   document.getElementById('val-proj-invested').textContent = formatCurrency(totalInvestedVal);
   document.getElementById('val-proj-gains').textContent = formatCurrency(wealthGains);
   document.getElementById('val-proj-total').textContent = formatCurrency(totalProjVal);
-  
+
   // Render Line Chart
   renderProjectionLineChart(pointsProj, pointsInvested, years);
 }
@@ -2284,29 +2645,32 @@ function renderProjections() {
 function renderProjectionLineChart(projData, investedData, maxYears) {
   const container = document.getElementById('projection-chart-container');
   clearContainer(container);
-  
-  const svgWidth = 600;
-  const svgHeight = 280;
-  const margin = { top: 20, right: 20, bottom: 40, left: 70 };
+
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 480 : 600;
+  const svgHeight = isMobile ? 240 : 280;
+  const margin = isMobile
+    ? { top: 15, right: 10, bottom: 30, left: 45 }
+    : { top: 20, right: 20, bottom: 40, left: 70 };
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
-  
+
   const svg = createSVGElement('svg');
   svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
   svg.classList.add('svg-chart');
-  
+
   appendSVGDefs(svg);
-  
+
   // Max Y value
   const maxVal = projData[projData.length - 1].value * 1.05;
-  
+
   // Draw Y grid and labels
   const ticks = 4;
   for (let i = 0; i <= ticks; i++) {
     const ratio = i / ticks;
     const yVal = maxVal * ratio;
     const y = margin.top + chartHeight - (ratio * chartHeight);
-    
+
     if (i > 0) {
       const line = createSVGElement('line');
       line.setAttribute('x1', margin.left.toString());
@@ -2316,13 +2680,13 @@ function renderProjectionLineChart(projData, investedData, maxYears) {
       line.classList.add('chart-grid-line');
       svg.appendChild(line);
     }
-    
+
     const text = createSVGElement('text');
     text.setAttribute('x', (margin.left - 10).toString());
     text.setAttribute('y', (y + 4).toString());
     text.setAttribute('text-anchor', 'end');
     text.classList.add('chart-axis-text');
-    
+
     let label = '';
     if (yVal >= 10000000) {
       label = '₹' + (yVal / 10000000).toFixed(1) + 'Cr';
@@ -2336,23 +2700,23 @@ function renderProjectionLineChart(projData, investedData, maxYears) {
     text.textContent = label;
     svg.appendChild(text);
   }
-  
+
   // Draw X axis grid and labels (every 2/5 years based on total range)
   const step = maxYears <= 10 ? 1 : maxYears <= 20 ? 2 : 5;
   for (let yr = 0; yr <= maxYears; yr += step) {
     const ratio = yr / maxYears;
     const x = margin.left + (ratio * chartWidth);
-    
+
     // Label X
     const text = createSVGElement('text');
     text.setAttribute('x', x.toString());
-    text.setAttribute('y', (margin.top + chartHeight + 20).toString());
+    text.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
     text.setAttribute('text-anchor', 'middle');
     text.classList.add('chart-axis-text');
     text.textContent = `Yr ${yr}`;
     svg.appendChild(text);
   }
-  
+
   // Map points to SVG coordinates
   const scalePoint = (p) => {
     const rx = p.year / maxYears;
@@ -2364,23 +2728,23 @@ function renderProjectionLineChart(projData, investedData, maxYears) {
       year: p.year
     };
   };
-  
+
   const mappedProj = projData.map(scalePoint);
   const mappedInvested = investedData.map(scalePoint);
-  
+
   // Create Polyline string
   const polylineStr = (points) => points.map(p => `${p.x},${p.y}`).join(' ');
-  
+
   // Area fill below Wealth line
-  const areaPathStr = `M ${mappedProj[0].x} ${margin.top + chartHeight} ` + 
-                     mappedProj.map(p => `L ${p.x} ${p.y}`).join(' ') + 
-                     ` L ${mappedProj[mappedProj.length - 1].x} ${margin.top + chartHeight} Z`;
-  
+  const areaPathStr = `M ${mappedProj[0].x} ${margin.top + chartHeight} ` +
+    mappedProj.map(p => `L ${p.x} ${p.y}`).join(' ') +
+    ` L ${mappedProj[mappedProj.length - 1].x} ${margin.top + chartHeight} Z`;
+
   const area = createSVGElement('path');
   area.setAttribute('d', areaPathStr);
   area.setAttribute('fill', 'url(#grad-proj-area)');
   svg.appendChild(area);
-  
+
   // Invested Line (Gray dashed line)
   const lineInv = createSVGElement('polyline');
   lineInv.setAttribute('points', polylineStr(mappedInvested));
@@ -2389,7 +2753,7 @@ function renderProjectionLineChart(projData, investedData, maxYears) {
   lineInv.setAttribute('stroke-width', '2');
   lineInv.setAttribute('stroke-dasharray', '5,5');
   svg.appendChild(lineInv);
-  
+
   // Projected Line (Indigo Solid Line)
   const lineProj = createSVGElement('polyline');
   lineProj.setAttribute('points', polylineStr(mappedProj));
@@ -2397,7 +2761,7 @@ function renderProjectionLineChart(projData, investedData, maxYears) {
   lineProj.setAttribute('stroke', 'var(--color-primary)');
   lineProj.setAttribute('stroke-width', '3');
   svg.appendChild(lineProj);
-  
+
   // Plot dots and attach Tooltips
   mappedProj.forEach((p, idx) => {
     const dot = createSVGElement('circle');
@@ -2409,29 +2773,29 @@ function renderProjectionLineChart(projData, investedData, maxYears) {
     dot.setAttribute('stroke-width', '2');
     dot.style.cursor = 'pointer';
     dot.style.transition = 'transform 0.15s ease';
-    
+
     dot.addEventListener('mouseenter', () => {
       dot.setAttribute('r', '7');
     });
-    
+
     // Attach Tooltip
     dot.addEventListener('mousemove', (e) => {
       const investedAtYr = mappedInvested[idx].value;
       const totalAtYr = p.value;
       const gainAtYr = totalAtYr - investedAtYr;
       const returnPct = investedAtYr > 0 ? (gainAtYr / investedAtYr) * 100 : 0;
-      
+
       showTooltip(e, `Year ${p.year} Growth`, investedAtYr, totalAtYr, gainAtYr, returnPct);
     });
-    
+
     dot.addEventListener('mouseleave', () => {
       dot.setAttribute('r', '5');
       hideTooltip();
     });
-    
+
     svg.appendChild(dot);
   });
-  
+
   container.appendChild(svg);
 }
 
@@ -2441,28 +2805,28 @@ function renderHeatmaps() {
   const lossContainer = document.getElementById('loss-heatmap-container');
   clearContainer(profitContainer);
   clearContainer(lossContainer);
-  
+
   const profits = [];
   const losses = [];
-  
+
   investments.forEach(inv => {
     const invAmt = Number(inv.investedAmount);
     const curAmt = Number(inv.currentAmount);
     if (invAmt === 0) return;
-    
+
     const diff = curAmt - invAmt;
     const pct = (diff / invAmt) * 100;
-    
+
     if (diff > 0) {
       profits.push({ inv, diff, pct });
     } else if (diff < 0) {
       losses.push({ inv, diff, pct });
     }
   });
-  
+
   profits.sort((a, b) => b.pct - a.pct);
   losses.sort((a, b) => a.pct - b.pct);
-  
+
   if (profits.length === 0) {
     const empty = document.createElement('div');
     empty.textContent = 'No profitable assets.';
@@ -2477,15 +2841,15 @@ function renderHeatmaps() {
       block.className = 'heatmap-block';
       block.style.backgroundColor = `rgba(16, 185, 129, ${opacity})`;
       block.style.color = opacity > 0.45 ? '#ffffff' : 'var(--text-primary)';
-      
+
       const name = document.createElement('span');
       name.className = 'heatmap-block-name';
       name.textContent = item.inv.name;
-      
+
       const val = document.createElement('span');
       val.className = 'heatmap-block-val';
       val.textContent = formatCurrency(item.inv.currentAmount);
-      
+
       const pct = document.createElement('span');
       pct.className = 'heatmap-block-pct';
       pct.textContent = `+${item.pct.toFixed(1)}%`;
@@ -2494,20 +2858,20 @@ function renderHeatmaps() {
       } else {
         pct.style.color = 'var(--color-success)';
       }
-      
+
       block.appendChild(name);
       block.appendChild(val);
       block.appendChild(pct);
-      
+
       block.addEventListener('mousemove', (e) => {
         showTooltip(e, item.inv.name, item.inv.investedAmount, item.inv.currentAmount, item.diff, item.pct);
       });
       block.addEventListener('mouseleave', hideTooltip);
-      
+
       profitContainer.appendChild(block);
     });
   }
-  
+
   if (losses.length === 0) {
     const empty = document.createElement('div');
     empty.textContent = 'No assets in loss.';
@@ -2523,15 +2887,15 @@ function renderHeatmaps() {
       block.className = 'heatmap-block';
       block.style.backgroundColor = `rgba(244, 63, 94, ${opacity})`;
       block.style.color = opacity > 0.45 ? '#ffffff' : 'var(--text-primary)';
-      
+
       const name = document.createElement('span');
       name.className = 'heatmap-block-name';
       name.textContent = item.inv.name;
-      
+
       const val = document.createElement('span');
       val.className = 'heatmap-block-val';
       val.textContent = formatCurrency(item.inv.currentAmount);
-      
+
       const pct = document.createElement('span');
       pct.className = 'heatmap-block-pct';
       pct.textContent = `${item.pct.toFixed(1)}%`;
@@ -2540,16 +2904,16 @@ function renderHeatmaps() {
       } else {
         pct.style.color = 'var(--color-danger)';
       }
-      
+
       block.appendChild(name);
       block.appendChild(val);
       block.appendChild(pct);
-      
+
       block.addEventListener('mousemove', (e) => {
         showTooltip(e, item.inv.name, item.inv.investedAmount, item.inv.currentAmount, item.diff, item.pct);
       });
       block.addEventListener('mouseleave', hideTooltip);
-      
+
       lossContainer.appendChild(block);
     });
   }
@@ -2559,37 +2923,37 @@ function renderHeatmaps() {
 function renderLiabilities() {
   const container = document.getElementById('liabilities-list-container');
   clearContainer(container);
-  
+
   let totalOutstanding = 0;
   let totalEmi = 0;
   let weightedInterestSum = 0;
-  
+
   liabilities.forEach(l => {
     totalOutstanding += Number(l.outstanding);
     totalEmi += Number(l.emi);
     weightedInterestSum += (Number(l.outstanding) * Number(l.rate));
   });
-  
+
   const avgRate = totalOutstanding > 0 ? (weightedInterestSum / totalOutstanding) : 0;
   const summary = getPortfolioSummary();
   const assetsVal = summary.currentValue;
   const debtAssetRatio = assetsVal > 0 ? (totalOutstanding / assetsVal) * 100 : 0;
-  
+
   document.getElementById('val-total-liabilities').textContent = formatCurrency(totalOutstanding);
   document.getElementById('val-total-emis').textContent = formatCurrency(totalEmi);
   document.getElementById('val-debt-asset-ratio').textContent = debtAssetRatio.toFixed(1) + '%';
   document.getElementById('val-avg-debt-rate').textContent = avgRate.toFixed(2) + '%';
-  
+
   const filtered = liabilities.filter(l => {
-    const matchesSearch = l.name.toLowerCase().includes(searchQueryLiabilities.toLowerCase()) || 
-                          (LIABILITY_TYPES[l.type] || '').toLowerCase().includes(searchQueryLiabilities.toLowerCase());
+    const matchesSearch = l.name.toLowerCase().includes(searchQueryLiabilities.toLowerCase()) ||
+      (LIABILITY_TYPES[l.type] || '').toLowerCase().includes(searchQueryLiabilities.toLowerCase());
     return matchesSearch;
   });
-  
+
   if (filtered.length === 0) {
     const emptyState = document.createElement('div');
     emptyState.classList.add('empty-state');
-    
+
     const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     icon.setAttribute('viewBox', '0 0 24 24');
     icon.setAttribute('fill', 'none');
@@ -2601,49 +2965,49 @@ function renderLiabilities() {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6');
     icon.appendChild(path);
-    
+
     const title = document.createElement('h4');
     title.classList.add('empty-title');
     title.textContent = 'No liabilities found';
-    
+
     const desc = document.createElement('p');
     desc.classList.add('empty-desc');
-    desc.textContent = liabilities.length === 0 
+    desc.textContent = liabilities.length === 0
       ? 'Start tracking your debts, home loans, car loans, and EMIs to monitor leverage.'
       : 'No active loans match your search criteria.';
-      
+
     emptyState.appendChild(icon);
     emptyState.appendChild(title);
     emptyState.appendChild(desc);
-    
+
     container.appendChild(emptyState);
     return;
   }
-  
+
   filtered.forEach(l => {
     const card = document.createElement('div');
     card.classList.add('investment-card');
-    
+
     const colMain = document.createElement('div');
     colMain.classList.add('asset-main-info');
-    
+
     const badgeRow = document.createElement('div');
     badgeRow.style.display = 'flex';
     badgeRow.style.alignItems = 'center';
     badgeRow.style.gap = '8px';
-    
+
     const badge = document.createElement('span');
     badge.className = 'asset-badge bonds';
     badge.textContent = LIABILITY_TYPES[l.type] || l.type;
     badgeRow.appendChild(badge);
-    
+
     const nameText = document.createElement('span');
     nameText.classList.add('asset-name');
     nameText.textContent = l.name;
-    
+
     colMain.appendChild(badgeRow);
     colMain.appendChild(nameText);
-    
+
     const colOutstanding = document.createElement('div');
     colOutstanding.classList.add('asset-data-col');
     const lblOutstanding = document.createElement('span');
@@ -2655,7 +3019,7 @@ function renderLiabilities() {
     valOutstanding.textContent = formatCurrency(l.outstanding);
     colOutstanding.appendChild(lblOutstanding);
     colOutstanding.appendChild(valOutstanding);
-    
+
     const colEmi = document.createElement('div');
     colEmi.classList.add('asset-data-col');
     const lblEmi = document.createElement('span');
@@ -2666,7 +3030,7 @@ function renderLiabilities() {
     valEmi.textContent = formatCurrency(l.emi);
     colEmi.appendChild(lblEmi);
     colEmi.appendChild(valEmi);
-    
+
     const colRate = document.createElement('div');
     colRate.classList.add('asset-data-col');
     const lblRate = document.createElement('span');
@@ -2677,23 +3041,23 @@ function renderLiabilities() {
     valRate.textContent = l.rate.toFixed(2) + '%';
     colRate.appendChild(lblRate);
     colRate.appendChild(valRate);
-    
+
     const colTenure = document.createElement('div');
     colTenure.classList.add('asset-data-col');
     const lblTenure = document.createElement('span');
     lblTenure.classList.add('asset-data-label');
     lblTenure.textContent = 'Tenure Left';
-    
+
     const tenureContainer = document.createElement('div');
     tenureContainer.style.display = 'flex';
     tenureContainer.style.alignItems = 'center';
     tenureContainer.style.gap = '8px';
-    
+
     const valTenure = document.createElement('span');
     valTenure.classList.add('asset-data-value');
     valTenure.style.fontSize = '0.85rem';
     valTenure.textContent = `${l.tenure} Months`;
-    
+
     const btnPayEmi = document.createElement('button');
     btnPayEmi.className = 'btn btn-secondary';
     btnPayEmi.style.padding = '2px 8px';
@@ -2710,18 +3074,18 @@ function renderLiabilities() {
       e.stopPropagation();
       payOneEMI(l.id);
     });
-    
+
     tenureContainer.appendChild(valTenure);
     if (Number(l.tenure) > 0) {
       tenureContainer.appendChild(btnPayEmi);
     }
-    
+
     colTenure.appendChild(lblTenure);
     colTenure.appendChild(tenureContainer);
-    
+
     const colActions = document.createElement('div');
     colActions.classList.add('card-actions');
-    
+
     const btnEdit = document.createElement('button');
     btnEdit.className = 'icon-btn';
     btnEdit.setAttribute('aria-label', 'Edit Liability');
@@ -2737,7 +3101,7 @@ function renderLiabilities() {
     editSvg.appendChild(editPath);
     btnEdit.appendChild(editSvg);
     btnEdit.addEventListener('click', () => openLiabilityModal(l));
-    
+
     const btnDelete = document.createElement('button');
     btnDelete.className = 'icon-btn';
     btnDelete.setAttribute('aria-label', 'Delete Liability');
@@ -2758,17 +3122,17 @@ function renderLiabilities() {
         deleteLiability(l.id);
       }
     });
-    
+
     colActions.appendChild(btnEdit);
     colActions.appendChild(btnDelete);
-    
+
     card.appendChild(colMain);
     card.appendChild(colOutstanding);
     card.appendChild(colEmi);
     card.appendChild(colRate);
     card.appendChild(colTenure);
     card.appendChild(colActions);
-    
+
     // Repayment progress row
     const totalTenureVal = Number(l.totalTenure || l.tenure || 1);
     const tenureLeftVal = Number(l.tenure);
@@ -2810,7 +3174,7 @@ function renderLiabilities() {
     progressMetaRow.style.fontSize = '0.75rem';
     progressMetaRow.style.color = 'var(--text-secondary)';
     progressMetaRow.style.marginTop = '-2px';
-    
+
     const lastPaidText = l.lastPaidDate ? new Date(l.lastPaidDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Never';
     const lastPaidEl = document.createElement('span');
     lastPaidEl.textContent = `Last Paid EMI Date: ${lastPaidText}`;
@@ -2818,7 +3182,7 @@ function renderLiabilities() {
     progressRow.appendChild(progressMetaRow);
 
     card.appendChild(progressRow);
-    
+
     container.appendChild(card);
   });
 }
@@ -2826,7 +3190,7 @@ function renderLiabilities() {
 function openLiabilityModal(lObj = null) {
   const overlay = document.getElementById('liability-modal');
   const titleText = document.getElementById('liability-modal-title-text');
-  
+
   const inputId = document.getElementById('input-liability-id');
   const inputType = document.getElementById('input-liability-type');
   const inputName = document.getElementById('input-liability-name');
@@ -2836,7 +3200,7 @@ function openLiabilityModal(lObj = null) {
   const inputTotalTenure = document.getElementById('input-liability-total-tenure');
   const inputTenure = document.getElementById('input-liability-tenure');
   const inputLastPaid = document.getElementById('input-liability-last-paid');
-  
+
   if (lObj) {
     titleText.textContent = 'Edit Liability';
     inputId.value = lObj.id;
@@ -2879,12 +3243,12 @@ function saveLiabilityForm() {
   const tenure = Number(document.getElementById('input-liability-tenure').value);
   const lastPaidVal = document.getElementById('input-liability-last-paid').value;
   const lastPaidDate = lastPaidVal ? new Date(lastPaidVal).toISOString() : null;
-  
+
   if (tenure > totalTenure) {
     alert("Tenure Left cannot be greater than Total Tenure!");
     return;
   }
-  
+
   if (id) {
     const idx = liabilities.findIndex(l => l.id === id);
     if (idx !== -1) {
@@ -2916,7 +3280,7 @@ function saveLiabilityForm() {
       lastUpdated: new Date().toISOString()
     });
   }
-  
+
   saveToStorage();
   closeLiabilityModal();
   renderLiabilities();
@@ -2926,21 +3290,21 @@ function saveLiabilityForm() {
 function payOneEMI(id) {
   const l = liabilities.find(item => item.id === id);
   if (!l) return;
-  
+
   const tenureLeftVal = Number(l.tenure);
   if (tenureLeftVal <= 0) {
     alert("This liability has already been fully repaid!");
     return;
   }
-  
+
   const monthlyRate = (Number(l.rate) / 100) / 12;
   const interestPaid = Number(l.outstanding) * monthlyRate;
   const principalPaid = Number(l.emi) - interestPaid;
-  
+
   l.outstanding = Math.max(0, Number(l.outstanding) - principalPaid);
   l.tenure = Math.max(0, tenureLeftVal - 1);
   l.lastPaidDate = new Date().toISOString();
-  
+
   saveToStorage();
   renderLiabilities();
 }
@@ -2959,14 +3323,14 @@ function deleteLiability(id) {
 function openBorrowLentModal(blObj = null) {
   const overlay = document.getElementById('borrow-lent-modal');
   const titleText = document.getElementById('borrow-lent-modal-title-text');
-  
+
   const inputId = document.getElementById('input-borrow-lent-id');
   const inputType = document.getElementById('input-borrow-lent-type');
   const inputPerson = document.getElementById('input-borrow-lent-person');
   const inputAmount = document.getElementById('input-borrow-lent-amount');
   const inputDate = document.getElementById('input-borrow-lent-date');
   const inputNotes = document.getElementById('input-borrow-lent-notes');
-  
+
   if (blObj) {
     titleText.textContent = 'Edit Cashflow Transaction';
     inputId.value = blObj.id;
@@ -3001,7 +3365,7 @@ function saveBorrowLentForm() {
   const amount = Number(document.getElementById('input-borrow-lent-amount').value);
   const date = document.getElementById('input-borrow-lent-date').value;
   const notes = document.getElementById('input-borrow-lent-notes').value;
-  
+
   if (id) {
     const idx = borrowLent.findIndex(bl => bl.id === id);
     if (idx !== -1) {
@@ -3011,7 +3375,7 @@ function saveBorrowLentForm() {
         const diff = amount - oldVal.amount;
         newOutstanding = Math.max(0, oldVal.outstanding + diff);
       }
-      
+
       borrowLent[idx] = {
         ...oldVal,
         type,
@@ -3037,7 +3401,7 @@ function saveBorrowLentForm() {
       payments: []
     });
   }
-  
+
   saveToStorage();
   closeBorrowLentModal();
   renderBorrowLent();
@@ -3047,19 +3411,19 @@ function openPaymentModal(blId) {
   const overlay = document.getElementById('payment-log-modal');
   const bl = borrowLent.find(item => item.id === blId);
   if (!bl) return;
-  
+
   const title = document.getElementById('payment-modal-title');
   const labelAmt = document.getElementById('lbl-payment-amount');
-  
+
   title.textContent = bl.type === 'lent' ? 'Log Collection Received' : 'Log Repayment Paid';
   labelAmt.textContent = bl.type === 'lent' ? 'Amount Collected (₹)' : 'Amount Paid (₹)';
-  
+
   document.getElementById('input-payment-bl-id').value = blId;
   document.getElementById('input-payment-amount').value = '';
   document.getElementById('input-payment-amount').max = bl.outstanding;
   document.getElementById('input-payment-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('input-payment-note').value = '';
-  
+
   overlay.classList.add('active-modal');
 }
 
@@ -3073,26 +3437,26 @@ function savePaymentForm() {
   const amount = Number(document.getElementById('input-payment-amount').value);
   const date = document.getElementById('input-payment-date').value;
   const note = document.getElementById('input-payment-note').value;
-  
+
   const bl = borrowLent.find(item => item.id === blId);
   if (!bl) return;
-  
+
   if (amount > bl.outstanding) {
     alert(`Payment amount (₹${amount}) cannot exceed outstanding balance (₹${bl.outstanding})!`);
     return;
   }
-  
+
   bl.outstanding = Math.max(0, bl.outstanding - amount);
   bl.payments.push({
     date,
     amount,
     note: note || (bl.type === 'lent' ? 'Collection' : 'Repayment')
   });
-  
+
   if (bl.outstanding === 0) {
     bl.status = 'paid';
   }
-  
+
   saveToStorage();
   closePaymentModal();
   renderBorrowLent();
@@ -3101,7 +3465,7 @@ function savePaymentForm() {
 function markBLAsPaid(id) {
   const bl = borrowLent.find(item => item.id === id);
   if (!bl) return;
-  
+
   const remaining = bl.outstanding;
   if (remaining > 0) {
     bl.payments.push({
@@ -3112,7 +3476,7 @@ function markBLAsPaid(id) {
   }
   bl.outstanding = 0;
   bl.status = 'paid';
-  
+
   saveToStorage();
   renderBorrowLent();
 }
@@ -3126,10 +3490,10 @@ function deleteBorrowLent(id) {
 function renderBorrowLent() {
   const container = document.getElementById('borrow-lent-list-container');
   clearContainer(container);
-  
+
   let totalLent = 0;
   let totalBorrowed = 0;
-  
+
   borrowLent.forEach(bl => {
     if (bl.status !== 'paid') {
       if (bl.type === 'lent') {
@@ -3139,16 +3503,16 @@ function renderBorrowLent() {
       }
     }
   });
-  
+
   const netBL = totalLent - totalBorrowed;
-  
+
   // Update section stats
   document.getElementById('val-total-lent').textContent = formatCurrency(totalLent);
   document.getElementById('val-total-borrowed').textContent = formatCurrency(totalBorrowed);
-  
+
   const netValEl = document.getElementById('val-net-borrow-lent');
   const netLblEl = document.getElementById('lbl-net-borrow-lent');
-  
+
   netValEl.textContent = formatCurrency(Math.abs(netBL));
   if (netBL > 0) {
     netValEl.style.color = 'var(--color-success)';
@@ -3160,12 +3524,12 @@ function renderBorrowLent() {
     netValEl.style.color = 'var(--text-secondary)';
     netLblEl.textContent = 'Net Balance Settled';
   }
-  
+
   // Filtering & searching
   const filtered = borrowLent.filter(bl => {
-    const matchesSearch = bl.person.toLowerCase().includes(searchQueryBorrowLent.toLowerCase()) || 
-                          (bl.notes || '').toLowerCase().includes(searchQueryBorrowLent.toLowerCase());
-    
+    const matchesSearch = bl.person.toLowerCase().includes(searchQueryBorrowLent.toLowerCase()) ||
+      (bl.notes || '').toLowerCase().includes(searchQueryBorrowLent.toLowerCase());
+
     let matchesFilter = true;
     if (currentBLFilter === 'lent') {
       matchesFilter = bl.type === 'lent' && bl.status !== 'paid';
@@ -3176,14 +3540,14 @@ function renderBorrowLent() {
     } else {
       matchesFilter = bl.status !== 'paid';
     }
-    
+
     return matchesSearch && matchesFilter;
   });
-  
+
   if (filtered.length === 0) {
     const emptyState = document.createElement('div');
     emptyState.classList.add('empty-state');
-    
+
     const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     icon.setAttribute('viewBox', '0 0 24 24');
     icon.setAttribute('fill', 'none');
@@ -3192,73 +3556,73 @@ function renderBorrowLent() {
     icon.setAttribute('stroke-linecap', 'round');
     icon.setAttribute('stroke-linejoin', 'round');
     icon.classList.add('empty-icon');
-    
+
     // shoulders
     const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path1.setAttribute('d', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2');
-    
+
     // head (aligned at cx=9)
     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     circle.setAttribute('cx', '9');
     circle.setAttribute('cy', '7');
     circle.setAttribute('r', '4');
-    
+
     // plus icon (lines)
     const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line1.setAttribute('x1', '19');
     line1.setAttribute('x2', '19');
     line1.setAttribute('y1', '8');
     line1.setAttribute('y2', '14');
-    
+
     const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line2.setAttribute('x1', '16');
     line2.setAttribute('x2', '22');
     line2.setAttribute('y1', '11');
     line2.setAttribute('y2', '11');
-    
+
     icon.appendChild(path1);
     icon.appendChild(circle);
     icon.appendChild(line1);
     icon.appendChild(line2);
     emptyState.appendChild(icon);
-    
+
     const title = document.createElement('h4');
     title.classList.add('empty-title');
     title.textContent = 'No cashflow entries found';
     emptyState.appendChild(title);
-    
+
     const desc = document.createElement('p');
     desc.classList.add('empty-desc');
-    desc.textContent = borrowLent.length === 0 
+    desc.textContent = borrowLent.length === 0
       ? 'Start logging personal borrowings and lendings to keep track of your cash flows.'
       : 'No active cashflow records match the selected filter/search.';
     emptyState.appendChild(desc);
-    
+
     container.appendChild(emptyState);
     return;
   }
-  
+
   filtered.forEach(bl => {
     const card = document.createElement('div');
     card.classList.add('investment-card');
     if (bl.status === 'paid') {
       card.style.opacity = '0.75';
     }
-    
+
     // Column 1: Info & Type Badge
     const colMain = document.createElement('div');
     colMain.classList.add('asset-main-info');
-    
+
     const badgeRow = document.createElement('div');
     badgeRow.style.display = 'flex';
     badgeRow.style.alignItems = 'center';
     badgeRow.style.gap = '8px';
-    
+
     const typeBadge = document.createElement('span');
     typeBadge.className = bl.type === 'lent' ? 'asset-badge savings' : 'asset-badge bonds';
     typeBadge.textContent = bl.type === 'lent' ? 'LENT' : 'BORROWED';
     badgeRow.appendChild(typeBadge);
-    
+
     if (bl.status === 'paid') {
       const paidBadge = document.createElement('span');
       paidBadge.className = 'asset-badge gold';
@@ -3267,14 +3631,14 @@ function renderBorrowLent() {
       paidBadge.textContent = 'SETTLED';
       badgeRow.appendChild(paidBadge);
     }
-    
+
     const personName = document.createElement('span');
     personName.classList.add('asset-name');
     personName.textContent = bl.person;
-    
+
     colMain.appendChild(badgeRow);
     colMain.appendChild(personName);
-    
+
     // Column 2: Principal
     const colAmt = document.createElement('div');
     colAmt.classList.add('asset-data-col');
@@ -3286,7 +3650,7 @@ function renderBorrowLent() {
     valAmt.textContent = formatCurrency(bl.amount);
     colAmt.appendChild(lblAmt);
     colAmt.appendChild(valAmt);
-    
+
     // Column 3: Outstanding Balance
     const colOutstanding = document.createElement('div');
     colOutstanding.classList.add('asset-data-col');
@@ -3305,7 +3669,7 @@ function renderBorrowLent() {
     }
     colOutstanding.appendChild(lblOutstanding);
     colOutstanding.appendChild(valOutstanding);
-    
+
     // Column 4: Date
     const colDate = document.createElement('div');
     colDate.classList.add('asset-data-col');
@@ -3318,11 +3682,11 @@ function renderBorrowLent() {
     valDate.textContent = new Date(bl.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     colDate.appendChild(lblDate);
     colDate.appendChild(valDate);
-    
+
     // Column 5: Card Actions (Edit, Delete, Pay, Mark Paid)
     const colActions = document.createElement('div');
     colActions.classList.add('card-actions');
-    
+
     if (bl.status !== 'paid') {
       const btnPay = document.createElement('button');
       btnPay.className = 'btn btn-secondary';
@@ -3333,7 +3697,7 @@ function renderBorrowLent() {
       btnPay.textContent = bl.type === 'lent' ? '+ Collect' : '+ Repay';
       btnPay.addEventListener('click', () => openPaymentModal(bl.id));
       colActions.appendChild(btnPay);
-      
+
       const btnSettle = document.createElement('button');
       btnSettle.className = 'btn btn-secondary';
       btnSettle.style.padding = '4px 8px';
@@ -3348,7 +3712,7 @@ function renderBorrowLent() {
       });
       colActions.appendChild(btnSettle);
     }
-    
+
     const btnEdit = document.createElement('button');
     btnEdit.className = 'icon-btn';
     btnEdit.setAttribute('aria-label', 'Edit Transaction');
@@ -3365,7 +3729,7 @@ function renderBorrowLent() {
     btnEdit.appendChild(editSvg);
     btnEdit.addEventListener('click', () => openBorrowLentModal(bl));
     colActions.appendChild(btnEdit);
-    
+
     const btnDelete = document.createElement('button');
     btnDelete.className = 'icon-btn';
     btnDelete.setAttribute('aria-label', 'Delete Transaction');
@@ -3387,20 +3751,20 @@ function renderBorrowLent() {
       }
     });
     colActions.appendChild(btnDelete);
-    
+
     card.appendChild(colMain);
     card.appendChild(colAmt);
     card.appendChild(colOutstanding);
     card.appendChild(colDate);
     card.appendChild(colActions);
-    
+
     // Collapsible payment logs & history
     const historyWrapper = document.createElement('div');
     historyWrapper.classList.add('loan-progress-row');
     historyWrapper.style.marginTop = '16px';
     historyWrapper.style.paddingTop = '12px';
     historyWrapper.style.borderTop = '1px solid var(--border-light)';
-    
+
     const historyHeader = document.createElement('div');
     historyHeader.style.display = 'flex';
     historyHeader.style.justifyContent = 'space-between';
@@ -3410,24 +3774,24 @@ function renderBorrowLent() {
     historyHeader.style.color = 'var(--text-primary)';
     historyHeader.style.cursor = 'pointer';
     historyHeader.style.userSelect = 'none';
-    
+
     const historyTitle = document.createElement('span');
     historyTitle.textContent = `Transaction Logs (${bl.payments.length} Payments)`;
-    
+
     const arrowIcon = document.createElement('span');
     arrowIcon.style.fontSize = '0.7rem';
     arrowIcon.style.transition = 'transform 0.2s';
     arrowIcon.textContent = '▼';
-    
+
     historyHeader.appendChild(historyTitle);
     historyHeader.appendChild(arrowIcon);
-    
+
     const historyList = document.createElement('div');
     historyList.style.display = 'none';
     historyList.style.flexDirection = 'column';
     historyList.style.gap = '6px';
     historyList.style.marginTop = '8px';
-    
+
     if (bl.payments.length === 0) {
       const noPayments = document.createElement('div');
       noPayments.style.fontSize = '0.75rem';
@@ -3444,31 +3808,31 @@ function renderBorrowLent() {
         item.style.padding = '4px 8px';
         item.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
         item.style.borderRadius = '4px';
-        
+
         const left = document.createElement('span');
         const amtBold = document.createElement('strong');
         amtBold.textContent = formatCurrency(p.amount);
         left.appendChild(amtBold);
         left.appendChild(document.createTextNode(` - ${p.note}`));
-        
+
         const right = document.createElement('span');
         right.textContent = new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-        
+
         item.appendChild(left);
         item.appendChild(right);
         historyList.appendChild(item);
       });
     }
-    
+
     historyHeader.addEventListener('click', () => {
       const isVisible = historyList.style.display === 'flex';
       historyList.style.display = isVisible ? 'none' : 'flex';
       arrowIcon.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
     });
-    
+
     historyWrapper.appendChild(historyHeader);
     historyWrapper.appendChild(historyList);
-    
+
     if (bl.notes) {
       const notesDiv = document.createElement('div');
       notesDiv.style.fontSize = '0.75rem';
@@ -3478,7 +3842,7 @@ function renderBorrowLent() {
       notesDiv.textContent = `Note: ${bl.notes}`;
       card.appendChild(notesDiv);
     }
-    
+
     card.appendChild(historyWrapper);
     container.appendChild(card);
   });
@@ -3504,29 +3868,46 @@ function formatMonthShort(monthStr) {
 
 function showCustomTooltip(event, title, label1, val1, label2, val2, label3, val3) {
   const tooltip = document.getElementById('chart-tooltip');
+  if (!document.getElementById('chart-tooltip-title')) {
+    tooltip.innerHTML = `
+      <div id="chart-tooltip-title" class="chart-tooltip-title">Category</div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-1">Invested:</span>
+        <span id="chart-tooltip-invested" class="chart-tooltip-value">₹0</span>
+      </div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-2">Current:</span>
+        <span id="chart-tooltip-current" class="chart-tooltip-value">₹0</span>
+      </div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-3">P&amp;L:</span>
+        <span id="chart-tooltip-pl" class="chart-tooltip-value">₹0 (+0%)</span>
+      </div>
+    `;
+  }
   const tTitle = document.getElementById('chart-tooltip-title');
   const tInvested = document.getElementById('chart-tooltip-invested');
   const tCurrent = document.getElementById('chart-tooltip-current');
   const tPl = document.getElementById('chart-tooltip-pl');
-  
+
   const l1 = document.getElementById('chart-tooltip-label-1');
   const l2 = document.getElementById('chart-tooltip-label-2');
   const l3 = document.getElementById('chart-tooltip-label-3');
   if (l1) l1.textContent = label1;
   if (l2) l2.textContent = label2;
   if (l3) l3.textContent = label3;
-  
+
   tTitle.textContent = title;
   tInvested.textContent = val1;
   tCurrent.textContent = val2;
   tPl.textContent = val3;
   tPl.className = 'chart-tooltip-value';
-  
+
   const container = document.querySelector('.main-wrapper');
   const rect = container.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-  
+
   tooltip.style.left = x + 'px';
   tooltip.style.top = (y - 12) + 'px';
   tooltip.style.opacity = '1';
@@ -3535,13 +3916,13 @@ function showCustomTooltip(event, title, label1, val1, label2, val2, label3, val
 function openSalaryModal(sObj = null) {
   const overlay = document.getElementById('salary-modal');
   const titleText = document.getElementById('salary-modal-title-text');
-  
+
   const inputId = document.getElementById('input-salary-id');
   const inputMonth = document.getElementById('input-salary-month');
   const inputInhand = document.getElementById('input-salary-inhand');
   const inputDeduction = document.getElementById('input-salary-deduction');
   const inputNotes = document.getElementById('input-salary-notes');
-  
+
   if (sObj) {
     titleText.textContent = 'Edit Salary Entry';
     inputId.value = sObj.id;
@@ -3573,12 +3954,12 @@ function saveSalaryForm() {
   const inhand = Number(document.getElementById('input-salary-inhand').value);
   const deduction = Number(document.getElementById('input-salary-deduction').value);
   const notes = document.getElementById('input-salary-notes').value;
-  
+
   if (!month) {
     alert('Please select a month!');
     return;
   }
-  
+
   if (id) {
     const idx = salaries.findIndex(s => s.id === id);
     if (idx !== -1) {
@@ -3610,7 +3991,7 @@ function saveSalaryForm() {
       });
     }
   }
-  
+
   saveToStorage();
   closeSalaryModal();
   renderSalaries();
@@ -3627,37 +4008,37 @@ function deleteSalary(id) {
 function renderSalaries() {
   const container = document.getElementById('salary-list-container');
   clearContainer(container);
-  
+
   let totalGross = 0;
   let totalInhand = 0;
   let totalDeductions = 0;
-  
+
   salaries.forEach(s => {
     totalInhand += Number(s.inhand);
     totalDeductions += Number(s.deduction);
     totalGross += (Number(s.inhand) + Number(s.deduction));
   });
-  
+
   const count = salaries.length;
   const avgInhand = count > 0 ? (totalInhand / count) : 0;
-  
+
   document.getElementById('val-total-gross-salary').textContent = formatCurrency(totalGross);
   document.getElementById('val-total-inhand-salary').textContent = formatCurrency(totalInhand);
   document.getElementById('val-total-deductions-salary').textContent = formatCurrency(totalDeductions);
   document.getElementById('val-avg-inhand-salary').textContent = formatCurrency(avgInhand);
-  
+
   const filtered = salaries.filter(s => {
     const monthLabel = formatMonthLabel(s.month).toLowerCase();
     const notesMatch = (s.notes || '').toLowerCase().includes(searchQuerySalaries.toLowerCase());
     return monthLabel.includes(searchQuerySalaries.toLowerCase()) || notesMatch;
   });
-  
+
   filtered.sort((a, b) => b.month.localeCompare(a.month));
-  
+
   if (filtered.length === 0) {
     const emptyState = document.createElement('div');
     emptyState.classList.add('empty-state');
-    
+
     const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     icon.setAttribute('viewBox', '0 0 24 24');
     icon.setAttribute('fill', 'none');
@@ -3669,44 +4050,44 @@ function renderSalaries() {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6');
     icon.appendChild(path);
-    
+
     const title = document.createElement('h4');
     title.classList.add('empty-title');
     title.textContent = 'No salary entries found';
-    
+
     const desc = document.createElement('p');
     desc.classList.add('empty-desc');
-    desc.textContent = salaries.length === 0 
+    desc.textContent = salaries.length === 0
       ? 'Start tracking your monthly credits and deductions by clicking "Add Salary Entry".'
       : 'No active salary records match your search.';
-      
+
     emptyState.appendChild(icon);
     emptyState.appendChild(title);
     emptyState.appendChild(desc);
-    
+
     container.appendChild(emptyState);
-    
+
     // Clear chart too
     const chartContainer = document.getElementById('salary-chart-container');
     clearContainer(chartContainer);
     return;
   }
-  
+
   filtered.forEach(s => {
     const gross = s.inhand + s.deduction;
     const inhandPct = gross > 0 ? (s.inhand / gross) * 100 : 0;
-    
+
     const card = document.createElement('div');
     card.classList.add('investment-card');
-    
+
     const colMain = document.createElement('div');
     colMain.classList.add('asset-main-info');
-    
+
     const monthText = document.createElement('span');
     monthText.classList.add('asset-name');
     monthText.textContent = formatMonthLabel(s.month);
     colMain.appendChild(monthText);
-    
+
     if (s.notes) {
       const noteText = document.createElement('span');
       noteText.style.fontSize = '0.75rem';
@@ -3716,7 +4097,7 @@ function renderSalaries() {
       noteText.textContent = s.notes;
       colMain.appendChild(noteText);
     }
-    
+
     const colGross = document.createElement('div');
     colGross.classList.add('asset-data-col');
     const lblGross = document.createElement('span');
@@ -3727,7 +4108,7 @@ function renderSalaries() {
     valGross.textContent = formatCurrency(gross);
     colGross.appendChild(lblGross);
     colGross.appendChild(valGross);
-    
+
     const colInhand = document.createElement('div');
     colInhand.classList.add('asset-data-col');
     const lblInhand = document.createElement('span');
@@ -3739,7 +4120,7 @@ function renderSalaries() {
     valInhand.textContent = formatCurrency(s.inhand);
     colInhand.appendChild(lblInhand);
     colInhand.appendChild(valInhand);
-    
+
     const colDed = document.createElement('div');
     colDed.classList.add('asset-data-col');
     const lblDed = document.createElement('span');
@@ -3751,10 +4132,10 @@ function renderSalaries() {
     valDed.textContent = formatCurrency(s.deduction);
     colDed.appendChild(lblDed);
     colDed.appendChild(valDed);
-    
+
     const colActions = document.createElement('div');
     colActions.classList.add('card-actions');
-    
+
     const btnEdit = document.createElement('button');
     btnEdit.className = 'icon-btn';
     btnEdit.setAttribute('aria-label', 'Edit Salary Entry');
@@ -3770,7 +4151,7 @@ function renderSalaries() {
     editSvg.appendChild(editPath);
     btnEdit.appendChild(editSvg);
     btnEdit.addEventListener('click', () => openSalaryModal(s));
-    
+
     const btnDelete = document.createElement('button');
     btnDelete.className = 'icon-btn';
     btnDelete.setAttribute('aria-label', 'Delete Salary Entry');
@@ -3787,44 +4168,44 @@ function renderSalaries() {
     deleteSvg.appendChild(deletePath);
     btnDelete.appendChild(deleteSvg);
     btnDelete.addEventListener('click', () => deleteSalary(s.id));
-    
+
     colActions.appendChild(btnEdit);
     colActions.appendChild(btnDelete);
-    
+
     card.appendChild(colMain);
     card.appendChild(colGross);
     card.appendChild(colInhand);
     card.appendChild(colDed);
     card.appendChild(colActions);
-    
+
     // Progress/Ratio Bar Row
     const progressRow = document.createElement('div');
     progressRow.classList.add('loan-progress-row');
-    
+
     const progressTextRow = document.createElement('div');
     progressTextRow.classList.add('loan-progress-text-row');
-    
+
     const progressLabel = document.createElement('span');
     progressLabel.classList.add('loan-progress-label');
     progressLabel.textContent = `Ratio: In-hand ${inhandPct.toFixed(0)}% vs. Deductions ${(100 - inhandPct).toFixed(0)}%`;
     progressTextRow.appendChild(progressLabel);
-    
+
     const progressTrack = document.createElement('div');
     progressTrack.classList.add('loan-progress-track');
-    
+
     const progressFill = document.createElement('div');
     progressFill.classList.add('loan-progress-fill');
     progressFill.style.width = `${inhandPct}%`;
     progressFill.style.background = 'var(--grad-emerald)';
-    
+
     progressTrack.appendChild(progressFill);
     progressRow.appendChild(progressTextRow);
     progressRow.appendChild(progressTrack);
-    
+
     card.appendChild(progressRow);
     container.appendChild(card);
   });
-  
+
   // Render dual line chart
   renderSalaryChart(salaries);
 }
@@ -3832,7 +4213,7 @@ function renderSalaries() {
 function renderSalaryChart(data) {
   const container = document.getElementById('salary-chart-container');
   clearContainer(container);
-  
+
   if (data.length === 0) {
     const emptyMsg = document.createElement('div');
     emptyMsg.textContent = 'No salary chart data available.';
@@ -3840,23 +4221,26 @@ function renderSalaryChart(data) {
     container.appendChild(emptyMsg);
     return;
   }
-  
+
   // Sort oldest first for linear time progression
   const chartData = [...data].sort((a, b) => a.month.localeCompare(b.month));
-  
-  const svgWidth = 740;
-  const svgHeight = 280;
-  const margin = { top: 20, right: 30, bottom: 40, left: 70 };
+
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 480 : 740;
+  const svgHeight = isMobile ? 240 : 280;
+  const margin = isMobile
+    ? { top: 15, right: 10, bottom: 30, left: 45 }
+    : { top: 20, right: 30, bottom: 40, left: 70 };
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
-  
+
   const svg = createSVGElement('svg');
   svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
   svg.classList.add('svg-chart');
-  
+
   // Custom Area Fill Gradients
   const defs = createSVGElement('defs');
-  
+
   const inhandGrad = createSVGElement('linearGradient');
   inhandGrad.setAttribute('id', 'grad-inhand-area');
   inhandGrad.setAttribute('x1', '0%'); inhandGrad.setAttribute('y1', '0%');
@@ -3865,7 +4249,7 @@ function renderSalaryChart(data) {
   const ihStop2 = createSVGElement('stop'); ihStop2.setAttribute('offset', '100%'); ihStop2.setAttribute('stop-color', '#10b981'); ihStop2.setAttribute('stop-opacity', '0.00');
   inhandGrad.appendChild(ihStop1); inhandGrad.appendChild(ihStop2);
   defs.appendChild(inhandGrad);
-  
+
   const dedGrad = createSVGElement('linearGradient');
   dedGrad.setAttribute('id', 'grad-ded-area');
   dedGrad.setAttribute('x1', '0%'); dedGrad.setAttribute('y1', '0%');
@@ -3874,25 +4258,25 @@ function renderSalaryChart(data) {
   const dedStop2 = createSVGElement('stop'); dedStop2.setAttribute('offset', '100%'); dedStop2.setAttribute('stop-color', '#f43f5e'); dedStop2.setAttribute('stop-opacity', '0.00');
   dedGrad.appendChild(dedStop1); dedGrad.appendChild(dedStop2);
   defs.appendChild(dedGrad);
-  
+
   svg.appendChild(defs);
-  
+
   // Find maximum values for Y axis scaling
   let maxVal = 0;
   chartData.forEach(s => {
     if (s.inhand > maxVal) maxVal = s.inhand;
-    if (s.dedRules > maxVal) maxVal = s.deduction; // Wait, s.dedRules is a typo, it should be s.deduction
+    if (s.dedRules > maxVal) maxVal = s.dedRules;
     if (s.deduction > maxVal) maxVal = s.deduction;
   });
   maxVal = Math.max(10000, maxVal * 1.1); // Add a 10% safety margin and enforce minimum Y-bound
-  
+
   // Draw Y grid lines and labels
   const ticks = 4;
   for (let i = 0; i <= ticks; i++) {
     const ratio = i / ticks;
     const yVal = maxVal * ratio;
     const y = margin.top + chartHeight - (ratio * chartHeight);
-    
+
     if (i > 0) {
       const line = createSVGElement('line');
       line.setAttribute('x1', margin.left.toString());
@@ -3902,13 +4286,13 @@ function renderSalaryChart(data) {
       line.classList.add('chart-grid-line');
       svg.appendChild(line);
     }
-    
+
     const text = createSVGElement('text');
     text.setAttribute('x', (margin.left - 10).toString());
     text.setAttribute('y', (y + 4).toString());
     text.setAttribute('text-anchor', 'end');
     text.classList.add('chart-axis-text');
-    
+
     let label = '';
     if (yVal >= 100000) {
       label = '₹' + (yVal / 100000).toFixed(1) + 'L';
@@ -3920,33 +4304,33 @@ function renderSalaryChart(data) {
     text.textContent = label;
     svg.appendChild(text);
   }
-  
+
   const pointsCount = chartData.length;
-  
+
   // Draw X axis grid and labels
   chartData.forEach((s, idx) => {
     const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
     const x = margin.left + (rx * chartWidth);
-    
+
     // Label X (limit to maximum 6 labels for clean aesthetic spacing)
     const labelStep = Math.max(1, Math.ceil(pointsCount / 6));
     if (idx % labelStep === 0) {
       const text = createSVGElement('text');
       text.setAttribute('x', x.toString());
-      text.setAttribute('y', (margin.top + chartHeight + 20).toString());
+      text.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
       text.setAttribute('text-anchor', 'middle');
       text.classList.add('chart-axis-text');
       text.textContent = formatMonthShort(s.month);
       svg.appendChild(text);
     }
   });
-  
+
   // Coordinate scaling logic
   const scalePoint = (s, idx) => {
     const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
     const ryInhand = s.inhand / maxVal;
     const ryDed = s.deduction / maxVal;
-    
+
     return {
       x: margin.left + (rx * chartWidth),
       yInhand: margin.top + chartHeight - (ryInhand * chartHeight),
@@ -3957,32 +4341,32 @@ function renderSalaryChart(data) {
       notes: s.notes
     };
   };
-  
+
   const mapped = chartData.map(scalePoint);
-  
+
   if (pointsCount > 1) {
     // Area fill under Inhand
-    const areaPathInhand = `M ${mapped[0].x} ${margin.top + chartHeight} ` + 
-                         mapped.map(p => `L ${p.x} ${p.yInhand}`).join(' ') + 
-                         ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
+    const areaPathInhand = `M ${mapped[0].x} ${margin.top + chartHeight} ` +
+      mapped.map(p => `L ${p.x} ${p.yInhand}`).join(' ') +
+      ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
     const areaInhand = createSVGElement('path');
     areaInhand.setAttribute('d', areaPathInhand);
     areaInhand.setAttribute('fill', 'url(#grad-inhand-area)');
     svg.appendChild(areaInhand);
-    
+
     // Area fill under Deductions
-    const areaPathDed = `M ${mapped[0].x} ${margin.top + chartHeight} ` + 
-                       mapped.map(p => `L ${p.x} ${p.yDed}`).join(' ') + 
-                       ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
+    const areaPathDed = `M ${mapped[0].x} ${margin.top + chartHeight} ` +
+      mapped.map(p => `L ${p.x} ${p.yDed}`).join(' ') +
+      ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
     const areaDed = createSVGElement('path');
     areaDed.setAttribute('d', areaPathDed);
     areaDed.setAttribute('fill', 'url(#grad-ded-area)');
     svg.appendChild(areaDed);
-    
+
     // Polyline coordinates
     const polylineStrInhand = mapped.map(p => `${p.x},${p.yInhand}`).join(' ');
     const polylineStrDed = mapped.map(p => `${p.x},${p.yDed}`).join(' ');
-    
+
     // Draw In-hand Line (Emerald)
     const lineInhand = createSVGElement('polyline');
     lineInhand.setAttribute('points', polylineStrInhand);
@@ -3990,7 +4374,7 @@ function renderSalaryChart(data) {
     lineInhand.setAttribute('stroke', '#10b981');
     lineInhand.setAttribute('stroke-width', '3');
     svg.appendChild(lineInhand);
-    
+
     // Draw Deductions Line (Rose)
     const lineDed = createSVGElement('polyline');
     lineDed.setAttribute('points', polylineStrDed);
@@ -3999,7 +4383,7 @@ function renderSalaryChart(data) {
     lineDed.setAttribute('stroke-width', '3');
     svg.appendChild(lineDed);
   }
-  
+
   // Draw points/dots and tooltips
   mapped.forEach(p => {
     // In-hand Point
@@ -4012,22 +4396,22 @@ function renderSalaryChart(data) {
     dotInhand.setAttribute('stroke-width', '2');
     dotInhand.style.cursor = 'pointer';
     dotInhand.style.transition = 'transform 0.15s ease';
-    
+
     dotInhand.addEventListener('mouseenter', () => dotInhand.setAttribute('r', '7'));
     dotInhand.addEventListener('mouseleave', () => {
       dotInhand.setAttribute('r', '5');
       hideTooltip();
     });
-    
+
     dotInhand.addEventListener('mousemove', (e) => {
       const title = formatMonthLabel(p.month);
       const gross = p.inhand + p.deduction;
       const ratio = gross > 0 ? ((p.deduction / gross) * 100).toFixed(0) + '%' : '0%';
       showCustomTooltip(e, title, 'In-hand Credited:', formatCurrency(p.inhand), 'Deductions:', formatCurrency(p.deduction), `Gross Income: ${formatCurrency(gross)} (${ratio} deductions)`);
     });
-    
+
     svg.appendChild(dotInhand);
-    
+
     // Deduction Point
     const dotDed = createSVGElement('circle');
     dotDed.setAttribute('cx', p.x.toString());
@@ -4038,23 +4422,23 @@ function renderSalaryChart(data) {
     dotDed.setAttribute('stroke-width', '2');
     dotDed.style.cursor = 'pointer';
     dotDed.style.transition = 'transform 0.15s ease';
-    
+
     dotDed.addEventListener('mouseenter', () => dotDed.setAttribute('r', '7'));
     dotDed.addEventListener('mouseleave', () => {
       dotDed.setAttribute('r', '5');
       hideTooltip();
     });
-    
+
     dotDed.addEventListener('mousemove', (e) => {
       const title = formatMonthLabel(p.month);
       const gross = p.inhand + p.deduction;
       const ratio = gross > 0 ? ((p.deduction / gross) * 100).toFixed(0) + '%' : '0%';
       showCustomTooltip(e, title, 'In-hand Credited:', formatCurrency(p.inhand), 'Deductions:', formatCurrency(p.deduction), `Gross Income: ${formatCurrency(gross)} (${ratio} deductions)`);
     });
-    
+
     svg.appendChild(dotDed);
   });
-  
+
   container.appendChild(svg);
 }
 
@@ -4062,24 +4446,107 @@ function initCalculatorSliders() {
   const sSip = document.getElementById('slider-sip');
   const sYears = document.getElementById('slider-years');
   const sRor = document.getElementById('slider-ror');
-  
+
   const handleUpdate = () => {
     renderProjections();
   };
-  
+
   sSip.addEventListener('input', handleUpdate);
   sYears.addEventListener('input', handleUpdate);
   sRor.addEventListener('input', handleUpdate);
+}
+
+function initMobileSidebar() {
+  const sidebar = document.getElementById('app-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const toggleBtn = document.getElementById('btn-sidebar-toggle');
+  const closeBtn = document.getElementById('btn-sidebar-close');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  const openSidebar = () => {
+    if (sidebar) sidebar.classList.add('sidebar-open');
+    if (overlay) overlay.classList.add('active');
+  };
+
+  const closeSidebar = () => {
+    if (sidebar) sidebar.classList.remove('sidebar-open');
+    if (overlay) overlay.classList.remove('active');
+  };
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', openSidebar);
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeSidebar);
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', closeSidebar);
+  }
+
+  // Auto-close sidebar on mobile when a navigation link is clicked
+  navLinks.forEach(link => {
+    link.addEventListener('click', closeSidebar);
+  });
+}
+
+// Debounced resize event listener to re-render charts when screen changes dimensions
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    const activeTabLink = document.querySelector('.nav-link.active');
+    const activeTabName = activeTabLink ? activeTabLink.getAttribute('data-tab') : 'dashboard';
+
+    if (activeTabName === 'dashboard') {
+      const totalPortfolioVal = investments.reduce((sum, inv) => sum + (Number(inv.currentAmount) || 0), 0);
+      if (totalPortfolioVal > 0) {
+        renderAllocationChart(totalPortfolioVal);
+        renderPerformanceChart();
+        renderDashboardHistoryChart(getPortfolioHistory());
+        renderNetWorthChart(getNetWorthHistory());
+      }
+    } else if (activeTabName === 'projections') {
+      renderProjections();
+    } else if (activeTabName === 'salary') {
+      renderSalaryChart(salaries);
+    }
+  }, 150);
+});
+
+function initDashboardSectionToggles() {
+  const headers = document.querySelectorAll('.dashboard-section .section-header');
+  headers.forEach(header => {
+    header.addEventListener('click', () => {
+      const parent = header.closest('.dashboard-section');
+      if (parent) {
+        parent.classList.toggle('collapsed');
+      }
+    });
+  });
+
+  const insightsHeader = document.querySelector('.insights-header');
+  if (insightsHeader) {
+    insightsHeader.addEventListener('click', () => {
+      const parent = insightsHeader.closest('.insights-card');
+      if (parent) {
+        parent.classList.toggle('collapsed');
+      }
+    });
+  }
 }
 
 // Initializer
 document.addEventListener('DOMContentLoaded', async () => {
   await loadFromStorage();
   initNavigation();
+  initMobileSidebar();
+  initDashboardSectionToggles();
   initFilterHandlers();
   initModalHandlers();
   initCalculatorSliders();
-  
+
   // Render active view
   const activeTabLink = document.querySelector('.nav-link.active');
   const activeTabName = activeTabLink ? activeTabLink.getAttribute('data-tab') : 'dashboard';
