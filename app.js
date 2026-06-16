@@ -670,11 +670,8 @@ function renderAllocationChart(totalPortfolioVal) {
   container.appendChild(svg);
 }
 
-// Generate Grouped SVG Bar Chart
-function renderPerformanceChart() {
-  const container = document.getElementById('performance-chart-container');
-  clearContainer(container);
-
+// Generate Grouped SVG Bar Chart SVG Element
+function generatePerformanceChartSVG(isMobile, isPrint = false) {
   // Calculate performance by class
   const classData = {};
   Object.keys(ASSET_CATEGORIES).forEach(key => {
@@ -692,20 +689,17 @@ function renderPerformanceChart() {
   const activeKeys = Object.keys(classData).filter(key => classData[key].invested > 0);
 
   if (activeKeys.length === 0) {
-    const emptyMsg = document.createElement('div');
-    emptyMsg.textContent = 'No performance data available.';
-    emptyMsg.style.color = 'var(--text-muted)';
-    container.appendChild(emptyMsg);
-    return;
+    return null;
   }
 
   // SVG setups
-  const isMobile = window.innerWidth < 600;
-  const svgWidth = isMobile ? 480 : 840;
-  const svgHeight = isMobile ? 240 : 280;
-  const margin = isMobile
-    ? { top: 15, right: 10, bottom: 30, left: 45 }
-    : { top: 20, right: 20, bottom: 40, left: 65 };
+  const svgWidth = isPrint ? 960 : (isMobile ? 480 : 840);
+  const svgHeight = isPrint ? 260 : (isMobile ? 240 : 280);
+  const margin = isPrint
+    ? { top: 20, right: 20, bottom: 45, left: 70 }
+    : (isMobile
+      ? { top: 15, right: 10, bottom: 30, left: 45 }
+      : { top: 20, right: 20, bottom: 40, left: 65 });
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -776,11 +770,11 @@ function renderPerformanceChart() {
   // Draw bars
   const groupCount = activeKeys.length;
   const groupWidth = chartWidth / groupCount;
-  const barPadding = isMobile ? 2 : 4;
+  const barPadding = (isMobile && !isPrint) ? 2 : 4;
 
   // Cap max bar width to prevent bloated bars on wide layouts
-  let barWidth = (groupWidth - (isMobile ? 10 : 24)) / 2;
-  const maxBarWidth = isMobile ? 20 : 36;
+  let barWidth = (groupWidth - ((isMobile && !isPrint) ? 10 : 24)) / 2;
+  const maxBarWidth = (isMobile && !isPrint) ? 20 : 36;
   if (barWidth > maxBarWidth) {
     barWidth = maxBarWidth;
   }
@@ -827,18 +821,20 @@ function renderPerformanceChart() {
     rectCur.classList.add('chart-bar');
 
     // Tooltip event attachments
-    const plAmount = current - invested;
-    const plPct = invested > 0 ? (plAmount / invested) * 100 : 0;
+    if (!isPrint) {
+      const plAmount = current - invested;
+      const plPct = invested > 0 ? (plAmount / invested) * 100 : 0;
 
-    rectInv.addEventListener('mousemove', (e) => {
-      showTooltip(e, `${label} (Invested)`, invested, current, plAmount, plPct);
-    });
-    rectInv.addEventListener('mouseleave', hideTooltip);
+      rectInv.addEventListener('mousemove', (e) => {
+        showTooltip(e, `${label} (Invested)`, invested, current, plAmount, plPct);
+      });
+      rectInv.addEventListener('mouseleave', hideTooltip);
 
-    rectCur.addEventListener('mousemove', (e) => {
-      showTooltip(e, `${label} (Current)`, invested, current, plAmount, plPct);
-    });
-    rectCur.addEventListener('mouseleave', hideTooltip);
+      rectCur.addEventListener('mousemove', (e) => {
+        showTooltip(e, `${label} (Current)`, invested, current, plAmount, plPct);
+      });
+      rectCur.addEventListener('mouseleave', hideTooltip);
+    }
 
     svg.appendChild(rectInv);
     svg.appendChild(rectCur);
@@ -846,12 +842,39 @@ function renderPerformanceChart() {
     // X Label text
     const labelText = createSVGElement('text');
     labelText.setAttribute('x', (xGroupStart + barWidth + (barPadding / 2)).toString());
-    labelText.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
+    labelText.setAttribute('y', (margin.top + chartHeight + ((isMobile && !isPrint) ? 16 : 20)).toString());
     labelText.setAttribute('text-anchor', 'middle');
     labelText.classList.add('chart-axis-text');
     labelText.textContent = label;
+
+    // Apply rotation to labels if printing or if we have > 5 active asset classes to prevent overlaps
+    if (isPrint || activeKeys.length > 5) {
+      const cx_lbl = xGroupStart + barWidth + (barPadding / 2);
+      const cy_lbl = margin.top + chartHeight + ((isMobile && !isPrint) ? 16 : 20);
+      labelText.setAttribute('transform', `rotate(-12, ${cx_lbl}, ${cy_lbl})`);
+    }
+
     svg.appendChild(labelText);
   });
+
+  return svg;
+}
+
+// Generate Grouped SVG Bar Chart
+function renderPerformanceChart() {
+  const container = document.getElementById('performance-chart-container');
+  clearContainer(container);
+
+  const isMobile = window.innerWidth < 600;
+  const svg = generatePerformanceChartSVG(isMobile, false);
+
+  if (!svg) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No performance data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    container.appendChild(emptyMsg);
+    return;
+  }
 
   container.appendChild(svg);
 }
@@ -4645,6 +4668,74 @@ function generatePDFReport() {
     }
   }
 
+  // SVG Performance Bar chart HTML generation (print-optimized)
+  let performanceSvgHtml = '';
+  const perfSvg = generatePerformanceChartSVG(false, true); // isMobile = false, isPrint = true
+  if (perfSvg) {
+    perfSvg.removeAttribute('style');
+    perfSvg.style.width = '100%';
+    perfSvg.style.height = 'auto';
+    perfSvg.style.maxHeight = '230px';
+    performanceSvgHtml = perfSvg.outerHTML;
+  }
+
+  // Calculate Profit and Loss Heatmaps
+  const profits = [];
+  const losses = [];
+  investments.forEach(inv => {
+    const invAmt = Number(inv.investedAmount);
+    const curAmt = Number(inv.currentAmount);
+    if (invAmt === 0) return;
+    const diff = curAmt - invAmt;
+    const pct = (diff / invAmt) * 100;
+    if (diff > 0) {
+      profits.push({ name: inv.name, currentAmount: inv.currentAmount, diff, pct });
+    } else if (diff < 0) {
+      losses.push({ name: inv.name, currentAmount: inv.currentAmount, diff, pct });
+    }
+  });
+  profits.sort((a, b) => b.pct - a.pct);
+  losses.sort((a, b) => a.pct - b.pct);
+
+  let profitHeatmapHtml = '';
+  if (profits.length === 0) {
+    profitHeatmapHtml = '<div style="color: var(--text-muted); font-size: 0.8rem; grid-column: 1 / -1; text-align: center; padding: 20px; background-color: var(--bg-light); border-radius: 6px; border: 1px solid var(--border-color);">No profitable assets.</div>';
+  } else {
+    profits.forEach(item => {
+      const opacity = Math.min(0.85, 0.12 + (item.pct / 40) * 0.73);
+      const bg = `rgba(16, 185, 129, ${opacity})`;
+      const textCol = opacity > 0.45 ? '#ffffff' : 'var(--text-main)';
+      const pctCol = opacity > 0.45 ? '#ffffff' : 'var(--color-success)';
+      profitHeatmapHtml += `
+        <div style="background-color: ${bg}; color: ${textCol}; padding: 10px 6px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 64px; border: 1px solid rgba(16, 185, 129, 0.15); page-break-inside: avoid;">
+          <span style="font-size: 0.75rem; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">${item.name}</span>
+          <span style="font-size: 0.75rem; font-weight: 500; margin-top: 1px; display: block;">${formatCurrency(item.currentAmount)}</span>
+          <span style="font-size: 0.75rem; font-weight: 700; color: ${pctCol}; margin-top: 1px; display: block;">+${item.pct.toFixed(1)}%</span>
+        </div>
+      `;
+    });
+  }
+
+  let lossHeatmapHtml = '';
+  if (losses.length === 0) {
+    lossHeatmapHtml = '<div style="color: var(--text-muted); font-size: 0.8rem; grid-column: 1 / -1; text-align: center; padding: 20px; background-color: var(--bg-light); border-radius: 6px; border: 1px solid var(--border-color);">No assets in loss.</div>';
+  } else {
+    losses.forEach(item => {
+      const absPct = Math.abs(item.pct);
+      const opacity = Math.min(0.85, 0.12 + (absPct / 20) * 0.73);
+      const bg = `rgba(244, 63, 94, ${opacity})`;
+      const textCol = opacity > 0.45 ? '#ffffff' : 'var(--text-main)';
+      const pctCol = opacity > 0.45 ? '#ffffff' : 'var(--color-danger)';
+      lossHeatmapHtml += `
+        <div style="background-color: ${bg}; color: ${textCol}; padding: 10px 6px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 64px; border: 1px solid rgba(244, 63, 94, 0.15); page-break-inside: avoid;">
+          <span style="font-size: 0.75rem; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">${item.name}</span>
+          <span style="font-size: 0.75rem; font-weight: 500; margin-top: 1px; display: block;">${formatCurrency(item.currentAmount)}</span>
+          <span style="font-size: 0.75rem; font-weight: 700; color: ${pctCol}; margin-top: 1px; display: block;">${item.pct.toFixed(1)}%</span>
+        </div>
+      `;
+    });
+  }
+
   // Calculate Asset Class allocations
   const classTotals = {};
   investments.forEach(inv => {
@@ -4657,6 +4748,43 @@ function generatePDFReport() {
     value: classTotals[key],
     pct: summary.currentValue > 0 ? (classTotals[key] / summary.currentValue) * 100 : 0
   })).sort((a, b) => b.value - a.value);
+
+  // Calculate Wealth Diversification Score for PDF Report
+  const classCount = Object.keys(classTotals).length;
+  const totalVal = summary.currentValue;
+  let divScore = classCount * 10;
+  let maxConc = 0;
+  Object.keys(classTotals).forEach(key => {
+    if (totalVal > 0) {
+      maxConc = Math.max(maxConc, (classTotals[key] / totalVal) * 100);
+    }
+  });
+
+  if (maxConc <= 30) {
+    divScore += 40;
+  } else if (maxConc <= 45) {
+    divScore += 25;
+  } else if (maxConc <= 60) {
+    divScore += 10;
+  }
+  divScore = Math.min(100, divScore);
+
+  let ratingLabel = '';
+  let ratingColor = '';
+  let ratingDesc = '';
+  if (divScore > 80) {
+    ratingLabel = 'Highly Diversified';
+    ratingColor = '#10b981'; // Success Green
+    ratingDesc = 'Your portfolio is Highly Diversified, minimizing category-specific shocks.';
+  } else if (divScore >= 50) {
+    ratingLabel = 'Moderately Diversified';
+    ratingColor = '#f59e0b'; // Warning Amber
+    ratingDesc = 'Your portfolio is Moderately Diversified. Consider spreading new allocations.';
+  } else {
+    ratingLabel = 'Concentrated';
+    ratingColor = '#f43f5e'; // Danger Rose
+    ratingDesc = 'Your portfolio is Concentrated. High risk of volatility due to cluster holdings.';
+  }
 
   let allocationTableHtml = '';
   sortedClasses.forEach(c => {
@@ -4688,9 +4816,8 @@ function generatePDFReport() {
     totalMonthlyEMIs += Number(l.emi);
   });
 
-  // Build AI Insights List
+  // Build Insights List
   const insights = [];
-  const totalVal = summary.currentValue;
   const equityVal = (classTotals['indian-stock'] || 0) + (classTotals['us-stock'] || 0) + ((classTotals['indian-mutual-fund'] || 0) * 0.85);
   const debtVal = (classTotals['fd'] || 0) + (classTotals['bonds'] || 0) + (classTotals['epfo'] || 0) + (classTotals['savings'] || 0) + ((classTotals['indian-mutual-fund'] || 0) * 0.15);
   const goldVal = classTotals['gold'] || 0;
@@ -4765,7 +4892,6 @@ function generatePDFReport() {
     insights.push({ type: 'info', title: `Equity-to-Debt Mix: ${equityPct.toFixed(0)}:${debtPct.toFixed(0)}`, desc: `Your asset mix is ${equityPct.toFixed(0)}% equities and ${debtPct.toFixed(0)}% fixed income/debt. Ensure this fits your risk tolerance.` });
   }
 
-  const classCount = Object.keys(classTotals).length;
   if (classCount < 4) {
     insights.push({ type: 'warning', title: 'Under-diversified Portfolio', desc: `Your capital spans only ${classCount} distinct asset classes. Spreading allocations into fixed deposits, gold, or debt mutual funds can reduce volatility.` });
   } else if (classCount >= 6) {
@@ -5107,6 +5233,25 @@ function generatePDFReport() {
         .color-success { color: var(--color-success) !important; }
         .color-danger { color: var(--color-danger) !important; }
         
+        .chart-axis-text {
+          fill: var(--text-muted);
+          font-family: 'Inter', sans-serif;
+          font-size: 9px;
+        }
+        
+        .chart-grid-line {
+          stroke: var(--border-color);
+          stroke-dasharray: 4,4;
+        }
+        
+        .chart-axis-line {
+          stroke: var(--border-color);
+        }
+
+        .chart-bar {
+          transition: opacity 0.2s;
+        }
+        
         .page-break {
           page-break-before: always;
         }
@@ -5160,7 +5305,7 @@ function generatePDFReport() {
         </div>
       </section>
 
-      <div class="allocation-section">
+      <div class="allocation-section" style="page-break-inside: avoid;">
         <div class="allocation-chart-wrapper">
           ${pieChartSvgHtml || '<div style="color: var(--text-muted);">Chart Preview</div>'}
         </div>
@@ -5181,7 +5326,83 @@ function generatePDFReport() {
         </div>
       </div>
 
-      <div style="margin-top: 10px; margin-bottom: 24px;">
+      <div style="margin-top: 10px; margin-bottom: 15px; page-break-inside: avoid;">
+        <h2 class="section-title">Asset Class Performance</h2>
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; justify-content: center;">
+          ${performanceSvgHtml || '<div style="color: var(--text-muted); font-size: 0.85rem;">No performance chart available.</div>'}
+        </div>
+      </div>
+
+      <div style="margin-top: 10px; page-break-inside: avoid;">
+        <h2 class="section-title" style="margin-bottom: 6px;">Portfolio Diversification</h2>
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 16px;">
+          <div style="flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; background-color: ${ratingColor}15; border: 2.5px solid ${ratingColor}; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: ${ratingColor};">
+            ${divScore}
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 2px;">
+              Rating: <span style="color: ${ratingColor}; font-weight: 700;">${ratingLabel}</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.3;">
+              ${ratingDesc}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-break"></div>
+
+      <header class="report-header">
+        <div class="logo-area">
+          <h1>Moyeniz</h1>
+          <p>Detailed Asset Breakdown</p>
+        </div>
+        <div class="meta-area">
+          <strong>Portfolio Holdings Details</strong><br>
+          Generated: ${dateString}
+        </div>
+      </header>
+
+      <div>
+        <h2 class="section-title">Individual Holdings & Valuation</h2>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Asset Name</th>
+              <th style="text-align: left;">Category</th>
+              <th style="text-align: right;">Invested Amount</th>
+              <th style="text-align: right;">Current Value</th>
+              <th style="text-align: right;">Total Return / Gain</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${holdingsTableRowsHtml || '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No assets recorded in portfolio.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 24px; margin-bottom: 24px; page-break-inside: avoid;">
+        <h2 class="section-title">Asset Profit & Loss Heatmaps</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div>
+            <h3 style="font-size: 0.85rem; font-weight: 600; color: #10b981; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Profit Heatmap</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+              ${profitHeatmapHtml}
+            </div>
+          </div>
+          <div>
+            <h3 style="font-size: 0.85rem; font-weight: 600; color: #f43f5e; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Loss Heatmap</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+              ${lossHeatmapHtml}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      ${liabilitiesHtml}
+      ${borrowLentHtml}
+
+      <div style="margin-top: 24px; margin-bottom: 10px; page-break-inside: avoid;">
         <h2 class="section-title">Portfolio Insights & Recommendations</h2>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
           <div>
@@ -5222,40 +5443,6 @@ function generatePDFReport() {
           </div>
         </div>
       </div>
-
-      <div class="page-break"></div>
-
-      <header class="report-header">
-        <div class="logo-area">
-          <h1>Moyeniz</h1>
-          <p>Detailed Asset Breakdown</p>
-        </div>
-        <div class="meta-area">
-          <strong>Portfolio Holdings Details</strong><br>
-          Generated: ${dateString}
-        </div>
-      </header>
-
-      <div>
-        <h2 class="section-title">Individual Holdings & Valuation</h2>
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th style="text-align: left;">Asset Name</th>
-              <th style="text-align: left;">Category</th>
-              <th style="text-align: right;">Invested Amount</th>
-              <th style="text-align: right;">Current Value</th>
-              <th style="text-align: right;">Total Return / Gain</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${holdingsTableRowsHtml || '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No assets recorded in portfolio.</td></tr>'}
-          </tbody>
-        </table>
-      </div>
-
-      ${liabilitiesHtml}
-      ${borrowLentHtml}
 
       <footer class="report-footer">
         <p>This report was generated locally inside your web browser. Moyeniz does not store, transmit, or process your portfolio data on external servers.</p>
