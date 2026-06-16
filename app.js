@@ -66,21 +66,23 @@ const SUBTYPES = {
   ]
 };
 
+const relativeDate = (yearsAgo) => new Date(Date.now() - yearsAgo * 365.25 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 // Realistic Pre-populated Demo Data
 const SAMPLE_PORTFOLIO = [
-  { id: 'stock-tcs', assetClass: 'indian-stock', name: 'TCS Ltd.', subtype: 'none', investedAmount: 150000, currentAmount: 185000, lastUpdated: new Date().toISOString() },
-  { id: 'stock-hdfc', assetClass: 'indian-stock', name: 'HDFC Bank Ltd.', subtype: 'none', investedAmount: 120000, currentAmount: 115000, lastUpdated: new Date().toISOString() },
-  { id: 'mf-parag', assetClass: 'indian-mutual-fund', name: 'Parag Parikh Flexi Cap Fund', subtype: 'flexi', investedAmount: 200000, currentAmount: 265000, lastUpdated: new Date().toISOString() },
-  { id: 'mf-quant', assetClass: 'indian-mutual-fund', name: 'Quant Mid Cap Fund', subtype: 'mid', investedAmount: 80000, currentAmount: 105000, lastUpdated: new Date().toISOString() },
-  { id: 'mf-nippon', assetClass: 'indian-mutual-fund', name: 'Nippon India Small Cap Fund', subtype: 'small', investedAmount: 50000, currentAmount: 72000, lastUpdated: new Date().toISOString() },
-  { id: 'us-aapl', assetClass: 'us-stock', name: 'Apple Inc. (AAPL)', subtype: 'none', investedAmount: 75000, currentAmount: 92000, lastUpdated: new Date().toISOString() },
-  { id: 'us-tsla', assetClass: 'us-stock', name: 'Tesla Inc. (TSLA)', subtype: 'none', investedAmount: 50000, currentAmount: 45000, lastUpdated: new Date().toISOString() },
-  { id: 'fd-sbi', assetClass: 'fd', name: 'SBI Fixed Deposit @ 6.8%', subtype: 'none', investedAmount: 300000, currentAmount: 318000, lastUpdated: new Date().toISOString() },
-  { id: 'gold-sgb', assetClass: 'gold', name: 'Sovereign Gold Bonds 2021', subtype: 'physical', investedAmount: 100000, currentAmount: 135000, lastUpdated: new Date().toISOString() },
-  { id: 'gold-bees', assetClass: 'gold', name: 'Nippon Gold ETF BeES', subtype: 'etf', investedAmount: 50000, currentAmount: 62000, lastUpdated: new Date().toISOString() },
-  { id: 'bonds-nhai', assetClass: 'bonds', name: 'NHAI Tax Free Bonds', subtype: 'none', investedAmount: 100000, currentAmount: 105000, lastUpdated: new Date().toISOString() },
-  { id: 'epf-acct', assetClass: 'epfo', name: 'EPFO Employee Share', subtype: 'none', investedAmount: 250000, currentAmount: 285000, lastUpdated: new Date().toISOString() },
-  { id: 'savings-icici', assetClass: 'savings', name: 'ICICI Savings Account Balance', subtype: 'none', investedAmount: 120000, currentAmount: 120000, lastUpdated: new Date().toISOString() }
+  { id: 'stock-tcs', assetClass: 'indian-stock', name: 'TCS Ltd.', subtype: 'none', investedAmount: 150000, currentAmount: 185000, purchaseDate: relativeDate(2.2), lastUpdated: new Date().toISOString() },
+  { id: 'stock-hdfc', assetClass: 'indian-stock', name: 'HDFC Bank Ltd.', subtype: 'none', investedAmount: 120000, currentAmount: 115000, purchaseDate: relativeDate(1.5), lastUpdated: new Date().toISOString() },
+  { id: 'mf-parag', assetClass: 'indian-mutual-fund', name: 'Parag Parikh Flexi Cap Fund', subtype: 'flexi', investedAmount: 200000, currentAmount: 265000, purchaseDate: relativeDate(3.0), lastUpdated: new Date().toISOString() },
+  { id: 'mf-quant', assetClass: 'indian-mutual-fund', name: 'Quant Mid Cap Fund', subtype: 'mid', investedAmount: 80000, currentAmount: 105000, purchaseDate: relativeDate(1.0), lastUpdated: new Date().toISOString() },
+  { id: 'mf-nippon', assetClass: 'indian-mutual-fund', name: 'Nippon India Small Cap Fund', subtype: 'small', investedAmount: 50000, currentAmount: 72000, purchaseDate: relativeDate(0.8), lastUpdated: new Date().toISOString() },
+  { id: 'us-aapl', assetClass: 'us-stock', name: 'Apple Inc. (AAPL)', subtype: 'none', investedAmount: 75000, currentAmount: 92000, purchaseDate: relativeDate(1.2), lastUpdated: new Date().toISOString() },
+  { id: 'us-tsla', assetClass: 'us-stock', name: 'Tesla Inc. (TSLA)', subtype: 'none', investedAmount: 50000, currentAmount: 45000, purchaseDate: relativeDate(0.6), lastUpdated: new Date().toISOString() },
+  { id: 'fd-sbi', assetClass: 'fd', name: 'SBI Fixed Deposit @ 6.8%', subtype: 'none', investedAmount: 300000, currentAmount: 318000, purchaseDate: relativeDate(0.9), lastUpdated: new Date().toISOString() },
+  { id: 'gold-sgb', assetClass: 'gold', name: 'Sovereign Gold Bonds 2021', subtype: 'physical', investedAmount: 100000, currentAmount: 135000, purchaseDate: relativeDate(2.5), lastUpdated: new Date().toISOString() },
+  { id: 'gold-bees', assetClass: 'gold', name: 'Nippon Gold ETF BeES', subtype: 'etf', investedAmount: 50000, currentAmount: 62000, purchaseDate: relativeDate(1.1), lastUpdated: new Date().toISOString() },
+  { id: 'bonds-nhai', assetClass: 'bonds', name: 'NHAI Tax Free Bonds', subtype: 'none', investedAmount: 100000, currentAmount: 105000, purchaseDate: relativeDate(1.8), lastUpdated: new Date().toISOString() },
+  { id: 'epf-acct', assetClass: 'epfo', name: 'EPFO Employee Share', subtype: 'none', investedAmount: 250000, currentAmount: 285000, purchaseDate: relativeDate(2.0), lastUpdated: new Date().toISOString() },
+  { id: 'savings-icici', assetClass: 'savings', name: 'ICICI Savings Account Balance', subtype: 'none', investedAmount: 120000, currentAmount: 120000, purchaseDate: relativeDate(0.5), lastUpdated: new Date().toISOString() }
 ];
 
 // Helper Functions for Safe Element Creation
@@ -391,33 +393,41 @@ function renderDashboard() {
     returnIcon.appendChild(dash);
   }
   
-  // Calculate weighted approximate CAGR based on asset allocations
-  // Custom estimates based on average durations
-  let weightedRor = 0;
-  if (summary.currentValue > 0) {
-    let equitySum = 0;
-    let debtSum = 0;
-    let goldSum = 0;
+  // Calculate dynamic Portfolio CAGR based on actual invested values, current values and holding periods
+  let portfolioCagr = 0;
+  if (summary.totalInvested > 0 && summary.currentValue > 0) {
+    let weightedCagrSum = 0;
+    let totalCurrentForCagr = 0;
+    const now = new Date();
+    
     investments.forEach(inv => {
-      const cur = Number(inv.currentAmount);
-      if (inv.assetClass === 'indian-stock' || inv.assetClass === 'us-stock' || (inv.assetClass === 'indian-mutual-fund' && inv.subtype !== 'flexi')) {
-        equitySum += cur;
-      } else if (inv.assetClass === 'indian-mutual-fund' && inv.subtype === 'flexi') {
-        equitySum += cur * 0.7;
-        debtSum += cur * 0.3;
-      } else if (inv.assetClass === 'gold') {
-        goldSum += cur;
-      } else {
-        debtSum += cur;
+      const invested = Number(inv.investedAmount);
+      const current = Number(inv.currentAmount);
+      if (invested > 0) {
+        // Enforce fallback date if purchaseDate is missing
+        const purchase = inv.purchaseDate ? new Date(inv.purchaseDate) : (inv.lastUpdated ? new Date(inv.lastUpdated) : now);
+        let durationInYears = (now - purchase) / (1000 * 60 * 60 * 24 * 365.25);
+        // Enforce minimum holding period of 1 month (0.083 years) to prevent extreme annualized returns on brand new entries
+        durationInYears = Math.max(0.083, durationInYears);
+        
+        // Compute individual CAGR: (current / invested) ^ (1 / years) - 1
+        const cagr = Math.pow(current / invested, 1 / durationInYears) - 1;
+        
+        weightedCagrSum += (cagr * current);
+        totalCurrentForCagr += current;
       }
     });
     
-    // Average return expectations: Equity 14%, Gold 8%, Debt 6.8%
-    const totalVal = summary.currentValue;
-    weightedRor = ((equitySum * 14.2) + (goldSum * 8.5) + (debtSum * 6.9)) / totalVal;
+    if (totalCurrentForCagr > 0) {
+      portfolioCagr = (weightedCagrSum / totalCurrentForCagr) * 100;
+    }
   }
   
-  document.getElementById('val-portfolio-cagr').textContent = weightedRor > 0 ? weightedRor.toFixed(1) + '%' : '0.0%';
+  // Render calculated XIRR (CAGR Equivalent)
+  const cagrEl = document.getElementById('val-portfolio-cagr');
+  if (cagrEl) {
+    cagrEl.textContent = (portfolioCagr >= 0 ? '+' : '') + portfolioCagr.toFixed(1) + '%';
+  }
   
   // Render Allocation Chart
   renderAllocationChart(summary.currentValue);
@@ -620,9 +630,12 @@ function renderPerformanceChart() {
   }
   
   // SVG setups
-  const svgWidth = 840;
-  const svgHeight = 280;
-  const margin = { top: 20, right: 20, bottom: 40, left: 65 };
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 480 : 840;
+  const svgHeight = isMobile ? 240 : 280;
+  const margin = isMobile 
+    ? { top: 15, right: 10, bottom: 30, left: 45 } 
+    : { top: 20, right: 20, bottom: 40, left: 65 };
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
   
@@ -693,11 +706,11 @@ function renderPerformanceChart() {
   // Draw bars
   const groupCount = activeKeys.length;
   const groupWidth = chartWidth / groupCount;
-  const barPadding = 4;
+  const barPadding = isMobile ? 2 : 4;
   
   // Cap max bar width to prevent bloated bars on wide layouts
-  let barWidth = (groupWidth - 24) / 2;
-  const maxBarWidth = 36;
+  let barWidth = (groupWidth - (isMobile ? 10 : 24)) / 2;
+  const maxBarWidth = isMobile ? 20 : 36;
   if (barWidth > maxBarWidth) {
     barWidth = maxBarWidth;
   }
@@ -763,7 +776,7 @@ function renderPerformanceChart() {
     // X Label text
     const labelText = createSVGElement('text');
     labelText.setAttribute('x', (xGroupStart + barWidth + (barPadding / 2)).toString());
-    labelText.setAttribute('y', (margin.top + chartHeight + 20).toString());
+    labelText.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
     labelText.setAttribute('text-anchor', 'middle');
     labelText.classList.add('chart-axis-text');
     labelText.textContent = label;
@@ -847,9 +860,12 @@ function renderDashboardHistoryChart(historyData) {
     return;
   }
   
-  const svgWidth = 840;
-  const svgHeight = 280;
-  const margin = { top: 20, right: 20, bottom: 40, left: 75 };
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 480 : 840;
+  const svgHeight = isMobile ? 240 : 280;
+  const margin = isMobile 
+    ? { top: 15, right: 10, bottom: 30, left: 45 } 
+    : { top: 20, right: 20, bottom: 40, left: 75 };
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
   
@@ -945,7 +961,7 @@ function renderDashboardHistoryChart(historyData) {
     
     const text = createSVGElement('text');
     text.setAttribute('x', x.toString());
-    text.setAttribute('y', (margin.top + chartHeight + 20).toString());
+    text.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
     text.setAttribute('text-anchor', 'middle');
     text.classList.add('chart-axis-text');
     text.textContent = d.monthLabel;
@@ -1800,6 +1816,7 @@ function openModal(invObj = null) {
   const inputName = document.getElementById('input-name');
   const inputInvested = document.getElementById('input-invested-amount');
   const inputCurrent = document.getElementById('input-current-amount');
+  const inputPurchaseDate = document.getElementById('input-purchase-date');
   
   if (invObj) {
     titleText.textContent = 'Edit Investment';
@@ -1815,6 +1832,7 @@ function openModal(invObj = null) {
     inputName.value = invObj.name;
     inputInvested.value = invObj.investedAmount;
     inputCurrent.value = invObj.currentAmount;
+    inputPurchaseDate.value = invObj.purchaseDate || new Date().toISOString().slice(0, 10);
   } else {
     titleText.textContent = 'Add Investment';
     inputId.value = '';
@@ -1823,6 +1841,7 @@ function openModal(invObj = null) {
     inputName.value = '';
     inputInvested.value = '';
     inputCurrent.value = '';
+    inputPurchaseDate.value = new Date().toISOString().slice(0, 10);
   }
   
   overlay.classList.add('active-modal');
@@ -2188,6 +2207,7 @@ function saveInvestmentForm() {
   const name = document.getElementById('input-name').value;
   const investedAmount = Number(document.getElementById('input-invested-amount').value);
   const currentAmount = Number(document.getElementById('input-current-amount').value);
+  const purchaseDate = document.getElementById('input-purchase-date').value || new Date().toISOString().slice(0, 10);
   
   if (id) {
     // Edit mode
@@ -2200,6 +2220,7 @@ function saveInvestmentForm() {
         name,
         investedAmount,
         currentAmount,
+        purchaseDate,
         lastUpdated: new Date().toISOString()
       };
     }
@@ -2213,6 +2234,7 @@ function saveInvestmentForm() {
       name,
       investedAmount,
       currentAmount,
+      purchaseDate,
       lastUpdated: new Date().toISOString()
     });
   }
@@ -2285,9 +2307,12 @@ function renderProjectionLineChart(projData, investedData, maxYears) {
   const container = document.getElementById('projection-chart-container');
   clearContainer(container);
   
-  const svgWidth = 600;
-  const svgHeight = 280;
-  const margin = { top: 20, right: 20, bottom: 40, left: 70 };
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 480 : 600;
+  const svgHeight = isMobile ? 240 : 280;
+  const margin = isMobile 
+    ? { top: 15, right: 10, bottom: 30, left: 45 } 
+    : { top: 20, right: 20, bottom: 40, left: 70 };
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
   
@@ -2346,7 +2371,7 @@ function renderProjectionLineChart(projData, investedData, maxYears) {
     // Label X
     const text = createSVGElement('text');
     text.setAttribute('x', x.toString());
-    text.setAttribute('y', (margin.top + chartHeight + 20).toString());
+    text.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
     text.setAttribute('text-anchor', 'middle');
     text.classList.add('chart-axis-text');
     text.textContent = `Yr ${yr}`;
@@ -3844,9 +3869,12 @@ function renderSalaryChart(data) {
   // Sort oldest first for linear time progression
   const chartData = [...data].sort((a, b) => a.month.localeCompare(b.month));
   
-  const svgWidth = 740;
-  const svgHeight = 280;
-  const margin = { top: 20, right: 30, bottom: 40, left: 70 };
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 480 : 740;
+  const svgHeight = isMobile ? 240 : 280;
+  const margin = isMobile 
+    ? { top: 15, right: 10, bottom: 30, left: 45 } 
+    : { top: 20, right: 30, bottom: 40, left: 70 };
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
   
@@ -3881,7 +3909,7 @@ function renderSalaryChart(data) {
   let maxVal = 0;
   chartData.forEach(s => {
     if (s.inhand > maxVal) maxVal = s.inhand;
-    if (s.dedRules > maxVal) maxVal = s.deduction; // Wait, s.dedRules is a typo, it should be s.deduction
+    if (s.dedRules > maxVal) maxVal = s.dedRules;
     if (s.deduction > maxVal) maxVal = s.deduction;
   });
   maxVal = Math.max(10000, maxVal * 1.1); // Add a 10% safety margin and enforce minimum Y-bound
@@ -3933,7 +3961,7 @@ function renderSalaryChart(data) {
     if (idx % labelStep === 0) {
       const text = createSVGElement('text');
       text.setAttribute('x', x.toString());
-      text.setAttribute('y', (margin.top + chartHeight + 20).toString());
+      text.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
       text.setAttribute('text-anchor', 'middle');
       text.classList.add('chart-axis-text');
       text.textContent = formatMonthShort(s.month);
@@ -4072,10 +4100,69 @@ function initCalculatorSliders() {
   sRor.addEventListener('input', handleUpdate);
 }
 
+function initMobileSidebar() {
+  const sidebar = document.getElementById('app-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const toggleBtn = document.getElementById('btn-sidebar-toggle');
+  const closeBtn = document.getElementById('btn-sidebar-close');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  const openSidebar = () => {
+    if (sidebar) sidebar.classList.add('sidebar-open');
+    if (overlay) overlay.classList.add('active');
+  };
+
+  const closeSidebar = () => {
+    if (sidebar) sidebar.classList.remove('sidebar-open');
+    if (overlay) overlay.classList.remove('active');
+  };
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', openSidebar);
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeSidebar);
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', closeSidebar);
+  }
+
+  // Auto-close sidebar on mobile when a navigation link is clicked
+  navLinks.forEach(link => {
+    link.addEventListener('click', closeSidebar);
+  });
+}
+
+// Debounced resize event listener to re-render charts when screen changes dimensions
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    const activeTabLink = document.querySelector('.nav-link.active');
+    const activeTabName = activeTabLink ? activeTabLink.getAttribute('data-tab') : 'dashboard';
+    
+    if (activeTabName === 'dashboard') {
+      const totalPortfolioVal = investments.reduce((sum, inv) => sum + (Number(inv.currentAmount) || 0), 0);
+      if (totalPortfolioVal > 0) {
+        renderAllocationChart(totalPortfolioVal);
+        renderPerformanceChart();
+        renderDashboardHistoryChart(getPortfolioHistory());
+      }
+    } else if (activeTabName === 'projections') {
+      renderProjections();
+    } else if (activeTabName === 'salary') {
+      renderSalaryChart(salaries);
+    }
+  }, 150);
+});
+
 // Initializer
 document.addEventListener('DOMContentLoaded', async () => {
   await loadFromStorage();
   initNavigation();
+  initMobileSidebar();
   initFilterHandlers();
   initModalHandlers();
   initCalculatorSliders();
