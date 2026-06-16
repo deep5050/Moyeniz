@@ -425,6 +425,10 @@ function renderDashboard() {
   // Render Performance Bar Chart
   renderPerformanceChart();
   
+  // Render Wealth vs Debt History Chart
+  const historyData = getPortfolioHistory();
+  renderDashboardHistoryChart(historyData);
+  
   // Render Insights and Score
   renderInsights(summary);
   
@@ -762,6 +766,321 @@ function renderPerformanceChart() {
     labelText.classList.add('chart-axis-text');
     labelText.textContent = label;
     svg.appendChild(labelText);
+  });
+  
+  container.appendChild(svg);
+}
+
+// Generate Historical Trend Chart data walking backward 6 months
+function getPortfolioHistory() {
+  const history = [];
+  const now = new Date();
+  
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthLabel = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+    const fullMonthLabel = d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    
+    // Reconstruct investments
+    let totalInvestments = 0;
+    investments.forEach(inv => {
+      const currentAmount = Number(inv.currentAmount) || 0;
+      let monthlyRate = 0.008; // default to stocks/MF
+      const assetClass = inv.assetClass;
+      
+      if (assetClass === 'fd' || assetClass === 'savings') {
+        monthlyRate = 0.005;
+      } else if (assetClass === 'gold' || assetClass === 'bonds' || assetClass === 'epfo') {
+        monthlyRate = 0.006;
+      }
+      
+      const val = currentAmount / Math.pow(1 + monthlyRate, i);
+      totalInvestments += val;
+    });
+    
+    // Reconstruct liabilities
+    let totalLiabilities = 0;
+    liabilities.forEach(l => {
+      const outstandingCurrent = Number(l.outstanding) || 0;
+      const emi = Number(l.emi) || 0;
+      const annualRate = Number(l.rate) || 0;
+      const monthlyRate = (annualRate / 100) / 12;
+      const totalTenure = Number(l.totalTenure || l.tenure || 1);
+      const tenureLeft = Number(l.tenure) || 0;
+      
+      let outstanding = outstandingCurrent;
+      for (let step = 1; step <= i; step++) {
+        if (tenureLeft + step > totalTenure) {
+          outstanding = 0;
+          break;
+        }
+        outstanding = (outstanding + emi) / (1 + monthlyRate);
+      }
+      totalLiabilities += outstanding;
+    });
+    
+    history.push({
+      monthLabel,
+      fullMonthLabel,
+      investments: Math.round(totalInvestments),
+      liabilities: Math.round(totalLiabilities),
+      netWorth: Math.round(totalInvestments - totalLiabilities)
+    });
+  }
+  
+  return history;
+}
+
+// Render Wealth vs Debt Trend Chart
+function renderDashboardHistoryChart(historyData) {
+  const container = document.getElementById('history-chart-container');
+  if (!container) return;
+  clearContainer(container);
+  
+  if (!historyData || historyData.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No historical data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    container.appendChild(emptyMsg);
+    return;
+  }
+  
+  const svgWidth = 840;
+  const svgHeight = 280;
+  const margin = { top: 20, right: 20, bottom: 40, left: 75 };
+  const chartWidth = svgWidth - margin.left - margin.right;
+  const chartHeight = svgHeight - margin.top - margin.bottom;
+  
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+  svg.classList.add('svg-chart');
+  
+  // Custom Area Fill Gradients
+  const defs = createSVGElement('defs');
+  
+  const invGrad = createSVGElement('linearGradient');
+  invGrad.setAttribute('id', 'grad-inv-trend-area');
+  invGrad.setAttribute('x1', '0%'); invGrad.setAttribute('y1', '0%');
+  invGrad.setAttribute('x2', '0%'); invGrad.setAttribute('y2', '100%');
+  const invStop1 = createSVGElement('stop'); invStop1.setAttribute('offset', '0%'); invStop1.setAttribute('stop-color', '#6366f1'); invStop1.setAttribute('stop-opacity', '0.15');
+  const invStop2 = createSVGElement('stop'); invStop2.setAttribute('offset', '100%'); invStop2.setAttribute('stop-color', '#6366f1'); invStop2.setAttribute('stop-opacity', '0.00');
+  invGrad.appendChild(invStop1); invGrad.appendChild(invStop2);
+  defs.appendChild(invGrad);
+  
+  const liabGrad = createSVGElement('linearGradient');
+  liabGrad.setAttribute('id', 'grad-liab-trend-area');
+  liabGrad.setAttribute('x1', '0%'); liabGrad.setAttribute('y1', '0%');
+  liabGrad.setAttribute('x2', '0%'); liabGrad.setAttribute('y2', '100%');
+  const liabStop1 = createSVGElement('stop'); liabStop1.setAttribute('offset', '0%'); liabStop1.setAttribute('stop-color', '#f43f5e'); liabStop1.setAttribute('stop-opacity', '0.12');
+  const liabStop2 = createSVGElement('stop'); liabStop2.setAttribute('offset', '100%'); liabStop2.setAttribute('stop-color', '#f43f5e'); liabStop2.setAttribute('stop-opacity', '0.00');
+  liabGrad.appendChild(liabStop1); liabGrad.appendChild(liabStop2);
+  defs.appendChild(liabGrad);
+  
+  svg.appendChild(defs);
+  
+  // Find maximum value for scaling Y
+  let maxVal = 0;
+  historyData.forEach(d => {
+    if (d.investments > maxVal) maxVal = d.investments;
+    if (d.liabilities > maxVal) maxVal = d.liabilities;
+  });
+  maxVal = Math.max(10000, maxVal * 1.15); // 15% padding, min 10k
+  
+  // Draw Y grid and labels
+  const ticks = 4;
+  for (let i = 0; i <= ticks; i++) {
+    const ratio = i / ticks;
+    const yVal = maxVal * ratio;
+    const y = margin.top + chartHeight - (ratio * chartHeight);
+    
+    if (i > 0) {
+      const line = createSVGElement('line');
+      line.setAttribute('x1', margin.left.toString());
+      line.setAttribute('y1', y.toString());
+      line.setAttribute('x2', (margin.left + chartWidth).toString());
+      line.setAttribute('y2', y.toString());
+      line.classList.add('chart-grid-line');
+      svg.appendChild(line);
+    }
+    
+    const text = createSVGElement('text');
+    text.setAttribute('x', (margin.left - 10).toString());
+    text.setAttribute('y', (y + 4).toString());
+    text.setAttribute('text-anchor', 'end');
+    text.classList.add('chart-axis-text');
+    
+    let label = '';
+    if (yVal >= 10000000) {
+      label = '₹' + (yVal / 10000000).toFixed(1) + 'Cr';
+    } else if (yVal >= 100000) {
+      label = '₹' + (yVal / 100000).toFixed(1) + 'L';
+    } else if (yVal >= 1000) {
+      label = '₹' + (yVal / 1000).toFixed(0) + 'k';
+    } else {
+      label = '₹' + yVal.toFixed(0);
+    }
+    text.textContent = label;
+    svg.appendChild(text);
+  }
+  
+  const pointsCount = historyData.length;
+  
+  // Draw X axis grid and labels
+  historyData.forEach((d, idx) => {
+    const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
+    const x = margin.left + (rx * chartWidth);
+    
+    // Vertical dotted lines (grid)
+    if (idx > 0 && idx < pointsCount - 1) {
+      const line = createSVGElement('line');
+      line.setAttribute('x1', x.toString());
+      line.setAttribute('y1', margin.top.toString());
+      line.setAttribute('x2', x.toString());
+      line.setAttribute('y2', (margin.top + chartHeight).toString());
+      line.classList.add('chart-grid-line');
+      svg.appendChild(line);
+    }
+    
+    const text = createSVGElement('text');
+    text.setAttribute('x', x.toString());
+    text.setAttribute('y', (margin.top + chartHeight + 20).toString());
+    text.setAttribute('text-anchor', 'middle');
+    text.classList.add('chart-axis-text');
+    text.textContent = d.monthLabel;
+    svg.appendChild(text);
+  });
+  
+  // Coordinate scaling logic
+  const scalePoint = (d, idx) => {
+    const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
+    const ryInv = d.investments / maxVal;
+    const ryLiab = d.liabilities / maxVal;
+    
+    return {
+      x: margin.left + (rx * chartWidth),
+      yInv: margin.top + chartHeight - (ryInv * chartHeight),
+      yLiab: margin.top + chartHeight - (ryLiab * chartHeight),
+      investments: d.investments,
+      liabilities: d.liabilities,
+      netWorth: d.netWorth,
+      monthLabel: d.monthLabel,
+      fullMonthLabel: d.fullMonthLabel
+    };
+  };
+  
+  const mapped = historyData.map(scalePoint);
+  
+  if (pointsCount > 1) {
+    // Area fill under Investments
+    const areaPathInv = `M ${mapped[0].x} ${margin.top + chartHeight} ` + 
+                        mapped.map(p => `L ${p.x} ${p.yInv}`).join(' ') + 
+                        ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
+    const areaInv = createSVGElement('path');
+    areaInv.setAttribute('d', areaPathInv);
+    areaInv.setAttribute('fill', 'url(#grad-inv-trend-area)');
+    svg.appendChild(areaInv);
+    
+    // Area fill under Liabilities
+    const areaPathLiab = `M ${mapped[0].x} ${margin.top + chartHeight} ` + 
+                         mapped.map(p => `L ${p.x} ${p.yLiab}`).join(' ') + 
+                         ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
+    const areaLiab = createSVGElement('path');
+    areaLiab.setAttribute('d', areaPathLiab);
+    areaLiab.setAttribute('fill', 'url(#grad-liab-trend-area)');
+    svg.appendChild(areaLiab);
+    
+    // Polyline coordinates
+    const polylineStrInv = mapped.map(p => `${p.x},${p.yInv}`).join(' ');
+    const polylineStrLiab = mapped.map(p => `${p.x},${p.yLiab}`).join(' ');
+    
+    // Draw Investments Line (Indigo)
+    const lineInv = createSVGElement('polyline');
+    lineInv.setAttribute('points', polylineStrInv);
+    lineInv.setAttribute('fill', 'none');
+    lineInv.setAttribute('stroke', '#6366f1');
+    lineInv.setAttribute('stroke-width', '3');
+    svg.appendChild(lineInv);
+    
+    // Draw Liabilities Line (Rose)
+    const lineLiab = createSVGElement('polyline');
+    lineLiab.setAttribute('points', polylineStrLiab);
+    lineLiab.setAttribute('fill', 'none');
+    lineLiab.setAttribute('stroke', '#f43f5e');
+    lineLiab.setAttribute('stroke-width', '3');
+    svg.appendChild(lineLiab);
+  }
+  
+  // Draw points/dots and tooltips
+  mapped.forEach(p => {
+    // Investments Point
+    const dotInv = createSVGElement('circle');
+    dotInv.setAttribute('cx', p.x.toString());
+    dotInv.setAttribute('cy', p.yInv.toString());
+    dotInv.setAttribute('r', '5');
+    dotInv.setAttribute('fill', '#6366f1');
+    dotInv.setAttribute('stroke', '#070913');
+    dotInv.setAttribute('stroke-width', '2');
+    dotInv.style.cursor = 'pointer';
+    dotInv.style.transition = 'transform 0.15s ease';
+    
+    dotInv.addEventListener('mouseenter', () => dotInv.setAttribute('r', '7'));
+    dotInv.addEventListener('mouseleave', () => {
+      dotInv.setAttribute('r', '5');
+      hideTooltip();
+    });
+    
+    dotInv.addEventListener('mousemove', (e) => {
+      showCustomTooltip(
+        e,
+        p.fullMonthLabel,
+        'Total Investments:',
+        formatCurrency(p.investments),
+        'Liabilities:',
+        formatCurrency(p.liabilities),
+        'Net Worth:',
+        formatCurrency(p.netWorth)
+      );
+      const tPl = document.getElementById('chart-tooltip-pl');
+      if (tPl) {
+        tPl.className = 'chart-tooltip-value ' + (p.netWorth >= 0 ? 'positive' : 'negative');
+      }
+    });
+    svg.appendChild(dotInv);
+    
+    // Liabilities Point
+    const dotLiab = createSVGElement('circle');
+    dotLiab.setAttribute('cx', p.x.toString());
+    dotLiab.setAttribute('cy', p.yLiab.toString());
+    dotLiab.setAttribute('r', '5');
+    dotLiab.setAttribute('fill', '#f43f5e');
+    dotLiab.setAttribute('stroke', '#070913');
+    dotLiab.setAttribute('stroke-width', '2');
+    dotLiab.style.cursor = 'pointer';
+    dotLiab.style.transition = 'transform 0.15s ease';
+    
+    dotLiab.addEventListener('mouseenter', () => dotLiab.setAttribute('r', '7'));
+    dotLiab.addEventListener('mouseleave', () => {
+      dotLiab.setAttribute('r', '5');
+      hideTooltip();
+    });
+    
+    dotLiab.addEventListener('mousemove', (e) => {
+      showCustomTooltip(
+        e,
+        p.fullMonthLabel,
+        'Total Investments:',
+        formatCurrency(p.investments),
+        'Liabilities:',
+        formatCurrency(p.liabilities),
+        'Net Worth:',
+        formatCurrency(p.netWorth)
+      );
+      const tPl = document.getElementById('chart-tooltip-pl');
+      if (tPl) {
+        tPl.className = 'chart-tooltip-value ' + (p.netWorth >= 0 ? 'positive' : 'negative');
+      }
+    });
+    svg.appendChild(dotLiab);
   });
   
   container.appendChild(svg);

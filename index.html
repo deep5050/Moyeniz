@@ -407,6 +407,31 @@
             </div>
           </div>
 
+          <!-- Monthly Wealth vs. Debt Trend Chart -->
+          <div class="chart-card" style="margin-top: 24px; width: 100%;">
+            <div class="chart-card-header">
+              <div>
+                <h3 class="chart-card-title">Wealth vs. Debt Trend</h3>
+                <p class="chart-card-subtitle">Total Investments vs. Outstanding Liabilities (last 6 months)</p>
+              </div>
+              <div class="legend-row" style="display: flex; gap: 16px; font-size: 0.8rem; font-weight: 500;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 12px; height: 3px; background-color: var(--color-primary); border-radius: 1px;"></span>
+                  <span>Total Investments</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 12px; height: 3px; background-color: var(--color-danger); border-radius: 1px;"></span>
+                  <span>Liabilities</span>
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrapper" style="min-height: 300px;">
+              <div id="history-chart-container" class="chart-svg-container" style="width: 100%;">
+                <!-- SVG line chart generated dynamically -->
+              </div>
+            </div>
+          </div>
+
           <!-- Wider Performance Chart at the bottom -->
           <div class="chart-card" style="margin-top: 24px; width: 100%;">
             <div class="chart-card-header">
