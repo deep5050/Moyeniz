@@ -1998,3 +1998,82 @@ input[type="range"].slider::-webkit-slider-thumb:hover {
   font-weight: 500;
   color: var(--text-secondary);
 }
+
+/* Circular Icon-Only Buttons */
+.btn-icon-only {
+  width: 40px;
+  height: 40px;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.btn-icon-only svg {
+  margin: 0 !important;
+  width: 20px;
+  height: 20px;
+}
+
+/* Floating Action Button (FAB) */
+.floating-add-btn {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--grad-primary);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-add-btn:hover {
+  transform: translateY(-4px) scale(1.08);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
+  background: linear-gradient(135deg, #4f46e5, var(--color-primary));
+}
+
+.floating-add-btn:active {
+  transform: translateY(1px) scale(0.95);
+}
+
+.floating-add-btn svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  stroke-width: 2.5;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 600px) {
+  .floating-add-btn {
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  }
+  
+  .floating-add-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .setup-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dropper-card, .setup-action-card {
+    padding: 24px 16px;
+  }
+}

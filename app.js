@@ -232,6 +232,38 @@ async function loadFromStorage() {
   }
 }
 
+// Update Visibility of Top Action Buttons (Download Portfolio / Add Investment)
+function updateTopActions(tabName) {
+  const btnDownloadTop = document.getElementById('btn-download-portfolio-top');
+  const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
+  const btnAddInvestment = document.getElementById('btn-add-investment');
+  const dataInitialized = localStorage.getItem('moyeniz_investments') !== null;
+
+  if (btnDownloadTop) {
+    if (tabName === 'dashboard' && dataInitialized) {
+      btnDownloadTop.style.display = 'inline-flex';
+    } else {
+      btnDownloadTop.style.display = 'none';
+    }
+  }
+
+  if (btnDownloadPdfTop) {
+    if (tabName === 'dashboard' && dataInitialized) {
+      btnDownloadPdfTop.style.display = 'inline-flex';
+    } else {
+      btnDownloadPdfTop.style.display = 'none';
+    }
+  }
+
+  if (btnAddInvestment) {
+    if (tabName === 'investments') {
+      btnAddInvestment.style.display = 'inline-flex';
+    } else {
+      btnAddInvestment.style.display = 'none';
+    }
+  }
+}
+
 // Tab Navigation logic
 function initNavigation() {
   const links = document.querySelectorAll('.nav-link');
@@ -278,6 +310,8 @@ function initNavigation() {
         // viewSubtitle.textContent = 'Track salary trends, credits, deductions, and increments over time.';
         renderSalaries();
       }
+
+      updateTopActions(tabName);
     });
   });
 }
@@ -315,11 +349,21 @@ function renderDashboard() {
     if (activeContent) activeContent.style.display = 'none';
     if (emptyContent) emptyContent.style.display = 'block';
     if (btnDownloadTop) btnDownloadTop.style.display = 'none';
+    const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
+    if (btnDownloadPdfTop) btnDownloadPdfTop.style.display = 'none';
     return;
   } else {
     if (activeContent) activeContent.style.display = 'block';
     if (emptyContent) emptyContent.style.display = 'none';
-    if (btnDownloadTop) btnDownloadTop.style.display = 'inline-flex';
+    const activeTabLink = document.querySelector('.nav-link.active');
+    const activeTabName = activeTabLink ? activeTabLink.getAttribute('data-tab') : 'dashboard';
+    if (btnDownloadTop) {
+      btnDownloadTop.style.display = activeTabName === 'dashboard' ? 'inline-flex' : 'none';
+    }
+    const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
+    if (btnDownloadPdfTop) {
+      btnDownloadPdfTop.style.display = activeTabName === 'dashboard' ? 'inline-flex' : 'none';
+    }
   }
 
   const summary = getPortfolioSummary();
@@ -454,6 +498,10 @@ function renderDashboard() {
   // Render Allocation Chart
   renderAllocationChart(summary.currentValue);
 
+  // Render Mutual Fund cap types & Savings account distribution charts
+  renderMutualFundChart();
+  renderSavingsChart();
+
   // Render Performance Bar Chart
   renderPerformanceChart();
 
@@ -517,6 +565,10 @@ function renderAllocationChart(totalPortfolioVal) {
 
   appendSVGDefs(svg);
 
+  // Create slices group for z-index layering
+  const slicesGroup = createSVGElement('g');
+  svg.appendChild(slicesGroup);
+
   let currentAngle = -Math.PI / 2; // start from top
 
   sortedClasses.forEach((catData) => {
@@ -559,13 +611,33 @@ function renderAllocationChart(totalPortfolioVal) {
     const catGain = catCurrent - catInvested;
     const catReturnPct = catInvested > 0 ? (catGain / catInvested) * 100 : 0;
 
+    // Dynamic Pop Out calculations
+    const midAngle = currentAngle + angleRange / 2;
+    const popDistance = 12;
+    const dx = popDistance * Math.cos(midAngle);
+    const dy = popDistance * Math.sin(midAngle);
+
+    path.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease';
+    path.style.transformOrigin = 'center';
+
+    // Hover listeners for the slice
+    path.addEventListener('mouseenter', () => {
+      slicesGroup.appendChild(path); // bring to front
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
+    });
+    path.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+    });
+
     // Event bindings for Tooltip
     path.addEventListener('mousemove', (e) => {
       showTooltip(e, category.label, catInvested, catCurrent, catGain, catReturnPct);
     });
     path.addEventListener('mouseleave', hideTooltip);
 
-    svg.appendChild(path);
+    slicesGroup.appendChild(path);
     currentAngle = endAngle;
 
     // Append Legend Item
@@ -602,14 +674,23 @@ function renderAllocationChart(totalPortfolioVal) {
     legItem.appendChild(infoCol);
     legItem.appendChild(valCol);
 
-    // Match legend hover with chart slice hover
+    // Legend hover interactions
+    legItem.style.transition = 'transform 0.2s ease, background-color 0.2s ease';
+    legItem.style.borderRadius = '6px';
+    legItem.style.padding = '4px 6px';
+
     legItem.addEventListener('mouseenter', () => {
-      path.style.transform = 'scale(1.05)';
-      path.style.filter = `drop-shadow(0 0 10px ${category.color}88)`;
+      slicesGroup.appendChild(path); // bring to front
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
+      legItem.style.transform = 'translateX(4px)';
+      legItem.style.backgroundColor = 'var(--bg-light)';
     });
     legItem.addEventListener('mouseleave', () => {
       path.style.transform = '';
       path.style.filter = '';
+      legItem.style.transform = '';
+      legItem.style.backgroundColor = '';
     });
 
     legend.appendChild(legItem);
@@ -626,11 +707,295 @@ function renderAllocationChart(totalPortfolioVal) {
   container.appendChild(svg);
 }
 
-// Generate Grouped SVG Bar Chart
-function renderPerformanceChart() {
-  const container = document.getElementById('performance-chart-container');
-  clearContainer(container);
+// Reusable Doughnut Chart Generator with 3D Pop-out Hover Animations
+function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, titlePrefix) {
+  const size = 320;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r_out = 145;
+  const r_in = 85;
 
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.classList.add('svg-chart');
+  svg.style.width = '100%';
+  svg.style.height = 'auto';
+  svg.style.maxWidth = '250px';
+  svg.style.maxHeight = '250px';
+
+  const defs = createSVGElement('defs');
+  items.forEach(item => {
+    const grad = createSVGElement('linearGradient');
+    grad.setAttribute('id', `grad-${idPrefix}-${item.key}`);
+    grad.setAttribute('x1', '0%');
+    grad.setAttribute('y1', '0%');
+    grad.setAttribute('x2', '100%');
+    grad.setAttribute('y2', '100%');
+
+    const stop1 = createSVGElement('stop');
+    stop1.setAttribute('offset', '0%');
+    stop1.setAttribute('stop-color', item.color);
+
+    const stop2 = createSVGElement('stop');
+    stop2.setAttribute('offset', '100%');
+    stop2.setAttribute('stop-color', item.colorDark);
+
+    grad.appendChild(stop1);
+    grad.appendChild(stop2);
+    defs.appendChild(grad);
+  });
+  svg.appendChild(defs);
+
+  const slicesGroup = createSVGElement('g');
+  svg.appendChild(slicesGroup);
+
+  let currentAngle = -Math.PI / 2; // start from top
+
+  items.forEach((item) => {
+    const angleRange = (item.pct / 100) * 2 * Math.PI;
+    const endAngle = currentAngle + angleRange;
+
+    // Draw doughnut slice
+    const path = createSVGElement('path');
+    path.classList.add('chart-slice');
+
+    // Math coordinates
+    const x1_out = cx + r_out * Math.cos(currentAngle);
+    const y1_out = cy + r_out * Math.sin(currentAngle);
+    const x2_out = cx + r_out * Math.cos(endAngle);
+    const y2_out = cy + r_out * Math.sin(endAngle);
+
+    const x1_in = cx + r_in * Math.cos(currentAngle);
+    const y1_in = cy + r_in * Math.sin(currentAngle);
+    const x2_in = cx + r_in * Math.cos(endAngle);
+    const y2_in = cy + r_in * Math.sin(endAngle);
+
+    const largeArc = angleRange > Math.PI ? 1 : 0;
+
+    const d = `M ${x1_out} ${y1_out} A ${r_out} ${r_out} 0 ${largeArc} 1 ${x2_out} ${y2_out} L ${x2_in} ${y2_in} A ${r_in} ${r_in} 0 ${largeArc} 0 ${x1_in} ${y1_in} Z`;
+
+    path.setAttribute('d', d);
+    path.setAttribute('fill', `url(#grad-${idPrefix}-${item.key})`);
+
+    // Dynamic Pop Out calculations
+    const midAngle = currentAngle + angleRange / 2;
+    const popDistance = 8;
+    const dx = popDistance * Math.cos(midAngle);
+    const dy = popDistance * Math.sin(midAngle);
+
+    path.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease';
+    path.style.transformOrigin = 'center';
+
+    // Tooltip statistics
+    let groupInvested = 0;
+    let groupCurrent = item.value;
+
+    if (idPrefix === 'mf-subtype') {
+      investments.forEach(inv => {
+        if (inv.assetClass === 'indian-mutual-fund' && (inv.subtype || 'none') === item.key) {
+          groupInvested += Number(inv.investedAmount) || 0;
+        }
+      });
+    } else {
+      groupInvested = item.value;
+    }
+
+    const groupGain = groupCurrent - groupInvested;
+    const groupReturnPct = groupInvested > 0 ? (groupGain / groupInvested) * 100 : 0;
+
+    // Hover listeners for the slice
+    path.addEventListener('mouseenter', () => {
+      slicesGroup.appendChild(path); // bring to front
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
+    });
+    path.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+    });
+
+    path.addEventListener('mousemove', (e) => {
+      showTooltip(e, `${titlePrefix}: ${item.label}`, groupInvested, groupCurrent, groupGain, groupReturnPct);
+    });
+    path.addEventListener('mouseleave', hideTooltip);
+
+    slicesGroup.appendChild(path);
+    currentAngle = endAngle;
+
+    // Append Legend Item
+    const legItem = document.createElement('div');
+    legItem.classList.add('legend-item');
+
+    const infoCol = document.createElement('div');
+    infoCol.classList.add('legend-info');
+
+    const dot = document.createElement('span');
+    dot.classList.add('legend-color-box');
+    dot.style.background = `linear-gradient(135deg, ${item.color}, ${item.colorDark})`;
+
+    const textLabel = document.createElement('span');
+    textLabel.classList.add('legend-name');
+    textLabel.textContent = item.label;
+
+    infoCol.appendChild(dot);
+    infoCol.appendChild(textLabel);
+
+    const valCol = document.createElement('div');
+    valCol.classList.add('legend-val');
+
+    const numSpan = document.createElement('span');
+    numSpan.textContent = formatCurrency(item.value);
+
+    const pctSpan = document.createElement('span');
+    pctSpan.classList.add('legend-pct');
+    pctSpan.textContent = item.pct.toFixed(1) + '%';
+
+    valCol.appendChild(numSpan);
+    valCol.appendChild(pctSpan);
+
+    legItem.appendChild(infoCol);
+    legItem.appendChild(valCol);
+
+    legItem.style.transition = 'transform 0.2s ease, background-color 0.2s ease';
+    legItem.style.borderRadius = '6px';
+    legItem.style.padding = '4px 6px';
+
+    legItem.addEventListener('mouseenter', () => {
+      slicesGroup.appendChild(path); // bring to front
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
+      legItem.style.transform = 'translateX(4px)';
+      legItem.style.backgroundColor = 'var(--bg-light)';
+    });
+    legItem.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+      legItem.style.transform = '';
+      legItem.style.backgroundColor = '';
+    });
+
+    legend.appendChild(legItem);
+  });
+
+  const innerCircle = createSVGElement('circle');
+  innerCircle.setAttribute('cx', cx.toString());
+  innerCircle.setAttribute('cy', cy.toString());
+  innerCircle.setAttribute('r', (r_in - 2).toString());
+  innerCircle.setAttribute('fill', 'var(--bg-inner-circle, #ffffff)');
+  svg.appendChild(innerCircle);
+
+  container.appendChild(svg);
+}
+
+// Generate Mutual Fund subtype Doughnut Chart
+function renderMutualFundChart() {
+  const container = document.getElementById('mf-chart-container');
+  const legend = document.getElementById('mf-legend');
+  clearContainer(container);
+  clearContainer(legend);
+
+  const mfInvestments = investments.filter(inv => inv.assetClass === 'indian-mutual-fund');
+  let totalMFVal = 0;
+  const subtypeTotals = {};
+
+  mfInvestments.forEach(inv => {
+    const val = Number(inv.currentAmount) || 0;
+    totalMFVal += val;
+    const subtype = inv.subtype || 'none';
+    subtypeTotals[subtype] = (subtypeTotals[subtype] || 0) + val;
+  });
+
+  if (totalMFVal === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No mutual fund allocation data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    emptyMsg.style.fontSize = '0.85rem';
+    emptyMsg.style.padding = '20px';
+    emptyMsg.style.textAlign = 'center';
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  const mfSubtypeMap = {
+    'large': { label: 'Large Cap', color: '#3b82f6', colorDark: '#1d4ed8' },
+    'mid': { label: 'Mid Cap', color: '#10b981', colorDark: '#047857' },
+    'small': { label: 'Small Cap', color: '#f43f5e', colorDark: '#be123c' },
+    'flexi': { label: 'Flexi Cap', color: '#a855f7', colorDark: '#6d28d9' },
+    'none': { label: 'Unspecified', color: '#64748b', colorDark: '#475569' }
+  };
+
+  const sortedSubtypes = Object.keys(subtypeTotals).map(key => {
+    const info = mfSubtypeMap[key] || { label: key.charAt(0).toUpperCase() + key.slice(1), color: '#8b5cf6', colorDark: '#5b21b6' };
+    return {
+      key,
+      label: info.label,
+      value: subtypeTotals[key],
+      pct: (subtypeTotals[key] / totalMFVal) * 100,
+      color: info.color,
+      colorDark: info.colorDark
+    };
+  }).sort((a, b) => b.value - a.value);
+
+  renderReusableDoughnut(container, legend, sortedSubtypes, totalMFVal, 'mf-subtype', 'Mutual Fund');
+}
+
+// Generate Bank-wise Savings Account balances Doughnut Chart
+function renderSavingsChart() {
+  const container = document.getElementById('savings-chart-container');
+  const legend = document.getElementById('savings-legend');
+  clearContainer(container);
+  clearContainer(legend);
+
+  const savingsInvestments = investments.filter(inv => inv.assetClass === 'savings');
+  let totalSavingsVal = 0;
+  const bankTotals = {};
+
+  savingsInvestments.forEach(inv => {
+    const val = Number(inv.currentAmount) || 0;
+    totalSavingsVal += val;
+    const name = inv.name || 'Savings Account';
+    bankTotals[name] = (bankTotals[name] || 0) + val;
+  });
+
+  if (totalSavingsVal === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No savings account balance data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    emptyMsg.style.fontSize = '0.85rem';
+    emptyMsg.style.padding = '20px';
+    emptyMsg.style.textAlign = 'center';
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  const bankColors = [
+    { color: '#3b82f6', colorDark: '#1d4ed8' },
+    { color: '#0ea5e9', colorDark: '#0284c7' },
+    { color: '#10b981', colorDark: '#047857' },
+    { color: '#14b8a6', colorDark: '#0d9488' },
+    { color: '#a855f7', colorDark: '#6d28d9' },
+    { color: '#f59e0b', colorDark: '#d97706' },
+    { color: '#f43f5e', colorDark: '#be123c' },
+    { color: '#6366f1', colorDark: '#4f46e5' }
+  ];
+
+  const sortedBanks = Object.keys(bankTotals).map((name, idx) => {
+    const colorInfo = bankColors[idx % bankColors.length];
+    return {
+      key: `bank-${idx}`,
+      label: name,
+      value: bankTotals[name],
+      pct: (bankTotals[name] / totalSavingsVal) * 100,
+      color: colorInfo.color,
+      colorDark: colorInfo.colorDark
+    };
+  }).sort((a, b) => b.value - a.value);
+
+  renderReusableDoughnut(container, legend, sortedBanks, totalSavingsVal, 'savings-bank', 'Savings');
+}
+
+// Generate Grouped SVG Bar Chart SVG Element
+function generatePerformanceChartSVG(isMobile, isPrint = false) {
   // Calculate performance by class
   const classData = {};
   Object.keys(ASSET_CATEGORIES).forEach(key => {
@@ -648,20 +1013,17 @@ function renderPerformanceChart() {
   const activeKeys = Object.keys(classData).filter(key => classData[key].invested > 0);
 
   if (activeKeys.length === 0) {
-    const emptyMsg = document.createElement('div');
-    emptyMsg.textContent = 'No performance data available.';
-    emptyMsg.style.color = 'var(--text-muted)';
-    container.appendChild(emptyMsg);
-    return;
+    return null;
   }
 
   // SVG setups
-  const isMobile = window.innerWidth < 600;
-  const svgWidth = isMobile ? 480 : 840;
-  const svgHeight = isMobile ? 240 : 280;
-  const margin = isMobile
-    ? { top: 15, right: 10, bottom: 30, left: 45 }
-    : { top: 20, right: 20, bottom: 40, left: 65 };
+  const svgWidth = isPrint ? 960 : (isMobile ? 480 : 840);
+  const svgHeight = isPrint ? 260 : (isMobile ? 240 : 280);
+  const margin = isPrint
+    ? { top: 20, right: 20, bottom: 45, left: 70 }
+    : (isMobile
+      ? { top: 15, right: 10, bottom: 30, left: 45 }
+      : { top: 20, right: 20, bottom: 40, left: 65 });
   const chartWidth = svgWidth - margin.left - margin.right;
   const chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -732,11 +1094,11 @@ function renderPerformanceChart() {
   // Draw bars
   const groupCount = activeKeys.length;
   const groupWidth = chartWidth / groupCount;
-  const barPadding = isMobile ? 2 : 4;
+  const barPadding = (isMobile && !isPrint) ? 2 : 4;
 
   // Cap max bar width to prevent bloated bars on wide layouts
-  let barWidth = (groupWidth - (isMobile ? 10 : 24)) / 2;
-  const maxBarWidth = isMobile ? 20 : 36;
+  let barWidth = (groupWidth - ((isMobile && !isPrint) ? 10 : 24)) / 2;
+  const maxBarWidth = (isMobile && !isPrint) ? 20 : 36;
   if (barWidth > maxBarWidth) {
     barWidth = maxBarWidth;
   }
@@ -783,18 +1145,20 @@ function renderPerformanceChart() {
     rectCur.classList.add('chart-bar');
 
     // Tooltip event attachments
-    const plAmount = current - invested;
-    const plPct = invested > 0 ? (plAmount / invested) * 100 : 0;
+    if (!isPrint) {
+      const plAmount = current - invested;
+      const plPct = invested > 0 ? (plAmount / invested) * 100 : 0;
 
-    rectInv.addEventListener('mousemove', (e) => {
-      showTooltip(e, `${label} (Invested)`, invested, current, plAmount, plPct);
-    });
-    rectInv.addEventListener('mouseleave', hideTooltip);
+      rectInv.addEventListener('mousemove', (e) => {
+        showTooltip(e, `${label} (Invested)`, invested, current, plAmount, plPct);
+      });
+      rectInv.addEventListener('mouseleave', hideTooltip);
 
-    rectCur.addEventListener('mousemove', (e) => {
-      showTooltip(e, `${label} (Current)`, invested, current, plAmount, plPct);
-    });
-    rectCur.addEventListener('mouseleave', hideTooltip);
+      rectCur.addEventListener('mousemove', (e) => {
+        showTooltip(e, `${label} (Current)`, invested, current, plAmount, plPct);
+      });
+      rectCur.addEventListener('mouseleave', hideTooltip);
+    }
 
     svg.appendChild(rectInv);
     svg.appendChild(rectCur);
@@ -802,12 +1166,39 @@ function renderPerformanceChart() {
     // X Label text
     const labelText = createSVGElement('text');
     labelText.setAttribute('x', (xGroupStart + barWidth + (barPadding / 2)).toString());
-    labelText.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
+    labelText.setAttribute('y', (margin.top + chartHeight + ((isMobile && !isPrint) ? 16 : 20)).toString());
     labelText.setAttribute('text-anchor', 'middle');
     labelText.classList.add('chart-axis-text');
     labelText.textContent = label;
+
+    // Apply rotation to labels if printing or if we have > 5 active asset classes to prevent overlaps
+    if (isPrint || activeKeys.length > 5) {
+      const cx_lbl = xGroupStart + barWidth + (barPadding / 2);
+      const cy_lbl = margin.top + chartHeight + ((isMobile && !isPrint) ? 16 : 20);
+      labelText.setAttribute('transform', `rotate(-12, ${cx_lbl}, ${cy_lbl})`);
+    }
+
     svg.appendChild(labelText);
   });
+
+  return svg;
+}
+
+// Generate Grouped SVG Bar Chart
+function renderPerformanceChart() {
+  const container = document.getElementById('performance-chart-container');
+  clearContainer(container);
+
+  const isMobile = window.innerWidth < 600;
+  const svg = generatePerformanceChartSVG(isMobile, false);
+
+  if (!svg) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No performance data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    container.appendChild(emptyMsg);
+    return;
+  }
 
   container.appendChild(svg);
 }
@@ -2266,6 +2657,8 @@ function handleUploadJSON(file) {
         if (activeTab === 'borrow-lent') renderBorrowLent();
         if (activeTab === 'salary') renderSalaries();
 
+        updateTopActions(activeTab);
+
         alert('Portfolio data loaded successfully!');
       } else {
         alert('Invalid data format. JSON must contain "investments" and "liabilities" arrays.');
@@ -2308,6 +2701,14 @@ function initModalHandlers() {
   if (btnDownloadTop) {
     btnDownloadTop.addEventListener('click', () => {
       downloadPortfolioJSON();
+    });
+  }
+
+  // Dashboard Header PDF Report Action
+  const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
+  if (btnDownloadPdfTop) {
+    btnDownloadPdfTop.addEventListener('click', () => {
+      generatePDFReport();
     });
   }
 
@@ -2354,6 +2755,7 @@ function initModalHandlers() {
       salaries = [...SAMPLE_SALARIES];
       saveToStorage();
       renderDashboard();
+      updateTopActions('dashboard');
     });
   }
 
@@ -2367,12 +2769,15 @@ function initModalHandlers() {
       salaries = [];
       saveToStorage();
       renderDashboard();
+      updateTopActions('dashboard');
     });
   }
 
-  btnClose.addEventListener('click', closeModal);
-  btnCancel.addEventListener('click', closeModal);
-  addBtn.addEventListener('click', () => openModal());
+  if (btnClose) btnClose.addEventListener('click', closeModal);
+  if (btnCancel) btnCancel.addEventListener('click', closeModal);
+  if (addBtn) addBtn.addEventListener('click', () => openModal());
+  const addBtnFloat = document.getElementById('btn-add-investment-float');
+  if (addBtnFloat) addBtnFloat.addEventListener('click', () => openModal());
 
   selectClass.addEventListener('change', (e) => {
     updateSubtypeOptions(e.target.value);
@@ -2399,6 +2804,8 @@ function initModalHandlers() {
       if (activeTab === 'liabilities') renderLiabilities();
       if (activeTab === 'borrow-lent') renderBorrowLent();
       if (activeTab === 'salary') renderSalaries();
+
+      updateTopActions(activeTab);
     }
   });
 
@@ -4537,6 +4944,864 @@ function initDashboardSectionToggles() {
   }
 }
 
+// Generate Standalone PDF Portfolio Wealth Report
+function generatePDFReport() {
+  const summary = getPortfolioSummary();
+  const now = new Date();
+  const dateString = now.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // Calculate Net Worth Metrics
+  let totalLiabilitiesVal = 0;
+  liabilities.forEach(l => {
+    totalLiabilitiesVal += Number(l.outstanding);
+  });
+
+  let totalLentVal = 0;
+  let totalBorrowedVal = 0;
+  borrowLent.forEach(bl => {
+    if (bl.status !== 'paid') {
+      const outstandingAmt = Number(bl.outstanding);
+      if (bl.type === 'lent') {
+        totalLentVal += outstandingAmt;
+      } else if (bl.type === 'borrowed') {
+        totalBorrowedVal += outstandingAmt;
+      }
+    }
+  });
+
+  const netWorthVal = summary.currentValue + totalLentVal - totalLiabilitiesVal - totalBorrowedVal;
+  const portfolioCagrText = document.getElementById('val-portfolio-cagr')?.textContent || '0.0%';
+
+  // SVG Allocation Pie chart HTML extraction
+  const pieChartContainer = document.getElementById('allocation-chart-container');
+  let pieChartSvgHtml = '';
+  if (pieChartContainer) {
+    const svgEl = pieChartContainer.querySelector('svg');
+    if (svgEl) {
+      const clonedSvg = svgEl.cloneNode(true);
+      clonedSvg.removeAttribute('style');
+      clonedSvg.style.width = '240px';
+      clonedSvg.style.height = '240px';
+      pieChartSvgHtml = clonedSvg.outerHTML;
+    }
+  }
+
+  // SVG Performance Bar chart HTML generation (print-optimized)
+  let performanceSvgHtml = '';
+  const perfSvg = generatePerformanceChartSVG(false, true); // isMobile = false, isPrint = true
+  if (perfSvg) {
+    perfSvg.removeAttribute('style');
+    perfSvg.style.width = '100%';
+    perfSvg.style.height = 'auto';
+    perfSvg.style.maxHeight = '230px';
+    performanceSvgHtml = perfSvg.outerHTML;
+  }
+
+  // Calculate Profit and Loss Heatmaps
+  const profits = [];
+  const losses = [];
+  investments.forEach(inv => {
+    const invAmt = Number(inv.investedAmount);
+    const curAmt = Number(inv.currentAmount);
+    if (invAmt === 0) return;
+    const diff = curAmt - invAmt;
+    const pct = (diff / invAmt) * 100;
+    if (diff > 0) {
+      profits.push({ name: inv.name, currentAmount: inv.currentAmount, diff, pct });
+    } else if (diff < 0) {
+      losses.push({ name: inv.name, currentAmount: inv.currentAmount, diff, pct });
+    }
+  });
+  profits.sort((a, b) => b.pct - a.pct);
+  losses.sort((a, b) => a.pct - b.pct);
+
+  let profitHeatmapHtml = '';
+  if (profits.length === 0) {
+    profitHeatmapHtml = '<div style="color: var(--text-muted); font-size: 0.8rem; grid-column: 1 / -1; text-align: center; padding: 20px; background-color: var(--bg-light); border-radius: 6px; border: 1px solid var(--border-color);">No profitable assets.</div>';
+  } else {
+    profits.forEach(item => {
+      const opacity = Math.min(0.85, 0.12 + (item.pct / 40) * 0.73);
+      const bg = `rgba(16, 185, 129, ${opacity})`;
+      const textCol = opacity > 0.45 ? '#ffffff' : 'var(--text-main)';
+      const pctCol = opacity > 0.45 ? '#ffffff' : 'var(--color-success)';
+      profitHeatmapHtml += `
+        <div style="background-color: ${bg}; color: ${textCol}; padding: 10px 6px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 64px; border: 1px solid rgba(16, 185, 129, 0.15); page-break-inside: avoid;">
+          <span style="font-size: 0.75rem; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">${item.name}</span>
+          <span style="font-size: 0.75rem; font-weight: 500; margin-top: 1px; display: block;">${formatCurrency(item.currentAmount)}</span>
+          <span style="font-size: 0.75rem; font-weight: 700; color: ${pctCol}; margin-top: 1px; display: block;">+${item.pct.toFixed(1)}%</span>
+        </div>
+      `;
+    });
+  }
+
+  let lossHeatmapHtml = '';
+  if (losses.length === 0) {
+    lossHeatmapHtml = '<div style="color: var(--text-muted); font-size: 0.8rem; grid-column: 1 / -1; text-align: center; padding: 20px; background-color: var(--bg-light); border-radius: 6px; border: 1px solid var(--border-color);">No assets in loss.</div>';
+  } else {
+    losses.forEach(item => {
+      const absPct = Math.abs(item.pct);
+      const opacity = Math.min(0.85, 0.12 + (absPct / 20) * 0.73);
+      const bg = `rgba(244, 63, 94, ${opacity})`;
+      const textCol = opacity > 0.45 ? '#ffffff' : 'var(--text-main)';
+      const pctCol = opacity > 0.45 ? '#ffffff' : 'var(--color-danger)';
+      lossHeatmapHtml += `
+        <div style="background-color: ${bg}; color: ${textCol}; padding: 10px 6px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 64px; border: 1px solid rgba(244, 63, 94, 0.15); page-break-inside: avoid;">
+          <span style="font-size: 0.75rem; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">${item.name}</span>
+          <span style="font-size: 0.75rem; font-weight: 500; margin-top: 1px; display: block;">${formatCurrency(item.currentAmount)}</span>
+          <span style="font-size: 0.75rem; font-weight: 700; color: ${pctCol}; margin-top: 1px; display: block;">${item.pct.toFixed(1)}%</span>
+        </div>
+      `;
+    });
+  }
+
+  // Calculate Asset Class allocations
+  const classTotals = {};
+  investments.forEach(inv => {
+    const val = Number(inv.currentAmount);
+    classTotals[inv.assetClass] = (classTotals[inv.assetClass] || 0) + val;
+  });
+
+  const sortedClasses = Object.keys(classTotals).map(key => ({
+    key,
+    value: classTotals[key],
+    pct: summary.currentValue > 0 ? (classTotals[key] / summary.currentValue) * 100 : 0
+  })).sort((a, b) => b.value - a.value);
+
+  // Calculate Wealth Diversification Score for PDF Report
+  const classCount = Object.keys(classTotals).length;
+  const totalVal = summary.currentValue;
+  let divScore = classCount * 10;
+  let maxConc = 0;
+  Object.keys(classTotals).forEach(key => {
+    if (totalVal > 0) {
+      maxConc = Math.max(maxConc, (classTotals[key] / totalVal) * 100);
+    }
+  });
+
+  if (maxConc <= 30) {
+    divScore += 40;
+  } else if (maxConc <= 45) {
+    divScore += 25;
+  } else if (maxConc <= 60) {
+    divScore += 10;
+  }
+  divScore = Math.min(100, divScore);
+
+  let ratingLabel = '';
+  let ratingColor = '';
+  let ratingDesc = '';
+  if (divScore > 80) {
+    ratingLabel = 'Highly Diversified';
+    ratingColor = '#10b981'; // Success Green
+    ratingDesc = 'Your portfolio is Highly Diversified, minimizing category-specific shocks.';
+  } else if (divScore >= 50) {
+    ratingLabel = 'Moderately Diversified';
+    ratingColor = '#f59e0b'; // Warning Amber
+    ratingDesc = 'Your portfolio is Moderately Diversified. Consider spreading new allocations.';
+  } else {
+    ratingLabel = 'Concentrated';
+    ratingColor = '#f43f5e'; // Danger Rose
+    ratingDesc = 'Your portfolio is Concentrated. High risk of volatility due to cluster holdings.';
+  }
+
+  let allocationTableHtml = '';
+  sortedClasses.forEach(c => {
+    const cat = ASSET_CATEGORIES[c.key];
+    const label = cat ? cat.label : c.key;
+    const color = cat ? cat.color : '#6366f1';
+    allocationTableHtml += `
+      <tr>
+        <td style="font-weight: 500;">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${color}; margin-right: 6px;"></span>
+          ${label}
+        </td>
+        <td style="text-align: right; font-weight: 500;">${formatCurrency(c.value)}</td>
+        <td style="text-align: right; font-weight: 600; color: var(--color-primary);">${c.pct.toFixed(1)}%</td>
+      </tr>
+    `;
+  });
+
+  // Calculate emergency fund coverage / active liabilities emi
+  let liquidAssets = 0;
+  investments.forEach(inv => {
+    if (inv.assetClass === 'savings' || inv.assetClass === 'fd') {
+      liquidAssets += Number(inv.currentAmount);
+    }
+  });
+
+  let totalMonthlyEMIs = 0;
+  liabilities.forEach(l => {
+    totalMonthlyEMIs += Number(l.emi);
+  });
+
+  // Build Insights List
+  const insights = [];
+  const equityVal = (classTotals['indian-stock'] || 0) + (classTotals['us-stock'] || 0) + ((classTotals['indian-mutual-fund'] || 0) * 0.85);
+  const debtVal = (classTotals['fd'] || 0) + (classTotals['bonds'] || 0) + (classTotals['epfo'] || 0) + (classTotals['savings'] || 0) + ((classTotals['indian-mutual-fund'] || 0) * 0.15);
+  const goldVal = classTotals['gold'] || 0;
+
+  const equityPct = totalVal > 0 ? (equityVal / totalVal) * 100 : 0;
+  const goldPct = totalVal > 0 ? (goldVal / totalVal) * 100 : 0;
+  const debtPct = totalVal > 0 ? (debtVal / totalVal) * 100 : 0;
+
+  let bestAsset = null;
+  let worstAsset = null;
+  let bestPct = -Infinity;
+  let worstPct = Infinity;
+
+  investments.forEach(inv => {
+    const invAmt = Number(inv.investedAmount);
+    const curAmt = Number(inv.currentAmount);
+    if (invAmt > 5000) {
+      const retPct = ((curAmt - invAmt) / invAmt) * 100;
+      if (retPct > bestPct) {
+        bestPct = retPct;
+        bestAsset = inv;
+      }
+      if (retPct < worstPct) {
+        worstPct = retPct;
+        worstAsset = inv;
+      }
+    }
+  });
+
+  if (equityPct > 65) {
+    insights.push({ type: 'warning', title: 'Aggressive Equity Exposure', desc: `Equities represent ${equityPct.toFixed(0)}% of your portfolio. While great for inflation-beating long-term growth, be prepared for high volatility.` });
+  } else if (equityPct >= 40 && equityPct <= 65) {
+    insights.push({ type: 'positive', title: 'Balanced Growth Profile', desc: `Your equity exposure is at a healthy ${equityPct.toFixed(0)}%. This provides a solid balance between capital appreciation and risk mitigation.` });
+  } else if (equityPct > 0 && equityPct < 40) {
+    insights.push({ type: 'info', title: 'Conservative Wealth Profile', desc: `Equities make up only ${equityPct.toFixed(0)}% of your capital. Consider increasing stock/mutual fund exposure to avoid purchasing power erosion from inflation.` });
+  }
+
+  if (goldPct >= 5 && goldPct <= 15) {
+    insights.push({ type: 'positive', title: 'Optimal Gold Allocation', desc: `Gold represents ${goldPct.toFixed(0)}% of your portfolio. This forms an excellent hedge against currency depreciation and market corrections.` });
+  } else if (goldPct > 15) {
+    insights.push({ type: 'warning', title: 'Overweight in Precious Metals', desc: `Precious metals comprise ${goldPct.toFixed(0)}% of your assets. Gold is stable but lacks compounding yields; consider reallocating to growth assets.` });
+  } else {
+    insights.push({ type: 'info', title: 'Low Inflation Hedge', desc: `Gold is less than 5% of your portfolio. Consider allocating a small portion (e.g. 5-10% in SGBs or Gold ETFs) as portfolio insurance.` });
+  }
+
+  if (bestAsset && bestPct > 10) {
+    insights.push({ type: 'positive', title: `Top Performer: ${bestAsset.name}`, desc: `Your investment has achieved a return of ${formatPercent(bestPct)}, growing to ${formatCurrency(bestAsset.currentAmount)}.` });
+  }
+  if (worstAsset && worstPct < -5) {
+    insights.push({ type: 'negative', title: `Underperformer Alert: ${worstAsset.name}`, desc: `This asset is currently down by ${formatPercent(worstPct)} (Current Value: ${formatCurrency(worstAsset.currentAmount)}). Monitor for potential changes in fundamentals.` });
+  }
+
+  const savingsVal = classTotals['savings'] || 0;
+  const savingsPct = totalVal > 0 ? (savingsVal / totalVal) * 100 : 0;
+  if (savingsPct > 20) {
+    insights.push({ type: 'info', title: 'High Liquid Cash Balance', desc: `Savings account represents ${savingsPct.toFixed(0)}% of your assets. Move excess liquidity to arbitrage funds or short-term FDs for higher tax-adjusted yields.` });
+  } else if (savingsPct > 0 && savingsPct < 3) {
+    insights.push({ type: 'warning', title: 'Low Liquidity Buffer', desc: `Your cash account holds only ${savingsPct.toFixed(1)}% of your net worth. Ensure you maintain at least 3-6 months of expenses in highly liquid bank balances.` });
+  }
+
+  const usStockVal = classTotals['us-stock'] || 0;
+  const usStockPct = totalVal > 0 ? (usStockVal / totalVal) * 100 : 0;
+  if (usStockPct > 15) {
+    insights.push({ type: 'positive', title: 'Strong Global Hedge', desc: `US stocks make up ${usStockPct.toFixed(0)}% of your portfolio, providing geographical diversification and protecting your wealth against local currency depreciation.` });
+  } else if (usStockPct > 0 && usStockPct <= 15) {
+    insights.push({ type: 'info', title: 'International Exposure Active', desc: `You have a ${usStockPct.toFixed(1)}% allocation to international equities. Increasing this towards 10-15% can further lower overall portfolio correlation.` });
+  } else {
+    insights.push({ type: 'warning', title: 'Zero International Diversification', desc: `You have 0% allocated to global markets. Consider adding US equities or international mutual funds to hedge against geographical concentration risks.` });
+  }
+
+  if (totalVal > 0) {
+    insights.push({ type: 'info', title: `Equity-to-Debt Mix: ${equityPct.toFixed(0)}:${debtPct.toFixed(0)}`, desc: `Your asset mix is ${equityPct.toFixed(0)}% equities and ${debtPct.toFixed(0)}% fixed income/debt. Ensure this fits your risk tolerance.` });
+  }
+
+  if (classCount < 4) {
+    insights.push({ type: 'warning', title: 'Under-diversified Portfolio', desc: `Your capital spans only ${classCount} distinct asset classes. Spreading allocations into fixed deposits, gold, or debt mutual funds can reduce volatility.` });
+  } else if (classCount >= 6) {
+    insights.push({ type: 'positive', title: 'Excellent Asset Class Variety', desc: `Your holdings are spread over ${classCount} different asset classes, creating a robust shield against major single-sector corrections.` });
+  }
+
+  const debtAssetRatio = totalVal > 0 ? (totalLiabilitiesVal / totalVal) * 100 : 0;
+  if (totalLiabilitiesVal > 0) {
+    if (debtAssetRatio > 50) {
+      insights.push({ type: 'negative', title: `High Debt Leverage (${debtAssetRatio.toFixed(0)}%)`, desc: `Your outstanding debt is over 50% of your current asset value. Consider prepaying high-interest loans.` });
+    } else if (debtAssetRatio >= 20 && debtAssetRatio <= 50) {
+      insights.push({ type: 'warning', title: `Moderate Debt Leverage (${debtAssetRatio.toFixed(0)}%)`, desc: `Your debt-to-asset ratio is at a moderate level of ${debtAssetRatio.toFixed(0)}%. Focus on paying down existing loans.` });
+    } else {
+      insights.push({ type: 'positive', title: `Healthy Debt Leverage (${debtAssetRatio.toFixed(0)}%)`, desc: `Your debt-to-asset ratio is a very healthy ${debtAssetRatio.toFixed(0)}%.` });
+    }
+  } else {
+    insights.push({ type: 'positive', title: '100% Debt-Free Portfolio', desc: 'You have no outstanding liabilities or loan EMIs. Your assets represent pure wealth.' });
+  }
+
+  if (totalMonthlyEMIs > 0) {
+    const monthsCoverage = liquidAssets / totalMonthlyEMIs;
+    if (monthsCoverage < 3) {
+      insights.push({ type: 'negative', title: 'Emergency Reserve Gap', desc: `Your liquid reserves (Savings + FDs) cover only ${monthsCoverage.toFixed(1)} months of EMIs. Build up liquid assets to cover at least 6 months.` });
+    } else if (monthsCoverage >= 6) {
+      insights.push({ type: 'positive', title: 'Robust Emergency Buffer', desc: `Your liquid assets cover ${monthsCoverage.toFixed(0)} months of EMI commitments. Solid emergency security.` });
+    }
+  }
+
+  let insightsHtml = '';
+  insights.forEach(ins => {
+    let typeClass = '';
+    let emoji = '';
+    if (ins.type === 'positive') {
+      typeClass = 'insight-positive';
+      emoji = '🟢';
+    } else if (ins.type === 'warning') {
+      typeClass = 'insight-warning';
+      emoji = '🟡';
+    } else if (ins.type === 'negative') {
+      typeClass = 'insight-negative';
+      emoji = '🔴';
+    } else {
+      typeClass = 'insight-info';
+      emoji = '🔵';
+    }
+    insightsHtml += `
+      <div class="insight-item ${typeClass}" style="margin-bottom: 8px; padding: 10px 14px; border-radius: 6px; border-left: 4px solid; line-height: 1.4;">
+        <strong style="display: block; font-size: 0.9rem; margin-bottom: 2px;">${emoji} ${ins.title}</strong>
+        <span style="font-size: 0.8rem; color: #475569;">${ins.desc}</span>
+      </div>
+    `;
+  });
+
+  // Group holdings summary rows
+  let holdingsTableRowsHtml = '';
+  const sortedInvestments = [...investments].sort((a, b) => {
+    if (a.assetClass !== b.assetClass) {
+      return a.assetClass.localeCompare(b.assetClass);
+    }
+    return Number(b.investedAmount) - Number(a.investedAmount);
+  });
+
+  sortedInvestments.forEach(inv => {
+    const cat = ASSET_CATEGORIES[inv.assetClass];
+    const categoryLabel = cat ? cat.label : inv.assetClass;
+    const invested = Number(inv.investedAmount);
+    const current = Number(inv.currentAmount);
+    const returns = current - invested;
+    const returnPct = invested > 0 ? (returns / invested) * 100 : 0;
+    const colorClass = returns >= 0 ? 'color-success' : 'color-danger';
+    const returnSign = returns >= 0 ? '+' : '';
+
+    holdingsTableRowsHtml += `
+      <tr>
+        <td style="font-weight: 600; color: #334155;">${inv.name}</td>
+        <td>${categoryLabel}</td>
+        <td style="text-align: right; font-family: monospace;">${formatCurrency(invested)}</td>
+        <td style="text-align: right; font-family: monospace;">${formatCurrency(current)}</td>
+        <td style="text-align: right; font-weight: 600; font-family: monospace;" class="${colorClass}">${returnSign}${formatCurrency(returns)} (${returnSign}${returnPct.toFixed(1)}%)</td>
+      </tr>
+    `;
+  });
+
+  // Liabilities block
+  let liabilitiesHtml = '';
+  if (liabilities.length > 0) {
+    let liabilitiesTableRowsHtml = '';
+    liabilities.forEach(l => {
+      const rate = Number(l.rate);
+      const emi = Number(l.emi);
+      const outstanding = Number(l.outstanding);
+      liabilitiesTableRowsHtml += `
+        <tr>
+          <td style="font-weight: 600; color: #334155;">${l.name}</td>
+          <td>${l.type === 'loan' ? 'Loan / EMI' : 'Credit Card Outstanding'}</td>
+          <td style="text-align: right;">${rate.toFixed(1)}%</td>
+          <td style="text-align: right; font-family: monospace;">${formatCurrency(emi)}</td>
+          <td style="text-align: right; font-weight: 600; font-family: monospace; color: #f43f5e;">${formatCurrency(outstanding)}</td>
+        </tr>
+      `;
+    });
+
+    liabilitiesHtml = `
+      <div style="margin-top: 24px;">
+        <h2 class="section-title">Liabilities & EMI Commitments</h2>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Liability Name</th>
+              <th style="text-align: left;">Type</th>
+              <th style="text-align: right;">Interest Rate</th>
+              <th style="text-align: right;">Monthly EMI</th>
+              <th style="text-align: right;">Outstanding Principal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${liabilitiesTableRowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // Borrow/Lent block
+  let borrowLentHtml = '';
+  const activeBL = borrowLent.filter(bl => bl.status !== 'paid');
+  if (activeBL.length > 0) {
+    let blTableRowsHtml = '';
+    activeBL.forEach(bl => {
+      const outstanding = Number(bl.outstanding);
+      const typeLabel = bl.type === 'lent' ? 'Lent (Receivable)' : 'Borrowed (Payable)';
+      const typeColor = bl.type === 'lent' ? '#10b981' : '#f43f5e';
+      blTableRowsHtml += `
+        <tr>
+          <td style="font-weight: 600; color: #334155;">${bl.person}</td>
+          <td style="color: ${typeColor}; font-weight: 600;">${typeLabel}</td>
+          <td>${bl.date}</td>
+          <td style="text-align: right; font-family: monospace; font-weight: 600;">${formatCurrency(outstanding)}</td>
+        </tr>
+      `;
+    });
+
+    borrowLentHtml = `
+      <div style="margin-top: 24px;">
+        <h2 class="section-title">Personal Borrow & Lent Accounts</h2>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Contact / Person Name</th>
+              <th style="text-align: left;">Transaction Type</th>
+              <th style="text-align: left;">Date Logged</th>
+              <th style="text-align: right;">Receivable / Payable Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${blTableRowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // Compile final HTML
+  const reportHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Moyeniz Portfolio Report</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+      <style>
+        :root {
+          --color-primary: #6366f1;
+          --color-success: #10b981;
+          --color-danger: #f43f5e;
+          --color-info: #0ea5e9;
+          --color-warning: #f59e0b;
+          --text-main: #1e293b;
+          --text-muted: #64748b;
+          --border-color: #e2e8f0;
+          --bg-light: #f8fafc;
+        }
+        
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+        
+        body {
+          font-family: 'Inter', sans-serif;
+          color: var(--text-main);
+          background-color: #ffffff;
+          padding: 24px;
+          line-height: 1.5;
+          font-size: 13px;
+        }
+        
+        @page {
+          size: A4 portrait;
+          margin: 12mm;
+        }
+        
+        .report-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          border-bottom: 2.5px solid var(--color-primary);
+          padding-bottom: 12px;
+          margin-bottom: 20px;
+        }
+        
+        .logo-area h1 {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.7rem;
+          font-weight: 700;
+          color: var(--color-primary);
+        }
+        
+        .logo-area p {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+        }
+        
+        .meta-area {
+          text-align: right;
+          font-size: 0.8rem;
+          color: var(--text-muted);
+          line-height: 1.4;
+        }
+        
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+        
+        .metric-card {
+          background-color: var(--bg-light);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 12px;
+        }
+        
+        .metric-label {
+          font-size: 0.7rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--text-muted);
+          margin-bottom: 4px;
+        }
+        
+        .metric-value {
+          font-size: 1.15rem;
+          font-weight: 700;
+          color: var(--text-main);
+          margin-bottom: 2px;
+        }
+        
+        .metric-footer {
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+        
+        .allocation-section {
+          display: flex;
+          gap: 24px;
+          margin-bottom: 24px;
+        }
+        
+        .allocation-chart-wrapper {
+          flex: 1;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background-color: var(--bg-light);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 12px;
+          max-width: 280px;
+        }
+        
+        .allocation-details {
+          flex: 1.5;
+        }
+        
+        h2.section-title {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: var(--color-primary);
+          margin-bottom: 10px;
+          border-bottom: 1.5px solid var(--border-color);
+          padding-bottom: 4px;
+        }
+        
+        .report-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 16px;
+          font-size: 0.8rem;
+        }
+        
+        .report-table th, .report-table td {
+          padding: 8px 10px;
+          border-bottom: 1px solid var(--border-color);
+        }
+        
+        .report-table th {
+          background-color: var(--bg-light);
+          font-weight: 600;
+          color: var(--text-muted);
+        }
+        
+        .insight-item.insight-positive {
+          border-left-color: var(--color-success);
+          background-color: #f0fdf4;
+        }
+        
+        .insight-item.insight-warning {
+          border-left-color: var(--color-warning);
+          background-color: #fffbeb;
+        }
+        
+        .insight-item.insight-negative {
+          border-left-color: var(--color-danger);
+          background-color: #fff1f2;
+        }
+        
+        .insight-item.insight-info {
+          border-left-color: var(--color-info);
+          background-color: #f0f9ff;
+        }
+        
+        .color-success { color: var(--color-success) !important; }
+        .color-danger { color: var(--color-danger) !important; }
+        
+        .chart-axis-text {
+          fill: var(--text-muted);
+          font-family: 'Inter', sans-serif;
+          font-size: 9px;
+        }
+        
+        .chart-grid-line {
+          stroke: var(--border-color);
+          stroke-dasharray: 4,4;
+        }
+        
+        .chart-axis-line {
+          stroke: var(--border-color);
+        }
+
+        .chart-bar {
+          transition: opacity 0.2s;
+        }
+        
+        .page-break {
+          page-break-before: always;
+        }
+        
+        .report-footer {
+          margin-top: 30px;
+          border-top: 1px solid var(--border-color);
+          padding-top: 10px;
+          text-align: center;
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+      </style>
+    </head>
+    <body>
+      <header class="report-header">
+        <div class="logo-area">
+          <h1>Moyeniz</h1>
+          <p>Privacy-First Portfolio Analytics</p>
+        </div>
+        <div class="meta-area">
+          <strong>Portfolio Wealth Report</strong><br>
+          Generated: ${dateString}<br>
+        </div>
+      </header>
+
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Net Worth</div>
+          <div class="metric-value" style="color: var(--color-primary);">${formatCurrency(netWorthVal)}</div>
+          <div class="metric-footer" style="color: var(--text-muted);">Assets minus Liabilities</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Assets</div>
+          <div class="metric-value">${formatCurrency(summary.currentValue + totalLentVal)}</div>
+          <div class="metric-footer" style="color: var(--text-muted);">Invested + Personal Receivables</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total Return</div>
+          <div class="metric-value ${summary.totalGain >= 0 ? 'color-success' : 'color-danger'}">
+            ${summary.totalGain >= 0 ? '+' : ''}${formatCurrency(summary.totalGain)}
+          </div>
+          <div class="metric-footer ${summary.totalGain >= 0 ? 'color-success' : 'color-danger'}">
+            ${summary.totalGain >= 0 ? '+' : ''}${summary.returnPct.toFixed(1)}%
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">CAGR / XIRR</div>
+          <div class="metric-value" style="color: var(--color-info);">${portfolioCagrText}</div>
+          <div class="metric-footer" style="color: var(--text-muted);">Annualized Growth Rate</div>
+        </div>
+      </section>
+
+      <div class="allocation-section" style="page-break-inside: avoid;">
+        <div class="allocation-chart-wrapper">
+          ${pieChartSvgHtml || '<div style="color: var(--text-muted);">Chart Preview</div>'}
+        </div>
+        <div class="allocation-details">
+          <h2 class="section-title">Asset Category Allocations</h2>
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th style="text-align: left;">Category Class</th>
+                <th style="text-align: right;">Current Value</th>
+                <th style="text-align: right;">Allocation</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allocationTableHtml}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-top: 10px; margin-bottom: 15px; page-break-inside: avoid;">
+        <h2 class="section-title">Asset Class Performance</h2>
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; justify-content: center;">
+          ${performanceSvgHtml || '<div style="color: var(--text-muted); font-size: 0.85rem;">No performance chart available.</div>'}
+        </div>
+      </div>
+
+      <div style="margin-top: 10px; page-break-inside: avoid;">
+        <h2 class="section-title" style="margin-bottom: 6px;">Portfolio Diversification</h2>
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 16px;">
+          <div style="flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; background-color: ${ratingColor}15; border: 2.5px solid ${ratingColor}; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: ${ratingColor};">
+            ${divScore}
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 2px;">
+              Rating: <span style="color: ${ratingColor}; font-weight: 700;">${ratingLabel}</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.3;">
+              ${ratingDesc}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-break"></div>
+
+      <header class="report-header">
+        <div class="logo-area">
+          <h1>Moyeniz</h1>
+          <p>Detailed Asset Breakdown</p>
+        </div>
+        <div class="meta-area">
+          <strong>Portfolio Holdings Details</strong><br>
+          Generated: ${dateString}
+        </div>
+      </header>
+
+      <div>
+        <h2 class="section-title">Individual Holdings & Valuation</h2>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Asset Name</th>
+              <th style="text-align: left;">Category</th>
+              <th style="text-align: right;">Invested Amount</th>
+              <th style="text-align: right;">Current Value</th>
+              <th style="text-align: right;">Total Return / Gain</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${holdingsTableRowsHtml || '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No assets recorded in portfolio.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 24px; margin-bottom: 24px; page-break-inside: avoid;">
+        <h2 class="section-title">Asset Profit & Loss Heatmaps</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div>
+            <h3 style="font-size: 0.85rem; font-weight: 600; color: #10b981; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Profit Heatmap</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+              ${profitHeatmapHtml}
+            </div>
+          </div>
+          <div>
+            <h3 style="font-size: 0.85rem; font-weight: 600; color: #f43f5e; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">Loss Heatmap</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;">
+              ${lossHeatmapHtml}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      ${liabilitiesHtml}
+      ${borrowLentHtml}
+
+      <div style="margin-top: 24px; margin-bottom: 10px; page-break-inside: avoid;">
+        <h2 class="section-title">Portfolio Insights & Recommendations</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+          <div>
+            ${insights.slice(0, Math.ceil(insights.length / 2)).length > 0 ?
+      insights.slice(0, Math.ceil(insights.length / 2)).map(ins => {
+        let typeClass = '';
+        let emoji = '';
+        if (ins.type === 'positive') { typeClass = 'insight-positive'; emoji = '🟢'; }
+        else if (ins.type === 'warning') { typeClass = 'insight-warning'; emoji = '🟡'; }
+        else if (ins.type === 'negative') { typeClass = 'insight-negative'; emoji = '🔴'; }
+        else { typeClass = 'insight-info'; emoji = '🔵'; }
+        return `
+                  <div class="insight-item ${typeClass}" style="margin-bottom: 8px; padding: 10px 14px; border-radius: 6px; border-left: 4px solid; line-height: 1.4;">
+                    <strong style="display: block; font-size: 0.9rem; margin-bottom: 2px;">${emoji} ${ins.title}</strong>
+                    <span style="font-size: 0.8rem; color: #475569;">${ins.desc}</span>
+                  </div>
+                `;
+      }).join('') : '<div style="color: var(--text-muted); font-size: 0.85rem;">No insights available.</div>'
+    }
+          </div>
+          <div>
+            ${insights.slice(Math.ceil(insights.length / 2)).length > 0 ?
+      insights.slice(Math.ceil(insights.length / 2)).map(ins => {
+        let typeClass = '';
+        let emoji = '';
+        if (ins.type === 'positive') { typeClass = 'insight-positive'; emoji = '🟢'; }
+        else if (ins.type === 'warning') { typeClass = 'insight-warning'; emoji = '🟡'; }
+        else if (ins.type === 'negative') { typeClass = 'insight-negative'; emoji = '🔴'; }
+        else { typeClass = 'insight-info'; emoji = '🔵'; }
+        return `
+                  <div class="insight-item ${typeClass}" style="margin-bottom: 8px; padding: 10px 14px; border-radius: 6px; border-left: 4px solid; line-height: 1.4;">
+                    <strong style="display: block; font-size: 0.9rem; margin-bottom: 2px;">${emoji} ${ins.title}</strong>
+                    <span style="font-size: 0.8rem; color: #475569;">${ins.desc}</span>
+                  </div>
+                `;
+      }).join('') : ''
+    }
+          </div>
+        </div>
+      </div>
+
+      <footer class="report-footer">
+        <p>This report was generated locally inside your web browser. Moyeniz does not store, transmit, or process your portfolio data on external servers.</p>
+        <p style="margin-top: 4px; font-weight: 500; color: var(--color-primary);">deep5050.github.io/Moyeniz/ &copy; ${now.getFullYear()}</p>
+      </footer>
+    </body>
+    </html>
+  `;
+
+  // Create iframe for printing
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow.document;
+  doc.write(reportHtml);
+  doc.close();
+
+  // Print execution
+  iframe.contentWindow.focus();
+  setTimeout(() => {
+    iframe.contentWindow.print();
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
+  }, 600);
+}
+
+
 // Initializer
 document.addEventListener('DOMContentLoaded', async () => {
   await loadFromStorage();
@@ -4556,4 +5821,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   else if (activeTabName === 'liabilities') renderLiabilities();
   else if (activeTabName === 'borrow-lent') renderBorrowLent();
   else if (activeTabName === 'salary') renderSalaries();
+
+  updateTopActions(activeTabName);
 });

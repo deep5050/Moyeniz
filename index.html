@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description"
     content="A premium, glassmorphic portfolio tracking app to visualize and manage investments across stocks, mutual funds, gold, bonds, EPFO, and savings.">
-  <title>Moyeniz - Beautiful Portfolio Tracker</title>
+  <title>Moyeniz - Privacy-First Portfolio Tracker</title>
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self';">
   <link rel="stylesheet" href="style.css">
@@ -205,14 +205,25 @@
             </svg>
             <span class="btn-text">Download Portfolio</span>
           </button>
-          <button class="btn btn-primary" id="btn-add-investment">
+          <button class="btn btn-secondary" id="btn-download-pdf-top" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" width="16"
+              height="16">
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+              <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+              <path d="M10 9H8" />
+              <path d="M16 13H8" />
+              <path d="M16 17H8" />
+            </svg>
+            <span class="btn-text">PDF Report</span>
+          </button>
+          <!-- <button class="btn btn-primary btn-icon-only" id="btn-add-investment" style="display: none;" title="Add Investment">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus">
               <path d="M5 12h14" />
               <path d="M12 5v14" />
             </svg>
-            <span class="btn-text">Add Investment</span>
-          </button>
+          </button> -->
         </div>
       </header>
 
@@ -428,46 +439,41 @@
               </div>
             </div>
 
-            <!-- Portfolio Insights & Diversification Rating Stack -->
+            <!-- Mutual Fund Allocation & Savings Account Balance Pie Charts -->
             <div style="display: flex; flex-direction: column; gap: 24px;">
-              <div class="insights-card" style="flex-grow: 1;">
-                <div class="insights-header"
-                  style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
-                  <h3 class="chart-card-title" style="margin: 0;">Portfolio Insights</h3>
-                  <span class="insights-toggle-icon"
-                    style="display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  </span>
+              <!-- Mutual Fund Types Pie Chart -->
+              <div class="chart-card">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="chart-card-title">Mutual Fund Allocation</h3>
+                    <p class="chart-card-subtitle">Breakdown by mutual fund subtype</p>
+                  </div>
                 </div>
-                <div class="insights-content">
-                  <div class="insights-list" id="insights-list-container">
-                    <!-- Insights generated dynamically -->
+                <div class="chart-wrapper" style="flex-direction: column;">
+                  <div id="mf-chart-container" class="chart-svg-container">
+                    <!-- SVG generated dynamically -->
+                  </div>
+                  <div id="mf-legend" class="legend-wrapper">
+                    <!-- Legend generated dynamically -->
                   </div>
                 </div>
               </div>
 
-              <div class="insights-card" style="padding: 24px;">
-                <h3 class="chart-card-title" style="margin-bottom: 12px; text-align: center;">Diversification Rating
-                </h3>
-                <div class="health-score-container"
-                  style="flex-direction: row; justify-content: center; gap: 32px; align-items: center; padding: 0;">
-                  <div class="gauge-svg" style="flex-shrink: 0; width: 140px; height: 140px; position: relative;">
-                    <svg width="140" height="140" viewBox="0 0 140 140"
-                      style="transform: rotate(-90deg); display: block;">
-                      <circle cx="70" cy="70" r="55" class="gauge-bg" />
-                      <circle cx="70" cy="70" r="55" class="gauge-fill" id="health-gauge-fill" stroke-dasharray="345.5"
-                        stroke-dashoffset="345.5" />
-                    </svg>
-                    <div class="gauge-score">
-                      <div class="gauge-score-value" id="health-score-text">0</div>
-                      <div class="gauge-score-label">Score</div>
-                    </div>
+              <!-- Bank Wise Savings Pie Chart -->
+              <div class="chart-card">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="chart-card-title">Savings Account Balance</h3>
+                    <p class="chart-card-subtitle">Distribution across savings bank accounts</p>
                   </div>
-                  <div class="health-status-desc" id="health-score-desc" style="text-align: left; max-width: 250px;">
-                    Analyzing...</div>
+                </div>
+                <div class="chart-wrapper" style="flex-direction: column;">
+                  <div id="savings-chart-container" class="chart-svg-container">
+                    <!-- SVG generated dynamically -->
+                  </div>
+                  <div id="savings-legend" class="legend-wrapper">
+                    <!-- Legend generated dynamically -->
+                  </div>
                 </div>
               </div>
             </div>
@@ -573,6 +579,52 @@
               </div>
             </div>
           </div>
+
+          <!-- Portfolio Insights & Diversification Rating Stack (Moved to bottom) -->
+          <div class="charts-grid" style="margin-top: 24px;">
+            <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column;">
+              <div class="insights-header"
+                style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                <h3 class="chart-card-title" style="margin: 0;">Portfolio Insights</h3>
+                <span class="insights-toggle-icon"
+                  style="display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </div>
+              <div class="insights-content" style="margin-top: 12px; flex-grow: 1;">
+                <div class="insights-list" id="insights-list-container">
+                  <!-- Insights generated dynamically -->
+                </div>
+              </div>
+            </div>
+
+            <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column; justify-content: center;">
+              <h3 class="chart-card-title" style="margin-bottom: 16px; text-align: center;">Diversification Rating</h3>
+              <div class="health-score-container"
+                style="flex-direction: row; justify-content: center; gap: 32px; align-items: center; padding: 0; flex-grow: 1;">
+                <div class="gauge-svg" style="flex-shrink: 0; width: 140px; height: 140px; position: relative;">
+                  <svg width="140" height="140" viewBox="0 0 140 140"
+                    style="transform: rotate(-90deg); display: block;">
+                    <circle cx="70" cy="70" r="55" class="gauge-bg" />
+                    <circle cx="70" cy="70" r="55" class="gauge-fill" id="health-gauge-fill" stroke-dasharray="345.5"
+                      stroke-dashoffset="345.5" />
+                  </svg>
+                  <div class="gauge-score">
+                    <div class="gauge-score-value" id="health-score-text">0</div>
+                    <div class="gauge-score-label">Score</div>
+                  </div>
+                </div>
+                <div class="health-score-desc-container" style="flex-grow: 1; min-width: 150px;">
+                  <div class="health-status-desc" id="health-score-desc" style="text-align: left; font-size: 0.9rem; line-height: 1.4; color: var(--text-secondary);">
+                    Analyzing...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Empty Dashboard Setup Content -->
@@ -665,6 +717,15 @@
         <div class="investments-container" id="investments-list-container">
           <!-- Investment items generated dynamically -->
         </div>
+
+        <!-- Floating Add Button for Investment -->
+        <button class="floating-add-btn" id="btn-add-investment-float" title="Add Investment">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+        </button>
       </section>
 
       <!-- VIEW 3: Projections -->
@@ -829,9 +890,6 @@
 
         <!-- Liabilities filters/actions -->
         <div class="filters-bar">
-          <div class="asset-filters">
-            <button class="filter-chip active" id="btn-add-liability">Add New Liability / Loan</button>
-          </div>
           <div class="search-wrapper">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
@@ -845,6 +903,15 @@
         <div class="investments-container" id="liabilities-list-container">
           <!-- Liabilities items generated dynamically -->
         </div>
+
+        <!-- Floating Add Button for Liabilities -->
+        <button class="floating-add-btn" id="btn-add-liability" title="Add Liability / Loan">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+        </button>
       </section>
 
       <!-- VIEW 5: Borrow & Lent -->
@@ -927,14 +994,21 @@
               <input type="text" class="search-input" id="input-search-borrow-lent" placeholder="Search cashflow..."
                 style="padding-left: 32px;">
             </div>
-            <button class="btn btn-primary" id="btn-add-borrow-lent" style="white-space: nowrap;">Add
-              Transaction</button>
           </div>
         </div>
 
         <div class="investments-container" id="borrow-lent-list-container">
           <!-- Dynamically generated borrow & lent cards -->
         </div>
+
+        <!-- Floating Add Button for Borrow & Lent -->
+        <button class="floating-add-btn" id="btn-add-borrow-lent" title="Add Borrow / Lent Transaction">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+        </button>
       </section>
 
       <!-- VIEW 6: Salary Tracker -->
@@ -1050,9 +1124,6 @@
 
         <!-- Filters & Action Bar -->
         <div class="filters-bar">
-          <div class="asset-filters">
-            <button class="filter-chip active" id="btn-add-salary">Add Salary Entry</button>
-          </div>
           <div class="search-wrapper">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
@@ -1067,6 +1138,15 @@
         <div class="investments-container" id="salary-list-container">
           <!-- Salary items generated dynamically -->
         </div>
+
+        <!-- Floating Add Button for Salary Entry -->
+        <button class="floating-add-btn" id="btn-add-salary" title="Add Salary Entry">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+        </button>
       </section>
 
       <!-- Interactive Tooltip Overlay -->
