@@ -461,6 +461,10 @@ function renderDashboard() {
   const historyData = getPortfolioHistory();
   renderDashboardHistoryChart(historyData);
 
+  // Render Net Worth History Chart
+  const netWorthData = getNetWorthHistory();
+  renderNetWorthChart(netWorthData);
+
   // Render Insights and Score
   renderInsights(summary);
 
@@ -1126,9 +1130,322 @@ function renderDashboardHistoryChart(historyData) {
   container.appendChild(svg);
 }
 
+// Generate Net Worth History walking backward 12 months, incorporating salary credits & EMI payments
+function getNetWorthHistory() {
+  const history = [];
+  const now = new Date();
+
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthLabel = d.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+    const fullMonthLabel = d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    const monthKey = d.toISOString().slice(0, 7); // "YYYY-MM"
+
+    // Reconstruct investments
+    let totalInvestments = 0;
+    investments.forEach(inv => {
+      const currentAmount = Number(inv.currentAmount) || 0;
+      let monthlyRate = 0.008; // default to stocks/MF
+      const assetClass = inv.assetClass;
+
+      if (assetClass === 'fd' || assetClass === 'savings') {
+        monthlyRate = 0.005;
+      } else if (assetClass === 'gold' || assetClass === 'bonds' || assetClass === 'epfo') {
+        monthlyRate = 0.006;
+      }
+
+      const val = currentAmount / Math.pow(1 + monthlyRate, i);
+      totalInvestments += val;
+    });
+
+    // Reconstruct liabilities & count active EMIs
+    let totalLiabilities = 0;
+    let totalEmisPaid = 0;
+    liabilities.forEach(l => {
+      const outstandingCurrent = Number(l.outstanding) || 0;
+      const emi = Number(l.emi) || 0;
+      const annualRate = Number(l.rate) || 0;
+      const monthlyRate = (annualRate / 100) / 12;
+      const totalTenure = Number(l.totalTenure || l.tenure || 1);
+      const tenureLeft = Number(l.tenure) || 0;
+
+      let outstanding = outstandingCurrent;
+      for (let step = 1; step <= i; step++) {
+        if (tenureLeft + step > totalTenure) {
+          outstanding = 0;
+          break;
+        }
+        outstanding = (outstanding + emi) / (1 + monthlyRate);
+      }
+      totalLiabilities += outstanding;
+
+      // Check if this liability had EMIs paid i months ago
+      if (tenureLeft + i <= totalTenure) {
+        totalEmisPaid += emi;
+      }
+    });
+
+    // Find salary credited in that month
+    const sal = salaries.find(s => s.month === monthKey);
+    const salaryCredited = sal ? Number(sal.inhand) : 0;
+
+    history.push({
+      monthLabel,
+      fullMonthLabel,
+      investments: Math.round(totalInvestments),
+      liabilities: Math.round(totalLiabilities),
+      netWorth: Math.round(totalInvestments - totalLiabilities),
+      salaryCredited: Math.round(salaryCredited),
+      emisPaid: Math.round(totalEmisPaid)
+    });
+  }
+
+  return history;
+}
+
+// Render Net Worth Line Chart
+function renderNetWorthChart(netWorthData) {
+  const container = document.getElementById('networth-chart-container');
+  if (!container) return;
+  clearContainer(container);
+
+  if (!netWorthData || netWorthData.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No historical net worth data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 480 : 840;
+  const svgHeight = isMobile ? 240 : 280;
+  const margin = isMobile
+    ? { top: 15, right: 10, bottom: 30, left: 45 }
+    : { top: 20, right: 20, bottom: 40, left: 75 };
+  const chartWidth = svgWidth - margin.left - margin.right;
+  const chartHeight = svgHeight - margin.top - margin.bottom;
+
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+  svg.classList.add('svg-chart');
+
+  // Custom Area Fill Gradients
+  const defs = createSVGElement('defs');
+
+  const nwGrad = createSVGElement('linearGradient');
+  nwGrad.setAttribute('id', 'grad-nw-trend-area');
+  nwGrad.setAttribute('x1', '0%'); nwGrad.setAttribute('y1', '0%');
+  nwGrad.setAttribute('x2', '0%'); nwGrad.setAttribute('y2', '100%');
+  const nwStop1 = createSVGElement('stop'); nwStop1.setAttribute('offset', '0%'); nwStop1.setAttribute('stop-color', '#8b5cf6'); nwStop1.setAttribute('stop-opacity', '0.25');
+  const nwStop2 = createSVGElement('stop'); nwStop2.setAttribute('offset', '100%'); nwStop2.setAttribute('stop-color', '#8b5cf6'); nwStop2.setAttribute('stop-opacity', '0.00');
+  nwGrad.appendChild(nwStop1); nwGrad.appendChild(nwStop2);
+  defs.appendChild(nwGrad);
+
+  svg.appendChild(defs);
+
+  // Find max and min values for Y axis scaling
+  let maxVal = -Infinity;
+  let minVal = Infinity;
+  netWorthData.forEach(d => {
+    if (d.netWorth > maxVal) maxVal = d.netWorth;
+    if (d.netWorth < minVal) minVal = d.netWorth;
+  });
+
+  const range = maxVal - minVal;
+  maxVal = maxVal + Math.max(10000, range * 0.1);
+  minVal = minVal - Math.max(10000, range * 0.1);
+  if (minVal > 0 && minVal < maxVal * 0.2) {
+    minVal = 0;
+  }
+
+  // Draw Y grid and labels
+  const ticks = 4;
+  for (let i = 0; i <= ticks; i++) {
+    const ratio = i / ticks;
+    const yVal = minVal + ratio * (maxVal - minVal);
+    const y = margin.top + chartHeight - (ratio * chartHeight);
+
+    if (i > 0 && i < ticks) {
+      const line = createSVGElement('line');
+      line.setAttribute('x1', margin.left.toString());
+      line.setAttribute('y1', y.toString());
+      line.setAttribute('x2', (margin.left + chartWidth).toString());
+      line.setAttribute('y2', y.toString());
+      line.classList.add('chart-grid-line');
+      svg.appendChild(line);
+    }
+
+    const text = createSVGElement('text');
+    text.setAttribute('x', (margin.left - 10).toString());
+    text.setAttribute('y', (y + 4).toString());
+    text.setAttribute('text-anchor', 'end');
+    text.classList.add('chart-axis-text');
+    text.textContent = formatCurrency(yVal);
+    svg.appendChild(text);
+  }
+
+  const pointsCount = netWorthData.length;
+
+  // Draw X axis grid and labels
+  netWorthData.forEach((d, idx) => {
+    const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
+    const x = margin.left + (rx * chartWidth);
+
+    // Vertical dotted lines (grid)
+    if (idx > 0 && idx < pointsCount - 1) {
+      const line = createSVGElement('line');
+      line.setAttribute('x1', x.toString());
+      line.setAttribute('y1', margin.top.toString());
+      line.setAttribute('x2', x.toString());
+      line.setAttribute('y2', (margin.top + chartHeight).toString());
+      line.classList.add('chart-grid-line');
+      svg.appendChild(line);
+    }
+
+    // Label X (show every 2nd label on mobile to avoid overcrowding)
+    if (!isMobile || idx % 2 === 0) {
+      const text = createSVGElement('text');
+      text.setAttribute('x', x.toString());
+      text.setAttribute('y', (margin.top + chartHeight + (isMobile ? 16 : 20)).toString());
+      text.setAttribute('text-anchor', 'middle');
+      text.classList.add('chart-axis-text');
+      text.textContent = d.monthLabel;
+      svg.appendChild(text);
+    }
+  });
+
+  // Coordinate scaling logic
+  const scalePoint = (d, idx) => {
+    const rx = pointsCount > 1 ? idx / (pointsCount - 1) : 0.5;
+    const valRatio = (d.netWorth - minVal) / (maxVal - minVal || 1);
+    return {
+      x: margin.left + (rx * chartWidth),
+      y: margin.top + chartHeight - (valRatio * chartHeight),
+      netWorth: d.netWorth,
+      investments: d.investments,
+      liabilities: d.liabilities,
+      salaryCredited: d.salaryCredited,
+      emisPaid: d.emisPaid,
+      monthLabel: d.monthLabel,
+      fullMonthLabel: d.fullMonthLabel
+    };
+  };
+
+  const mapped = netWorthData.map(scalePoint);
+
+  if (pointsCount > 1) {
+    // Area fill under Net Worth line
+    const areaPath = `M ${mapped[0].x} ${margin.top + chartHeight} ` +
+      mapped.map(p => `L ${p.x} ${p.y}`).join(' ') +
+      ` L ${mapped[mapped.length - 1].x} ${margin.top + chartHeight} Z`;
+    const area = createSVGElement('path');
+    area.setAttribute('d', areaPath);
+    area.setAttribute('fill', 'url(#grad-nw-trend-area)');
+    svg.appendChild(area);
+
+    // Draw Net Worth Line (Violet)
+    const polylineStr = mapped.map(p => `${p.x},${p.y}`).join(' ');
+    const line = createSVGElement('polyline');
+    line.setAttribute('points', polylineStr);
+    line.setAttribute('fill', 'none');
+    line.setAttribute('stroke', '#8b5cf6');
+    line.setAttribute('stroke-width', '3');
+    svg.appendChild(line);
+  }
+
+  // Draw points/dots and tooltips
+  mapped.forEach(p => {
+    const dot = createSVGElement('circle');
+    dot.setAttribute('cx', p.x.toString());
+    dot.setAttribute('cy', p.y.toString());
+    dot.setAttribute('r', '5');
+    dot.setAttribute('fill', '#8b5cf6');
+    dot.setAttribute('stroke', '#070913');
+    dot.setAttribute('stroke-width', '2');
+    dot.style.cursor = 'pointer';
+    dot.style.transition = 'transform 0.15s ease';
+
+    dot.addEventListener('mouseenter', () => dot.setAttribute('r', '7'));
+    dot.addEventListener('mouseleave', () => {
+      dot.setAttribute('r', '5');
+      hideTooltip();
+    });
+
+    dot.addEventListener('mousemove', (e) => {
+      showNetWorthTooltip(
+        e,
+        p.fullMonthLabel,
+        p.netWorth,
+        p.investments,
+        p.liabilities,
+        p.salaryCredited,
+        p.emisPaid
+      );
+    });
+    svg.appendChild(dot);
+  });
+
+  container.appendChild(svg);
+}
+
+// Show custom detailed tooltip for Net Worth Chart
+function showNetWorthTooltip(event, title, netWorth, assets, liabilities, salary, emi) {
+  const tooltip = document.getElementById('chart-tooltip');
+  tooltip.innerHTML = `
+    <div class="chart-tooltip-title">${title}</div>
+    <div class="chart-tooltip-row">
+      <span>Net Worth:</span>
+      <strong class="chart-tooltip-value" style="color: var(--color-primary); font-weight: 700;">${formatCurrency(netWorth)}</strong>
+    </div>
+    <div class="chart-tooltip-row">
+      <span>Assets:</span>
+      <span class="chart-tooltip-value" style="color: #6366f1;">${formatCurrency(assets)}</span>
+    </div>
+    <div class="chart-tooltip-row">
+      <span>Liabilities:</span>
+      <span class="chart-tooltip-value" style="color: var(--color-danger);">${formatCurrency(liabilities)}</span>
+    </div>
+    <div class="chart-tooltip-row">
+      <span>Salary Credited:</span>
+      <span class="chart-tooltip-value" style="color: var(--color-success);">${formatCurrency(salary)}</span>
+    </div>
+    <div class="chart-tooltip-row">
+      <span>EMIs Paid:</span>
+      <span class="chart-tooltip-value" style="color: var(--color-danger);">${formatCurrency(emi)}</span>
+    </div>
+  `;
+
+  const container = document.querySelector('.main-wrapper');
+  const rect = container.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = (y - 12) + 'px';
+  tooltip.style.opacity = '1';
+}
+
 // Interactive Tooltip Helpers
 function showTooltip(event, title, invested, current, pl, pct) {
   const tooltip = document.getElementById('chart-tooltip');
+  if (!document.getElementById('chart-tooltip-title')) {
+    tooltip.innerHTML = `
+      <div id="chart-tooltip-title" class="chart-tooltip-title">Category</div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-1">Invested:</span>
+        <span id="chart-tooltip-invested" class="chart-tooltip-value">₹0</span>
+      </div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-2">Current:</span>
+        <span id="chart-tooltip-current" class="chart-tooltip-value">₹0</span>
+      </div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-3">P&amp;L:</span>
+        <span id="chart-tooltip-pl" class="chart-tooltip-value">₹0 (+0%)</span>
+      </div>
+    `;
+  }
   const tTitle = document.getElementById('chart-tooltip-title');
   const tInvested = document.getElementById('chart-tooltip-invested');
   const tCurrent = document.getElementById('chart-tooltip-current');
@@ -3551,6 +3868,23 @@ function formatMonthShort(monthStr) {
 
 function showCustomTooltip(event, title, label1, val1, label2, val2, label3, val3) {
   const tooltip = document.getElementById('chart-tooltip');
+  if (!document.getElementById('chart-tooltip-title')) {
+    tooltip.innerHTML = `
+      <div id="chart-tooltip-title" class="chart-tooltip-title">Category</div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-1">Invested:</span>
+        <span id="chart-tooltip-invested" class="chart-tooltip-value">₹0</span>
+      </div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-2">Current:</span>
+        <span id="chart-tooltip-current" class="chart-tooltip-value">₹0</span>
+      </div>
+      <div class="chart-tooltip-row">
+        <span id="chart-tooltip-label-3">P&amp;L:</span>
+        <span id="chart-tooltip-pl" class="chart-tooltip-value">₹0 (+0%)</span>
+      </div>
+    `;
+  }
   const tTitle = document.getElementById('chart-tooltip-title');
   const tInvested = document.getElementById('chart-tooltip-invested');
   const tCurrent = document.getElementById('chart-tooltip-current');
@@ -4171,6 +4505,7 @@ window.addEventListener('resize', () => {
         renderAllocationChart(totalPortfolioVal);
         renderPerformanceChart();
         renderDashboardHistoryChart(getPortfolioHistory());
+        renderNetWorthChart(getNetWorthHistory());
       }
     } else if (activeTabName === 'projections') {
       renderProjections();

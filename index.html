@@ -431,10 +431,13 @@
             <!-- Portfolio Insights & Diversification Rating Stack -->
             <div style="display: flex; flex-direction: column; gap: 24px;">
               <div class="insights-card" style="flex-grow: 1;">
-                <div class="insights-header" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                <div class="insights-header"
+                  style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
                   <h3 class="chart-card-title" style="margin: 0;">Portfolio Insights</h3>
-                  <span class="insights-toggle-icon" style="display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <span class="insights-toggle-icon"
+                    style="display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                       <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
                   </span>
@@ -492,6 +495,28 @@
             </div>
             <div class="chart-wrapper" style="min-height: 300px;">
               <div id="history-chart-container" class="chart-svg-container" style="width: 100%;">
+                <!-- SVG line chart generated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Net Worth Timeline Chart -->
+          <div class="chart-card" style="margin-top: 24px; width: 100%;">
+            <div class="chart-card-header">
+              <div>
+                <h3 class="chart-card-title">Net Worth Timeline</h3>
+                <p class="chart-card-subtitle">Your actual net worth (Assets - Liabilities) over the last 12 months</p>
+              </div>
+              <div class="legend-row" style="display: flex; gap: 16px; font-size: 0.8rem; font-weight: 500;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span
+                    style="display: inline-block; width: 12px; height: 3px; background-color: #8b5cf6; border-radius: 1px;"></span>
+                  <span>Net Worth</span>
+                </div>
+              </div>
+            </div>
+            <div class="chart-wrapper" style="min-height: 300px;">
+              <div id="networth-chart-container" class="chart-svg-container" style="width: 100%;">
                 <!-- SVG line chart generated dynamically -->
               </div>
             </div>
@@ -555,7 +580,7 @@
           <div class="empty-dashboard-container">
             <h2 class="empty-dashboard-title">Set Up Your Wealth Portfolio</h2>
             <p class="empty-dashboard-subtitle">Select how you would like to initialize your Moyeniz portfolio tracking
-              metrics:</p>
+            </p>
 
             <div class="setup-grid">
               <!-- Option 1: File Dropper (Drag & Drop JSON) -->
