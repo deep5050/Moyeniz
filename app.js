@@ -474,8 +474,10 @@ function renderAllocationChart(totalPortfolioVal) {
   const svg = createSVGElement('svg');
   svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
   svg.classList.add('svg-chart');
-  svg.style.width = '370px';
-  svg.style.height = '370px';
+  svg.style.width = '100%';
+  svg.style.height = 'auto';
+  svg.style.maxWidth = '370px';
+  svg.style.maxHeight = '370px';
   
   appendSVGDefs(svg);
   

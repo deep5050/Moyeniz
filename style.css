@@ -1525,33 +1525,52 @@ input[type="range"].slider::-webkit-slider-thumb:hover {
     height: auto;
     border-right: none;
     border-bottom: 1px solid var(--border-light);
-    padding: 16px 24px;
+    padding: 12px 16px;
   }
   .brand {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    justify-content: center;
   }
   .nav-menu {
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: flex-start;
     overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav-menu::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-link {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .sidebar-footer {
+    display: none; /* Hide profile block in top menu for clean look */
   }
   .main-wrapper {
     height: auto;
     overflow-y: visible;
   }
   .top-bar {
-    padding: 16px 24px;
+    padding: 16px 20px;
   }
   .page-view {
-    padding: 24px 16px;
+    padding: 20px 14px;
   }
   .investment-card {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
+  .loan-progress-row {
+    grid-column: span 2;
+  }
   .card-actions {
     grid-column: span 2;
-    justify-content: flex-start;
+    justify-content: flex-end;
     border-top: 1px solid var(--border-light);
     padding-top: 12px;
     margin-top: 4px;
@@ -1562,13 +1581,174 @@ input[type="range"].slider::-webkit-slider-thumb:hover {
 }
 
 @media (max-width: 600px) {
-  .metrics-grid {
-    grid-template-columns: 1fr;
+  .sidebar {
+    padding: 10px 12px;
+  }
+  .brand {
+    margin-bottom: 8px;
   }
   .top-bar {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .top-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .top-actions .btn {
+    flex-grow: 1;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+  .page-view {
+    padding: 12px 10px;
+  }
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .metric-card {
+    padding: 16px;
+  }
+  .metric-value {
+    font-size: 1.6rem;
+  }
+  .chart-card {
+    padding: 16px;
+  }
+  .insights-card {
+    padding: 16px;
+  }
+  
+  /* Mobile Re-imagined Investment / Liability / Salary List Cards */
+  .investment-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+  .investment-card .asset-main-info {
+    grid-column: auto;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 8px;
+    margin-bottom: 2px;
+  }
+  .investment-card .asset-data-col {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    border-bottom: 1px dashed rgba(15, 23, 42, 0.06);
+    padding-bottom: 8px;
+  }
+  .investment-card .asset-data-col .asset-data-label {
+    margin-bottom: 0;
+  }
+  .investment-card .pl-col {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    border-bottom: 1px dashed rgba(15, 23, 42, 0.06);
+    padding-bottom: 8px;
+  }
+  .investment-card .pl-col::before {
+    content: 'P&L (Returns)';
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .investment-card .pl-col .pl-val {
+    margin-left: auto;
+    margin-right: 8px;
+  }
+  .investment-card .asset-data-col:has(+ .card-actions),
+  .investment-card .pl-col:has(+ .card-actions) {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .investment-card .card-actions {
+    grid-column: auto;
+    width: 100%;
+    justify-content: flex-end;
+    border-top: 1px solid var(--border-light);
+    padding-top: 10px;
+    margin-top: 4px;
+  }
+  .loan-progress-row {
+    grid-column: auto;
+    width: 100%;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  .loan-progress-text-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  /* Filter horizontal scroll premium styling */
+  .filters-bar {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .asset-filters {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .asset-filters::-webkit-scrollbar {
+    display: none;
+  }
+  .search-wrapper {
+    width: 100%;
+  }
+  
+  /* AI Insights / Score Gauge vertical stacking */
+  .health-score-container {
+    flex-direction: column !important;
+    gap: 16px !important;
+    text-align: center;
+  }
+  #health-score-desc {
+    text-align: center !important;
+  }
+  
+  /* Projections page vertical stacking */
+  .projection-summary {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    text-align: center;
+    padding: 12px;
+  }
+  
+  /* Modals/Form dialog sizing */
+  .modal-box {
+    padding: 20px 16px;
+  }
+  .form-row {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .form-group {
+    margin-bottom: 12px;
+  }
+  .form-actions {
+    margin-top: 20px;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .form-actions .btn {
+    width: 100%;
+  }
+  .app-footer {
+    padding: 16px 12px;
   }
 }
 
