@@ -29,7 +29,9 @@
         </div>
         <div class="brand-name">Moyeniz</div>
         <button id="btn-sidebar-close" class="sidebar-close-btn" aria-label="Close navigation">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" width="20" height="20">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" width="20"
+            height="20">
             <line x1="18" x2="6" y1="6" y2="18"></line>
             <line x1="6" x2="18" y1="6" y2="18"></line>
           </svg>
@@ -180,7 +182,9 @@
       <!-- Top Status & Action Bar -->
       <header class="top-bar">
         <button id="btn-sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle navigation">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" width="22" height="22">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" width="22"
+            height="22">
             <line x1="4" x2="20" y1="12" y2="12"></line>
             <line x1="4" x2="20" y1="6" y2="6"></line>
             <line x1="4" x2="20" y1="18" y2="18"></line>
@@ -188,7 +192,7 @@
         </button>
         <div class="page-title">
           <h1 id="view-title">Dashboard</h1>
-          <p id="view-subtitle">An overview of your complete financial portfolio.</p>
+          <!-- <p id="view-subtitle">An overview of your complete financial portfolio.</p> -->
         </div>
         <div class="top-actions">
           <button class="btn btn-secondary" id="btn-download-portfolio-top" style="display: none;">
@@ -215,155 +219,191 @@
       <!-- VIEW 1: Dashboard -->
       <section class="page-view active-view" id="view-dashboard">
         <div id="dashboard-active-content">
-          <!-- Metrics Grid -->
-          <div class="metrics-grid">
-            <div class="metric-card primary">
-              <div class="metric-header">
-                <span class="metric-title">Total Invested</span>
-                <div class="metric-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-landmark"
-                    width="20" height="20">
-                    <line x1="3" x2="21" y1="22" y2="22" />
-                    <line x1="6" x2="6" y1="18" y2="11" />
-                    <line x1="10" x2="10" y1="18" y2="11" />
-                    <line x1="14" x2="14" y1="18" y2="11" />
-                    <line x1="18" x2="18" y1="18" y2="11" />
-                    <path d="m12 2-10 7h20Z" />
-                  </svg>
-                </div>
-              </div>
-              <div class="metric-value" id="val-total-invested">₹0</div>
-              <div class="metric-footer">
-                <span class="label">Principal Amount</span>
-              </div>
+          <!-- Metrics Sections -->
+          <!-- Section 1: Portfolio Assets (Collapsible) -->
+          <div class="dashboard-section" id="section-assets">
+            <div class="section-header">
+              <h2 class="section-title">Portfolio Assets &amp; Net Worth</h2>
+              <span class="section-toggle-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
             </div>
 
-            <div class="metric-card blue">
-              <div class="metric-header">
-                <span class="metric-title">Current Value</span>
-                <div class="metric-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-up"
-                    width="20" height="20">
-                    <path d="m22 7-8.5 8.5-5-5L2 17" />
-                    <path d="M16 7h6v6" />
-                  </svg>
+            <div class="metrics-grid section-content">
+              <!-- Card 1: Total Invested -->
+              <div class="metric-card primary">
+                <div class="metric-header">
+                  <span class="metric-title">Total Invested</span>
+                  <div class="metric-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-landmark"
+                      width="20" height="20">
+                      <line x1="3" x2="21" y1="22" y2="22" />
+                      <line x1="6" x2="6" y1="18" y2="11" />
+                      <line x1="10" x2="10" y1="18" y2="11" />
+                      <line x1="14" x2="14" y1="18" y2="11" />
+                      <line x1="18" x2="18" y1="18" y2="11" />
+                      <path d="m12 2-10 7h20Z" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-value" id="val-total-invested">₹0</div>
+                <div class="metric-footer">
+                  <span class="label">Principal Amount</span>
                 </div>
               </div>
-              <div class="metric-value" id="val-current-value">₹0</div>
-              <div class="metric-footer">
-                <span class="label">Live Assets Value</span>
+
+              <!-- Card 2: Current Value -->
+              <div class="metric-card blue">
+                <div class="metric-header">
+                  <span class="metric-title">Current Value</span>
+                  <div class="metric-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-up"
+                      width="20" height="20">
+                      <path d="m22 7-8.5 8.5-5-5L2 17" />
+                      <path d="M16 7h6v6" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-value" id="val-current-value">₹0</div>
+                <div class="metric-footer">
+                  <span class="label">Live Assets Value</span>
+                </div>
+              </div>
+
+              <!-- Card 3: Total Lent -->
+              <div class="metric-card blue">
+                <div class="metric-header">
+                  <span class="metric-title">Total Lent</span>
+                  <div class="metric-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="lucide lucide-arrow-up-right" width="20" height="20">
+                      <path d="M7 7h10v10" />
+                      <path d="M7 17 17 7" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-value" id="val-total-lent-dash">₹0</div>
+                <div class="metric-footer">
+                  <span class="label">Personal Lendings</span>
+                </div>
+              </div>
+
+              <!-- Card 4: Net Worth -->
+              <div class="metric-card purple">
+                <div class="metric-header">
+                  <span class="metric-title">Net Worth</span>
+                  <div class="metric-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield"
+                      width="20" height="20">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-value" id="val-net-worth">₹0</div>
+                <div class="metric-footer">
+                  <span class="label">Assets + Lent - Debt</span>
+                </div>
+              </div>
+
+              <!-- Card 5: Total Returns (P&L) -->
+              <div class="metric-card success" id="card-total-return">
+                <div class="metric-header">
+                  <span class="metric-title">Total Returns (P&amp;L)</span>
+                  <div class="metric-icon" id="icon-total-return">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="lucide lucide-arrow-up-right" width="20" height="20">
+                      <path d="M7 7h10v10" />
+                      <path d="M7 17 17 7" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-value" id="val-total-return">₹0</div>
+                <div class="metric-footer">
+                  <span class="trend-badge up" id="badge-total-return-pct">+0%</span>
+                  <span class="label">Absolute Gain</span>
+                </div>
+              </div>
+
+              <!-- Card 6: XIRR (CAGR Equivalent) -->
+              <div class="metric-card warning">
+                <div class="metric-header">
+                  <span class="metric-title">XIRR (CAGR Equivalent)</span>
+                  <div class="metric-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-percent"
+                      width="20" height="20">
+                      <line x1="19" x2="5" y1="5" y2="19" />
+                      <circle cx="6.5" cy="6.5" r="2.5" />
+                      <circle cx="17.5" cy="17.5" r="2.5" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-value" id="val-portfolio-cagr">0.0%</div>
+                <div class="metric-footer">
+                  <span class="label">Annualized Return</span>
+                </div>
               </div>
             </div>
+          </div>
 
-            <div class="metric-card danger">
-              <div class="metric-header">
-                <span class="metric-title">Total Debt</span>
-                <div class="metric-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-down"
-                    width="20" height="20">
-                    <line x1="22" x2="2" y1="18" y2="18" />
-                    <path d="M22 6 13.5 14.5l-5-5L2 16" />
-                    <path d="M16 14.5h6v-6" />
-                  </svg>
-                </div>
-              </div>
-              <div class="metric-value" id="val-total-liabilities-dash">₹0</div>
-              <div class="metric-footer">
-                <span class="label">Outstanding Liabilities</span>
-              </div>
+          <!-- Section 2: Liabilities & Borrowings (Collapsible) -->
+          <div class="dashboard-section" id="section-liabilities">
+            <div class="section-header">
+              <h2 class="section-title">Liabilities &amp; Borrowings</h2>
+              <span class="section-toggle-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
             </div>
 
-            <div class="metric-card danger">
-              <div class="metric-header">
-                <span class="metric-title">Total Borrowed</span>
-                <div class="metric-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="lucide lucide-arrow-down-left" width="20" height="20">
-                    <path d="M17 7 7 17" />
-                    <path d="M17 17H7V7" />
-                  </svg>
+            <div class="metrics-grid section-content">
+              <!-- Card 7: Total Debt -->
+              <div class="metric-card danger">
+                <div class="metric-header">
+                  <span class="metric-title">Total Debt</span>
+                  <div class="metric-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="lucide lucide-trending-down" width="20" height="20">
+                      <line x1="22" x2="2" y1="18" y2="18" />
+                      <path d="M22 6 13.5 14.5l-5-5L2 16" />
+                      <path d="M16 14.5h6v-6" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="metric-value" id="val-total-liabilities-dash">₹0</div>
+                <div class="metric-footer">
+                  <span class="label">Outstanding Liabilities</span>
                 </div>
               </div>
-              <div class="metric-value" id="val-total-borrowed-dash">₹0</div>
-              <div class="metric-footer">
-                <span class="label">Personal Borrowings</span>
-              </div>
-            </div>
 
-            <div class="metric-card blue">
-              <div class="metric-header">
-                <span class="metric-title">Total Lent</span>
-                <div class="metric-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right"
-                    width="20" height="20">
-                    <path d="M7 7h10v10" />
-                    <path d="M7 17 17 7" />
-                  </svg>
+              <!-- Card 8: Total Borrowed -->
+              <div class="metric-card danger">
+                <div class="metric-header">
+                  <span class="metric-title">Total Borrowed</span>
+                  <div class="metric-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                      class="lucide lucide-arrow-down-left" width="20" height="20">
+                      <path d="M17 7 7 17" />
+                      <path d="M17 17H7V7" />
+                    </svg>
+                  </div>
                 </div>
-              </div>
-              <div class="metric-value" id="val-total-lent-dash">₹0</div>
-              <div class="metric-footer">
-                <span class="label">Personal Lendings</span>
-              </div>
-            </div>
-
-            <div class="metric-card purple">
-              <div class="metric-header">
-                <span class="metric-title">Net Worth</span>
-                <div class="metric-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield"
-                    width="20" height="20">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
+                <div class="metric-value" id="val-total-borrowed-dash">₹0</div>
+                <div class="metric-footer">
+                  <span class="label">Personal Borrowings</span>
                 </div>
-              </div>
-              <div class="metric-value" id="val-net-worth">₹0</div>
-              <div class="metric-footer">
-                <span class="label">Assets + Lent - Debt</span>
-              </div>
-            </div>
-
-            <div class="metric-card success" id="card-total-return">
-              <div class="metric-header">
-                <span class="metric-title">Total Returns (P&amp;L)</span>
-                <div class="metric-icon" id="icon-total-return">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right"
-                    width="20" height="20">
-                    <path d="M7 7h10v10" />
-                    <path d="M7 17 17 7" />
-                  </svg>
-                </div>
-              </div>
-              <div class="metric-value" id="val-total-return">₹0</div>
-              <div class="metric-footer">
-                <span class="trend-badge up" id="badge-total-return-pct">+0%</span>
-                <span class="label">Absolute Gain</span>
-              </div>
-            </div>
-
-            <div class="metric-card warning">
-              <div class="metric-header">
-                <span class="metric-title">XIRR (CAGR Equivalent)</span>
-                <div class="metric-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-percent"
-                    width="20" height="20">
-                    <line x1="19" x2="5" y1="5" y2="19" />
-                    <circle cx="6.5" cy="6.5" r="2.5" />
-                    <circle cx="17.5" cy="17.5" r="2.5" />
-                  </svg>
-                </div>
-              </div>
-              <div class="metric-value" id="val-portfolio-cagr">0.0%</div>
-              <div class="metric-footer">
-                <span class="label">Annualized Return</span>
               </div>
             </div>
           </div>
@@ -388,10 +428,10 @@
               </div>
             </div>
 
-            <!-- AI Portfolio Insights & Diversification Rating Stack -->
+            <!-- Portfolio Insights & Diversification Rating Stack -->
             <div style="display: flex; flex-direction: column; gap: 24px;">
               <div class="insights-card" style="flex-grow: 1;">
-                <h3 class="chart-card-title" style="margin-bottom: 20px;">AI Portfolio Insights</h3>
+                <h3 class="chart-card-title" style="margin-bottom: 20px;">Portfolio Insights</h3>
                 <div class="insights-list" id="insights-list-container">
                   <!-- Insights generated dynamically -->
                 </div>
@@ -430,11 +470,13 @@
               </div>
               <div class="legend-row" style="display: flex; gap: 16px; font-size: 0.8rem; font-weight: 500;">
                 <div style="display: flex; align-items: center; gap: 6px;">
-                  <span style="display: inline-block; width: 12px; height: 3px; background-color: var(--color-primary); border-radius: 1px;"></span>
+                  <span
+                    style="display: inline-block; width: 12px; height: 3px; background-color: var(--color-primary); border-radius: 1px;"></span>
                   <span>Total Investments</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px;">
-                  <span style="display: inline-block; width: 12px; height: 3px; background-color: var(--color-danger); border-radius: 1px;"></span>
+                  <span
+                    style="display: inline-block; width: 12px; height: 3px; background-color: var(--color-danger); border-radius: 1px;"></span>
                   <span>Liabilities</span>
                 </div>
               </div>
@@ -1012,7 +1054,7 @@
 
       <!-- Global Footer -->
       <footer class="app-footer">
-        Made with ❤️ &amp; antigravity by <a href="https://github.com/deep5050" target="_blank"
+        Made with ❤️ &amp; Antigravity by <a href="https://github.com/deep5050" target="_blank"
           rel="noopener noreferrer">Dipankar Pal</a>
       </footer>
     </main>
