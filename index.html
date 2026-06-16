@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A premium, glassmorphic portfolio tracking app to visualize and manage investments across stocks, mutual funds, gold, bonds, EPFO, and savings.">
+  <title>Moyeniz - Beautiful Portfolio Tracker</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self';">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-up" width="22" height="22"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>
+        </div>
+        <div class="brand-name">Moyeniz</div>
+      </div>
+      
+      <nav style="flex-grow: 1;">
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a class="nav-link active" id="tab-dashboard" data-tab="dashboard">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layout-dashboard"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="10" rx="1"/><rect width="7" height="5" x="3" y="14" rx="1"/></svg>
+              Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tab-investments" data-tab="investments">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wallet"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M19 12h2v4h-2z"/><path d="M12 7v10"/></svg>
+              Investments
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tab-projections" data-tab="projections">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-line-chart"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+              Projections
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tab-liabilities" data-tab="liabilities">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-down" width="20" height="20"><line x1="22" x2="2" y1="18" y2="18"/><path d="M22 6 13.5 14.5l-5-5L2 16"/><path d="M16 14.5h6v-6"/></svg>
+              Liabilities
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tab-borrow-lent" data-tab="borrow-lent">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-handshake" width="20" height="20"><path d="m11 17 2 2a1 1 0 0 0 1.4 0l4-4a1 1 0 0 0 0-1.4l-2-2a1 1 0 0 0-1.4 0L12 15M13 13l2-2a1 1 0 0 0 0-1.4l-2-2a1 1 0 0 0-1.4 0L10 9M18 19l2.5-2.5a2 2 0 0 0 0-2.8l-2-2M6 5 3.5 7.5a2 2 0 0 0 0 2.8l2 2M16 11l-2.5-2.5a2 2 0 0 0-2.8 0l-2 2M8 13l2.5 2.5a2 2 0 0 0 2.8 0l2-2"/></svg>
+              Borrow & Lent
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <div class="sidebar-footer" style="position: relative; justify-content: center;">
+        <button class="icon-btn" id="btn-settings-toggle" aria-label="Settings" style="padding: 8px 16px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center; border-radius: var(--radius-md); font-family: var(--font-body); font-size: 0.85rem; font-weight: 500;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings" width="16" height="16"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          System Settings
+        </button>
+        <div class="settings-dropdown" id="settings-dropdown-menu" style="display: none; position: absolute; bottom: 56px; right: 0; background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 8px; box-shadow: var(--shadow-card); z-index: 100; min-width: 170px; display: flex; flex-direction: column; gap: 4px;">
+          <button class="btn btn-secondary btn-sm" id="btn-reset-data" style="width: 100%; text-align: left; justify-content: flex-start; white-space: nowrap; font-size: 0.75rem; padding: 6px 10px; margin: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw" width="12" height="12" style="margin-right: 4px;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            Reset Sample Data
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-download-json" style="width: 100%; text-align: left; justify-content: flex-start; white-space: nowrap; font-size: 0.75rem; padding: 6px 10px; margin: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download" width="12" height="12" style="margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Backup (.json)
+          </button>
+          <label for="settings-file-input" class="btn btn-secondary btn-sm" id="btn-upload-label" style="width: 100%; text-align: left; justify-content: flex-start; white-space: nowrap; font-size: 0.75rem; padding: 6px 10px; margin: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-sizing: border-box;">
+            <input type="file" id="settings-file-input" accept=".json" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-upload" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload Backup (.json)
+          </label>
+          <button class="btn btn-secondary btn-sm" id="btn-clear-cache" style="width: 100%; text-align: left; justify-content: flex-start; white-space: nowrap; font-size: 0.75rem; padding: 6px 10px; margin: 0; color: var(--color-danger);">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2" width="12" height="12" style="margin-right: 4px; color: var(--color-danger);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            Clear Cached Data
+          </button>
+          <div style="font-size: 0.65rem; color: var(--text-secondary); border-top: 1px solid var(--border-light); padding-top: 8px; margin-top: 4px; text-align: center; max-width: 170px; line-height: 1.3;">Privacy Note: Your data is processed & cached purely in your browser. We never collect or save it.</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <main class="main-wrapper">
+      
+      <!-- Top Status & Action Bar -->
+      <header class="top-bar">
+        <div class="page-title">
+          <h1 id="view-title">Dashboard</h1>
+          <p id="view-subtitle">An overview of your complete financial portfolio.</p>
+        </div>
+        <div class="top-actions">
+          <button class="btn btn-secondary" id="btn-download-portfolio-top" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Portfolio
+          </button>
+          <button class="btn btn-primary" id="btn-add-investment">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Add Investment
+          </button>
+        </div>
+      </header>
+
+      <!-- VIEW 1: Dashboard -->
+      <section class="page-view active-view" id="view-dashboard">
+        <div id="dashboard-active-content">
+          <!-- Metrics Grid -->
+        <div class="metrics-grid">
+          <div class="metric-card primary">
+            <div class="metric-header">
+              <span class="metric-title">Total Invested</span>
+              <div class="metric-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-landmark" width="20" height="20"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><path d="m12 2-10 7h20Z"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-total-invested">₹0</div>
+            <div class="metric-footer">
+              <span class="label">Principal Amount</span>
+            </div>
+          </div>
+
+          <div class="metric-card blue">
+            <div class="metric-header">
+              <span class="metric-title">Current Value</span>
+              <div class="metric-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-up" width="20" height="20"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-current-value">₹0</div>
+            <div class="metric-footer">
+              <span class="label">Live Assets Value</span>
+            </div>
+          </div>
+
+          <div class="metric-card danger">
+            <div class="metric-header">
+              <span class="metric-title">Total Debt</span>
+              <div class="metric-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-down" width="20" height="20"><line x1="22" x2="2" y1="18" y2="18"/><path d="M22 6 13.5 14.5l-5-5L2 16"/><path d="M16 14.5h6v-6"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-total-liabilities-dash">₹0</div>
+            <div class="metric-footer">
+              <span class="label">Outstanding Liabilities</span>
+            </div>
+          </div>
+
+          <div class="metric-card danger">
+            <div class="metric-header">
+              <span class="metric-title">Total Borrowed</span>
+              <div class="metric-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-left" width="20" height="20"><path d="M17 7 7 17"/><path d="M17 17H7V7"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-total-borrowed-dash">₹0</div>
+            <div class="metric-footer">
+              <span class="label">Personal Borrowings</span>
+            </div>
+          </div>
+
+          <div class="metric-card blue">
+            <div class="metric-header">
+              <span class="metric-title">Total Lent</span>
+              <div class="metric-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" width="20" height="20"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-total-lent-dash">₹0</div>
+            <div class="metric-footer">
+              <span class="label">Personal Lendings</span>
+            </div>
+          </div>
+
+          <div class="metric-card purple">
+            <div class="metric-header">
+              <span class="metric-title">Net Worth</span>
+              <div class="metric-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield" width="20" height="20"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-net-worth">₹0</div>
+            <div class="metric-footer">
+              <span class="label">Assets + Lent - Debt</span>
+            </div>
+          </div>
+
+          <div class="metric-card success" id="card-total-return">
+            <div class="metric-header">
+              <span class="metric-title">Total Returns (P&amp;L)</span>
+              <div class="metric-icon" id="icon-total-return">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" width="20" height="20"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-total-return">₹0</div>
+            <div class="metric-footer">
+              <span class="trend-badge up" id="badge-total-return-pct">+0%</span>
+              <span class="label">Absolute Gain</span>
+            </div>
+          </div>
+
+          <div class="metric-card warning">
+            <div class="metric-header">
+              <span class="metric-title">XIRR (CAGR Equivalent)</span>
+              <div class="metric-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-percent" width="20" height="20"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-portfolio-cagr">0.0%</div>
+            <div class="metric-footer">
+              <span class="label">Annualized Return</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+          <!-- Asset Allocation Pie Chart -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3 class="chart-card-title">Asset Allocation</h3>
+                <p class="chart-card-subtitle">Portfolio spread across categories</p>
+              </div>
+            </div>
+            <div class="chart-wrapper" style="flex-direction: column;">
+              <div id="allocation-chart-container" class="chart-svg-container">
+                <!-- SVG pie chart generated dynamically -->
+              </div>
+              <div id="allocation-legend" class="legend-wrapper">
+                <!-- Legend items generated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Portfolio Insights & Diversification Rating Stack -->
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="insights-card" style="flex-grow: 1;">
+              <h3 class="chart-card-title" style="margin-bottom: 20px;">AI Portfolio Insights</h3>
+              <div class="insights-list" id="insights-list-container">
+                <!-- Insights generated dynamically -->
+              </div>
+            </div>
+            
+            <div class="insights-card" style="padding: 24px;">
+              <h3 class="chart-card-title" style="margin-bottom: 12px; text-align: center;">Diversification Rating</h3>
+              <div class="health-score-container" style="flex-direction: row; justify-content: center; gap: 32px; align-items: center; padding: 0;">
+                <div class="gauge-svg" style="flex-shrink: 0; width: 140px; height: 140px; position: relative;">
+                  <svg width="140" height="140" viewBox="0 0 140 140" style="transform: rotate(-90deg); display: block;">
+                    <circle cx="70" cy="70" r="55" class="gauge-bg" />
+                    <circle cx="70" cy="70" r="55" class="gauge-fill" id="health-gauge-fill" stroke-dasharray="345.5" stroke-dashoffset="345.5" />
+                  </svg>
+                  <div class="gauge-score">
+                    <div class="gauge-score-value" id="health-score-text">0</div>
+                    <div class="gauge-score-label">Score</div>
+                  </div>
+                </div>
+                <div class="health-status-desc" id="health-score-desc" style="text-align: left; max-width: 250px;">Analyzing...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wider Performance Chart at the bottom -->
+        <div class="chart-card" style="margin-top: 24px; width: 100%;">
+          <div class="chart-card-header">
+            <div>
+              <h3 class="chart-card-title">Asset Performance</h3>
+              <p class="chart-card-subtitle">Invested vs Current value comparison by category</p>
+            </div>
+          </div>
+          <div class="chart-wrapper" style="min-height: 300px;">
+            <div id="performance-chart-container" class="chart-svg-container" style="width: 100%;">
+              <!-- SVG bar chart generated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Heatmaps Grid -->
+        <div class="charts-grid" style="margin-top: 24px;">
+          <!-- Profit Heatmap -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3 class="chart-card-title">Profit Heatmap</h3>
+                <p class="chart-card-subtitle">Holdings currently in profit (intensity matches returns)</p>
+              </div>
+            </div>
+            <div class="chart-wrapper" style="min-height: 180px; align-items: stretch; justify-content: flex-start; flex-direction: column;">
+              <div id="profit-heatmap-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%;">
+                <!-- Dynamic cards -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Loss Heatmap -->
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <div>
+                <h3 class="chart-card-title">Loss Heatmap</h3>
+                <p class="chart-card-subtitle">Holdings currently in loss (intensity matches drop rate)</p>
+              </div>
+            </div>
+            <div class="chart-wrapper" style="min-height: 180px; align-items: stretch; justify-content: flex-start; flex-direction: column;">
+              <div id="loss-heatmap-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%;">
+                <!-- Dynamic cards -->
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- Empty Dashboard Setup Content -->
+        <div id="dashboard-empty-content" style="display: none;">
+          <div class="empty-dashboard-container">
+            <h2 class="empty-dashboard-title">Set Up Your Wealth Portfolio</h2>
+            <p class="empty-dashboard-subtitle">Select how you would like to initialize your Moyeniz portfolio tracking metrics:</p>
+            
+            <div class="setup-grid">
+              <!-- Option 1: File Dropper (Drag & Drop JSON) -->
+              <div class="dropper-card" id="setup-dropper">
+                <input type="file" id="setup-file-input" accept=".json" style="display: none;">
+                <div class="dropper-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="36" height="36"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <h3 class="setup-card-title">1. Upload Investment Data</h3>
+                <p class="setup-card-desc">Drag and drop your `moyeniz.json` backup file here, or click to browse files.</p>
+              </div>
+              
+              <!-- Option 2: Load Sample Data -->
+              <div class="setup-action-card" id="setup-btn-sample">
+                <div class="setup-card-icon-wrapper" style="color: var(--color-warning); background-color: rgba(245, 158, 11, 0.08);">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="28" height="28"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </div>
+                <h3 class="setup-card-title">2. Load Sample Data</h3>
+                <p class="setup-card-desc">Explore standard mock investments across mutual funds, stocks, and liabilities to see charts in action.</p>
+              </div>
+              
+              <!-- Option 3: Start from Scratch -->
+              <div class="setup-action-card" id="setup-btn-scratch">
+                <div class="setup-card-icon-wrapper" style="color: var(--color-success); background-color: rgba(16, 185, 129, 0.08);">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="28" height="28"><path d="M12 5v14M5 12h14"/></svg>
+                </div>
+                <h3 class="setup-card-title">3. Create From Scratch</h3>
+                <p class="setup-card-desc">Initialize a clean, blank slate. Add stocks, fixed deposits, gold, and liabilities manually.</p>
+              </div>
+            </div>
+            <p class="empty-dashboard-privacy" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 32px; max-width: 500px; line-height: 1.4;">🔒 <strong>Privacy First:</strong> Your investment data is processed and cached purely inside your browser's local storage. We never collect, transmit, or save your data on any server.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: Investments -->
+      <section class="page-view" id="view-investments">
+        <div class="filters-bar">
+          <div class="asset-filters" id="asset-filters-container">
+            <button class="filter-chip active" data-filter="all">All Assets</button>
+            <button class="filter-chip" data-filter="indian-stock">Indian Stock</button>
+            <button class="filter-chip" data-filter="indian-mutual-fund">Mutual Funds</button>
+            <button class="filter-chip" data-filter="us-stock">US Stocks</button>
+            <button class="filter-chip" data-filter="fd">Fixed Deposits</button>
+            <button class="filter-chip" data-filter="gold">Gold</button>
+            <button class="filter-chip" data-filter="bonds">Bonds</button>
+            <button class="filter-chip" data-filter="epfo">EPFO</button>
+            <button class="filter-chip" data-filter="savings">Savings</button>
+          </div>
+          
+          <div class="search-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" class="search-input" id="input-search" placeholder="Search investments...">
+          </div>
+        </div>
+
+        <div class="investments-container" id="investments-list-container">
+          <!-- Investment items generated dynamically -->
+        </div>
+      </section>
+
+      <!-- VIEW 3: Projections -->
+      <section class="page-view" id="view-projections">
+        <div class="projection-grid">
+          <!-- Slide Panel Calculator -->
+          <div class="calculator-panel">
+            <h3 class="chart-card-title">Future Growth Assumptions</h3>
+            
+            <div class="range-slider-group">
+              <div class="range-slider-header">
+                <span class="range-slider-label">Monthly SIP Addition</span>
+                <span class="range-slider-val" id="val-sip-amt">₹10,000</span>
+              </div>
+              <input type="range" class="slider" id="slider-sip" min="0" max="100000" step="1000" value="15000">
+            </div>
+
+            <div class="range-slider-group">
+              <div class="range-slider-header">
+                <span class="range-slider-label">Investment Period</span>
+                <span class="range-slider-val" id="val-years">10 Years</span>
+              </div>
+              <input type="range" class="slider" id="slider-years" min="1" max="30" step="1" value="10">
+            </div>
+
+            <div class="range-slider-group">
+              <div class="range-slider-header">
+                <span class="range-slider-label">Average Annual Growth Rate</span>
+                <span class="range-slider-val" id="val-ror">10%</span>
+              </div>
+              <input type="range" class="slider" id="slider-ror" min="2" max="24" step="0.5" value="11.5">
+            </div>
+            
+            <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5;">
+              <p><strong>Note:</strong> Projections start with your current portfolio value of <span id="span-proj-base-amt">₹0</span>. The SIP amounts are compounded monthly at the custom rate.</p>
+            </div>
+          </div>
+
+          <!-- Growth Chart Output -->
+          <div class="projection-card">
+            <div class="chart-card-header">
+              <div>
+                <h3 class="chart-card-title">Wealth Growth Trajectory</h3>
+                <p class="chart-card-subtitle">Compounded projections for the next decade</p>
+              </div>
+            </div>
+            
+            <div class="projection-summary">
+              <div class="projection-summary-item">
+                <span class="projection-summary-label">Total Contributions</span>
+                <span class="projection-summary-val" id="val-proj-invested">₹0</span>
+              </div>
+              <div class="projection-summary-item">
+                <span class="projection-summary-label">Estimated Wealth Gain</span>
+                <span class="projection-summary-val" id="val-proj-gains">₹0</span>
+              </div>
+              <div class="projection-summary-item">
+                <span class="projection-summary-label">Total Projected Value</span>
+                <span class="projection-summary-val highlight" id="val-proj-total">₹0</span>
+              </div>
+            </div>
+
+            <div class="projection-chart-wrapper">
+              <div id="projection-chart-container" class="chart-svg-container">
+                <!-- SVG projection line chart generated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: Liabilities -->
+      <section class="page-view" id="view-liabilities">
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+          <div class="metric-card primary">
+            <div class="metric-header">
+              <span class="metric-title">Total Outstanding Debt</span>
+              <div class="metric-icon" style="color: var(--color-danger); background-color: rgba(244, 63, 94, 0.08);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-down" width="20" height="20"><line x1="22" x2="2" y1="18" y2="18"/><path d="M22 6 13.5 14.5l-5-5L2 16"/><path d="M16 14.5h6v-6"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-total-liabilities">₹0</div>
+            <div class="metric-footer">
+              <span class="label">Total Liabilities Principal</span>
+            </div>
+          </div>
+
+          <div class="metric-card warning">
+            <div class="metric-header">
+              <span class="metric-title">Monthly Debt EMIs</span>
+              <div class="metric-icon" style="color: var(--color-warning); background-color: rgba(245, 158, 11, 0.08);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-days" width="20" height="20"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-total-emis">₹0</div>
+            <div class="metric-footer">
+              <span class="label">Monthly Payment Outflow</span>
+            </div>
+          </div>
+
+          <div class="metric-card success">
+            <div class="metric-header">
+              <span class="metric-title">Debt-to-Asset Ratio</span>
+              <div class="metric-icon" style="color: var(--color-primary); background-color: rgba(99, 102, 241, 0.08);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scale" width="20" height="20"><path d="m16 16 3-8 3 8c-.87.65-2.24 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-2.24 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h18"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-debt-asset-ratio">0.0%</div>
+            <div class="metric-footer">
+              <span class="label">Assets to Debt Leverage</span>
+            </div>
+          </div>
+
+          <div class="metric-card blue">
+            <div class="metric-header">
+              <span class="metric-title">Average Interest Rate</span>
+              <div class="metric-icon" style="color: var(--color-info); background-color: rgba(14, 165, 233, 0.08);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-percent" width="20" height="20"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-avg-debt-rate">0.0%</div>
+            <div class="metric-footer">
+              <span class="label">Weighted Average Rate</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Liabilities filters/actions -->
+        <div class="filters-bar">
+          <div class="asset-filters">
+            <button class="filter-chip active" id="btn-add-liability">Add New Liability / Loan</button>
+          </div>
+          <div class="search-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" class="search-input" id="input-search-liabilities" placeholder="Search liabilities...">
+          </div>
+        </div>
+
+        <div class="investments-container" id="liabilities-list-container">
+          <!-- Liabilities items generated dynamically -->
+        </div>
+      </section>
+
+      <!-- VIEW 5: Borrow & Lent -->
+      <section class="page-view" id="view-borrow-lent">
+        <!-- Metrics Grid -->
+        <div class="metrics-grid" style="margin-bottom: 24px;">
+          <div class="metric-card blue">
+            <div class="metric-header">
+              <span class="metric-title">Total Lent</span>
+              <div class="metric-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-right" width="20" height="20"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-total-lent">₹0</div>
+            <div class="metric-footer">
+              <span class="label">Money people owe you</span>
+            </div>
+          </div>
+
+          <div class="metric-card danger">
+            <div class="metric-header">
+              <span class="metric-title">Total Borrowed</span>
+              <div class="metric-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-left" width="20" height="20"><path d="M17 7 7 17"/><path d="M17 17H7V7"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-total-borrowed">₹0</div>
+            <div class="metric-footer">
+              <span class="label">Money you owe to people</span>
+            </div>
+          </div>
+
+          <div class="metric-card purple">
+            <div class="metric-header">
+              <span class="metric-title">Net Borrow &amp; Lent</span>
+              <div class="metric-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-left-right" width="20" height="20"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>
+              </div>
+            </div>
+            <div class="metric-value" id="val-net-borrow-lent">₹0</div>
+            <div class="metric-footer">
+              <span class="label" id="lbl-net-borrow-lent">Net Cash Flow Balance</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters/Actions bar -->
+        <div class="filters-bar">
+          <div class="asset-filters" id="borrow-lent-filters-container">
+            <button class="filter-chip active" data-filter="all">All Cashflow</button>
+            <button class="filter-chip" data-filter="lent">Lent</button>
+            <button class="filter-chip" data-filter="borrowed">Borrowed</button>
+            <button class="filter-chip" data-filter="history">Past History (Paid)</button>
+          </div>
+          <div class="search-wrapper" style="display: flex; align-items: center; gap: 12px;">
+            <div style="position: relative; display: flex; align-items: center;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-muted);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" class="search-input" id="input-search-borrow-lent" placeholder="Search cashflow..." style="padding-left: 32px;">
+            </div>
+            <button class="btn btn-primary" id="btn-add-borrow-lent" style="white-space: nowrap;">Add Transaction</button>
+          </div>
+        </div>
+
+        <div class="investments-container" id="borrow-lent-list-container">
+          <!-- Dynamically generated borrow & lent cards -->
+        </div>
+      </section>
+
+      <!-- Interactive Tooltip Overlay -->
+      <div id="chart-tooltip" class="chart-tooltip">
+        <div id="chart-tooltip-title" class="chart-tooltip-title">Category</div>
+        <div class="chart-tooltip-row">
+          <span>Invested:</span>
+          <span id="chart-tooltip-invested" class="chart-tooltip-value">₹0</span>
+        </div>
+        <div class="chart-tooltip-row">
+          <span>Current:</span>
+          <span id="chart-tooltip-current" class="chart-tooltip-value">₹0</span>
+        </div>
+        <div class="chart-tooltip-row">
+          <span>P&amp;L:</span>
+          <span id="chart-tooltip-pl" class="chart-tooltip-value">₹0 (+0%)</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Liability Editor Modal Overlay -->
+  <div class="modal-overlay" id="liability-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" id="liability-modal-title-text">Add Liability</h3>
+        <button class="modal-close" id="btn-close-liability-modal">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+      
+      <form id="liability-form" autocomplete="off">
+        <input type="hidden" id="input-liability-id" value="">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="input-liability-type">Liability Type</label>
+            <select class="form-select" id="input-liability-type" required>
+              <option value="" disabled selected>Select Type</option>
+              <option value="home-loan">Home Loan</option>
+              <option value="car-loan">Car Loan</option>
+              <option value="personal-loan">Personal Loan</option>
+              <option value="education-loan">Education Loan</option>
+              <option value="other-loan">Other Loan / EMI</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="input-liability-name">Lender / Description</label>
+            <input type="text" class="form-input" id="input-liability-name" placeholder="e.g., SBI Home Loan, HDFC Car Loan" required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="input-liability-outstanding">Outstanding Amount (₹)</label>
+            <input type="number" class="form-input" id="input-liability-outstanding" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="input-liability-emi">Monthly EMI (₹)</label>
+            <input type="number" class="form-input" id="input-liability-emi" min="0" placeholder="0" required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="input-liability-rate">Interest Rate (%)</label>
+            <input type="number" class="form-input" id="input-liability-rate" min="0" max="100" step="0.05" placeholder="8.5" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="input-liability-total-tenure">Total Tenure (Months)</label>
+            <input type="number" class="form-input" id="input-liability-total-tenure" min="1" placeholder="120" required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="input-liability-tenure">Tenure Left (Months)</label>
+            <input type="number" class="form-input" id="input-liability-tenure" min="0" placeholder="60" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="input-liability-last-paid">Last Paid EMI Date</label>
+            <input type="date" class="form-input" id="input-liability-last-paid">
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-liability-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Liability</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Investment Editor Modal Overlay -->
+  <div class="modal-overlay" id="investment-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title-text">Add Investment</h3>
+        <button class="modal-close" id="btn-close-modal">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+      
+      <form id="investment-form" autocomplete="off">
+        <input type="hidden" id="input-id" value="">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="input-asset-class">Asset Class</label>
+            <select class="form-select" id="input-asset-class" required>
+              <option value="" disabled selected>Select Class</option>
+              <option value="indian-stock">Indian Stock</option>
+              <option value="indian-mutual-fund">Indian Mutual Fund</option>
+              <option value="us-stock">US Stock</option>
+              <option value="fd">Fixed Deposit (FD)</option>
+              <option value="gold">Gold</option>
+              <option value="bonds">Bonds</option>
+              <option value="epfo">EPFO</option>
+              <option value="savings">Savings Account</option>
+            </select>
+          </div>
+          
+          <div class="form-group" id="group-subtype" style="display: none;">
+            <label class="form-label" for="input-subtype">Subtype / Category</label>
+            <select class="form-select" id="input-subtype">
+              <!-- Loaded dynamically based on asset class selection -->
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="input-name" id="label-name">Investment Name / Institution</label>
+          <input type="text" class="form-input" id="input-name" placeholder="e.g., Reliance Industries, HDFC Liquid Fund, SBI FD" required>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="input-invested-amount">Invested Amount (₹)</label>
+            <input type="number" class="form-input" id="input-invested-amount" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="input-current-amount">Current Amount (₹)</label>
+            <input type="number" class="form-input" id="input-current-amount" min="0" placeholder="0" required>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Investment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Borrow & Lent Editor Modal Overlay -->
+  <div class="modal-overlay" id="borrow-lent-modal">
+    <div class="modal-box" style="width: 800px; max-width: 95%;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="borrow-lent-modal-title-text">Add Cashflow Transaction</h3>
+        <button class="modal-close" id="btn-close-borrow-lent-modal">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+      
+      <form id="borrow-lent-form" autocomplete="off">
+        <input type="hidden" id="input-borrow-lent-id" value="">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="input-borrow-lent-type">Transaction Type</label>
+            <select class="form-select" id="input-borrow-lent-type" required>
+              <option value="" disabled selected>Select Type</option>
+              <option value="lent">Lent (Someone owes you)</option>
+              <option value="borrowed">Borrowed (You owe someone)</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="input-borrow-lent-person">Person Name</label>
+            <input type="text" class="form-input" id="input-borrow-lent-person" placeholder="e.g., John Doe, Uncle Sam" required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="input-borrow-lent-amount">Principal Amount (₹)</label>
+            <input type="number" class="form-input" id="input-borrow-lent-amount" min="1" placeholder="e.g., 5000" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="input-borrow-lent-date">Transaction Date</label>
+            <input type="date" class="form-input" id="input-borrow-lent-date" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="input-borrow-lent-notes">Notes / Purpose</label>
+          <input type="text" class="form-input" id="input-borrow-lent-notes" placeholder="e.g., Personal emergency help, Wedding advance">
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-borrow-lent-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Log Payment Modal Overlay -->
+  <div class="modal-overlay" id="payment-log-modal">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="payment-modal-title">Log Payment / Collection</h3>
+        <button class="modal-close" id="btn-close-payment-modal">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+      
+      <form id="payment-log-form" autocomplete="off">
+        <input type="hidden" id="input-payment-bl-id" value="">
+        
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" id="lbl-payment-amount">Payment Amount (₹)</label>
+          <input type="number" class="form-input" id="input-payment-amount" min="1" placeholder="e.g., 1000" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" for="input-payment-date">Payment Date</label>
+          <input type="date" class="form-input" id="input-payment-date" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" for="input-payment-note">Note / Comment</label>
+          <input type="text" class="form-input" id="input-payment-note" placeholder="e.g., First installment, Cash paid">
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-payment-modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

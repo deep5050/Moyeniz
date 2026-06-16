@@ -1,0 +1,3124 @@
+// State and Constants
+let investments = [];
+let liabilities = [];
+let borrowLent = [];
+let searchQueryLiabilities = '';
+let searchQueryBorrowLent = '';
+let currentBLFilter = 'all';
+
+const LIABILITY_TYPES = {
+  'home-loan': 'Home Loan',
+  'car-loan': 'Car Loan',
+  'personal-loan': 'Personal Loan',
+  'education-loan': 'Education Loan',
+  'other-loan': 'Other Loan / EMI'
+};
+
+const SAMPLE_LIABILITIES = [
+  { id: 'loan-home', type: 'home-loan', name: 'SBI MaxGain Home Loan', outstanding: 3450000, emi: 31200, rate: 8.45, totalTenure: 240, tenure: 180, lastPaidDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), lastUpdated: new Date().toISOString() },
+  { id: 'loan-car', type: 'car-loan', name: 'HDFC Car Loan', outstanding: 540000, emi: 11800, rate: 9.15, totalTenure: 60, tenure: 48, lastPaidDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), lastUpdated: new Date().toISOString() }
+];
+
+const SAMPLE_BORROW_LENT = [
+  { id: 'bl-1', type: 'lent', person: 'Amit Sharma', amount: 15000, outstanding: 9000, date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], notes: 'Business advance helper', status: 'active', payments: [{ date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 6000, note: 'First part payment' }] },
+  { id: 'bl-2', type: 'borrowed', person: 'Rohan Gupta', amount: 20000, outstanding: 20000, date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], notes: 'Laptop purchase advance', status: 'active', payments: [] },
+  { id: 'bl-3', type: 'lent', person: 'Vikram Singh', amount: 5000, outstanding: 0, date: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], notes: 'Emergency medical cash', status: 'paid', payments: [{ date: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], amount: 5000, note: 'Settled full outstanding' }] }
+];
+
+const ASSET_CATEGORIES = {
+  'indian-stock': { label: 'Indian Stock', color: '#6366f1', colorDark: '#4f46e5', gradient: 'grad-primary' },
+  'indian-mutual-fund': { label: 'Mutual Funds', color: '#a855f7', colorDark: '#7c3aed', gradient: 'grad-violet' },
+  'us-stock': { label: 'US Stocks', color: '#0ea5e9', colorDark: '#0284c7', gradient: 'grad-blue' },
+  'fd': { label: 'Fixed Deposits', color: '#f59e0b', colorDark: '#d97706', gradient: 'grad-amber' },
+  'gold': { label: 'Gold', color: '#eab308', colorDark: '#ca8a04', gradient: 'grad-gold' },
+  'bonds': { label: 'Bonds', color: '#f43f5e', colorDark: '#e11d48', gradient: 'grad-rose' },
+  'epfo': { label: 'EPFO', color: '#14b8a6', colorDark: '#0d9488', gradient: 'grad-teal' },
+  'savings': { label: 'Savings', color: '#3b82f6', colorDark: '#2563eb', gradient: 'grad-blue-dark' }
+};
+
+const SUBTYPES = {
+  'indian-mutual-fund': [
+    { value: 'large', label: 'Large Cap' },
+    { value: 'mid', label: 'Mid Cap' },
+    { value: 'small', label: 'Small Cap' },
+    { value: 'flexi', label: 'Flexi Cap' }
+  ],
+  'gold': [
+    { value: 'physical', label: 'Physical Gold' },
+    { value: 'etf', label: 'Gold ETF / SGB' }
+  ]
+};
+
+// Realistic Pre-populated Demo Data
+const SAMPLE_PORTFOLIO = [
+  { id: 'stock-tcs', assetClass: 'indian-stock', name: 'TCS Ltd.', subtype: 'none', investedAmount: 150000, currentAmount: 185000, lastUpdated: new Date().toISOString() },
+  { id: 'stock-hdfc', assetClass: 'indian-stock', name: 'HDFC Bank Ltd.', subtype: 'none', investedAmount: 120000, currentAmount: 115000, lastUpdated: new Date().toISOString() },
+  { id: 'mf-parag', assetClass: 'indian-mutual-fund', name: 'Parag Parikh Flexi Cap Fund', subtype: 'flexi', investedAmount: 200000, currentAmount: 265000, lastUpdated: new Date().toISOString() },
+  { id: 'mf-quant', assetClass: 'indian-mutual-fund', name: 'Quant Mid Cap Fund', subtype: 'mid', investedAmount: 80000, currentAmount: 105000, lastUpdated: new Date().toISOString() },
+  { id: 'mf-nippon', assetClass: 'indian-mutual-fund', name: 'Nippon India Small Cap Fund', subtype: 'small', investedAmount: 50000, currentAmount: 72000, lastUpdated: new Date().toISOString() },
+  { id: 'us-aapl', assetClass: 'us-stock', name: 'Apple Inc. (AAPL)', subtype: 'none', investedAmount: 75000, currentAmount: 92000, lastUpdated: new Date().toISOString() },
+  { id: 'us-tsla', assetClass: 'us-stock', name: 'Tesla Inc. (TSLA)', subtype: 'none', investedAmount: 50000, currentAmount: 45000, lastUpdated: new Date().toISOString() },
+  { id: 'fd-sbi', assetClass: 'fd', name: 'SBI Fixed Deposit @ 6.8%', subtype: 'none', investedAmount: 300000, currentAmount: 318000, lastUpdated: new Date().toISOString() },
+  { id: 'gold-sgb', assetClass: 'gold', name: 'Sovereign Gold Bonds 2021', subtype: 'physical', investedAmount: 100000, currentAmount: 135000, lastUpdated: new Date().toISOString() },
+  { id: 'gold-bees', assetClass: 'gold', name: 'Nippon Gold ETF BeES', subtype: 'etf', investedAmount: 50000, currentAmount: 62000, lastUpdated: new Date().toISOString() },
+  { id: 'bonds-nhai', assetClass: 'bonds', name: 'NHAI Tax Free Bonds', subtype: 'none', investedAmount: 100000, currentAmount: 105000, lastUpdated: new Date().toISOString() },
+  { id: 'epf-acct', assetClass: 'epfo', name: 'EPFO Employee Share', subtype: 'none', investedAmount: 250000, currentAmount: 285000, lastUpdated: new Date().toISOString() },
+  { id: 'savings-icici', assetClass: 'savings', name: 'ICICI Savings Account Balance', subtype: 'none', investedAmount: 120000, currentAmount: 120000, lastUpdated: new Date().toISOString() }
+];
+
+// Helper Functions for Safe Element Creation
+function createSVGElement(tag) {
+  return document.createElementNS('http://www.w3.org/2000/svg', tag);
+}
+
+function clearContainer(container) {
+  if (container) {
+    container.replaceChildren();
+  }
+}
+
+// Format numbers as currency
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  }).format(amount);
+}
+
+function formatPercent(val) {
+  return (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+}
+
+// Generate secure dynamic gradient definition
+function appendSVGDefs(svgEl) {
+  const defs = createSVGElement('defs');
+  
+  // Define color gradients matching JS setup
+  Object.keys(ASSET_CATEGORIES).forEach(key => {
+    const cat = ASSET_CATEGORIES[key];
+    const grad = createSVGElement('linearGradient');
+    grad.setAttribute('id', `grad-${key}`);
+    grad.setAttribute('x1', '0%');
+    grad.setAttribute('y1', '0%');
+    grad.setAttribute('x2', '100%');
+    grad.setAttribute('y2', '100%');
+    
+    const stop1 = createSVGElement('stop');
+    stop1.setAttribute('offset', '0%');
+    stop1.setAttribute('stop-color', cat.color);
+    
+    const stop2 = createSVGElement('stop');
+    stop2.setAttribute('offset', '100%');
+    stop2.setAttribute('stop-color', cat.colorDark);
+    
+    grad.appendChild(stop1);
+    grad.appendChild(stop2);
+    defs.appendChild(grad);
+  });
+  
+  // Extra gradient definitions for general purposes
+  const upGrad = createSVGElement('linearGradient');
+  upGrad.setAttribute('id', 'grad-up');
+  upGrad.setAttribute('x1', '0%'); upGrad.setAttribute('y1', '0%');
+  upGrad.setAttribute('x2', '0%'); upGrad.setAttribute('y2', '100%');
+  const upStop1 = createSVGElement('stop'); upStop1.setAttribute('offset', '0%'); upStop1.setAttribute('stop-color', '#10b981');
+  const upStop2 = createSVGElement('stop'); upStop2.setAttribute('offset', '100%'); upStop2.setAttribute('stop-color', '#059669');
+  upGrad.appendChild(upStop1); upGrad.appendChild(upStop2);
+  defs.appendChild(upGrad);
+
+  const downGrad = createSVGElement('linearGradient');
+  downGrad.setAttribute('id', 'grad-down');
+  downGrad.setAttribute('x1', '0%'); downGrad.setAttribute('y1', '0%');
+  downGrad.setAttribute('x2', '0%'); downGrad.setAttribute('y2', '100%');
+  const downStop1 = createSVGElement('stop'); downStop1.setAttribute('offset', '0%'); downStop1.setAttribute('stop-color', '#f43f5e');
+  const downStop2 = createSVGElement('stop'); downStop2.setAttribute('offset', '100%'); downStop2.setAttribute('stop-color', '#e11d48');
+  downGrad.appendChild(downStop1); downGrad.appendChild(downStop2);
+  defs.appendChild(downGrad);
+
+  const projAreaGrad = createSVGElement('linearGradient');
+  projAreaGrad.setAttribute('id', 'grad-proj-area');
+  projAreaGrad.setAttribute('x1', '0%'); projAreaGrad.setAttribute('y1', '0%');
+  projAreaGrad.setAttribute('x2', '0%'); projAreaGrad.setAttribute('y2', '100%');
+  const pStop1 = createSVGElement('stop'); pStop1.setAttribute('offset', '0%'); pStop1.setAttribute('stop-color', '#6366f1'); pStop1.setAttribute('stop-opacity', '0.25');
+  const pStop2 = createSVGElement('stop'); pStop2.setAttribute('offset', '100%'); pStop2.setAttribute('stop-color', '#6366f1'); pStop2.setAttribute('stop-opacity', '0.00');
+  projAreaGrad.appendChild(pStop1); projAreaGrad.appendChild(pStop2);
+  defs.appendChild(projAreaGrad);
+
+  svgEl.appendChild(defs);
+}
+
+// Local Storage Handlers
+function saveToStorage() {
+  localStorage.setItem('moyeniz_investments', JSON.stringify(investments));
+  localStorage.setItem('moyeniz_liabilities', JSON.stringify(liabilities));
+  localStorage.setItem('moyeniz_borrow_lent', JSON.stringify(borrowLent));
+}
+
+async function loadFromStorage() {
+  const data = localStorage.getItem('moyeniz_investments');
+  const lData = localStorage.getItem('moyeniz_liabilities');
+  const blData = localStorage.getItem('moyeniz_borrow_lent');
+  
+  if (data !== null && lData !== null) {
+    investments = JSON.parse(data);
+    liabilities = JSON.parse(lData);
+    borrowLent = blData !== null ? JSON.parse(blData) : [];
+    saveToStorage();
+    return;
+  }
+  
+  // Try to fetch custom "moyeniz.json" from server root
+  try {
+    const response = await fetch('moyeniz.json');
+    if (response.ok) {
+      const backup = await response.json();
+      if (Array.isArray(backup.investments) && Array.isArray(backup.liabilities)) {
+        investments = backup.investments;
+        liabilities = backup.liabilities;
+        borrowLent = Array.isArray(backup.borrowLent) ? backup.borrowLent : [];
+        saveToStorage();
+        console.log('Successfully loaded config from server root.');
+        return;
+      }
+    }
+  } catch (err) {
+    console.log('No root config moyeniz.json found in server directory.');
+  }
+}
+
+// Tab Navigation logic
+function initNavigation() {
+  const links = document.querySelectorAll('.nav-link');
+  const views = document.querySelectorAll('.page-view');
+  const viewTitle = document.getElementById('view-title');
+  const viewSubtitle = document.getElementById('view-subtitle');
+
+  links.forEach(link => {
+    link.addEventListener('click', () => {
+      const tabName = link.getAttribute('data-tab');
+      
+      // Toggle active link
+      links.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      
+      // Toggle active viewport
+      views.forEach(v => v.classList.remove('active-view'));
+      const activeView = document.getElementById(`view-${tabName}`);
+      if (activeView) activeView.classList.add('active-view');
+      
+      // Update headings
+      if (tabName === 'dashboard') {
+        viewTitle.textContent = 'Dashboard';
+        viewSubtitle.textContent = 'An overview of your complete financial portfolio.';
+        renderDashboard();
+      } else if (tabName === 'investments') {
+        viewTitle.textContent = 'Investments';
+        viewSubtitle.textContent = 'View, filter, and manage individual assets.';
+        renderInvestments();
+      } else if (tabName === 'projections') {
+        viewTitle.textContent = 'Projections';
+        viewSubtitle.textContent = 'Simulate future wealth based on compound assumptions.';
+        renderProjections();
+      } else if (tabName === 'liabilities') {
+        viewTitle.textContent = 'Liabilities & EMIs';
+        viewSubtitle.textContent = 'Track your loans, monthly outflows, and overall leverage.';
+        renderLiabilities();
+      } else if (tabName === 'borrow-lent') {
+        viewTitle.textContent = 'Borrow & Lent';
+        viewSubtitle.textContent = 'Track personal borrowings and lendings, payments, and histories.';
+        renderBorrowLent();
+      }
+    });
+  });
+}
+
+// Calculations and Summaries
+function getPortfolioSummary() {
+  let totalInvested = 0;
+  let currentVal = 0;
+  
+  investments.forEach(inv => {
+    totalInvested += Number(inv.investedAmount);
+    currentVal += Number(inv.currentAmount);
+  });
+  
+  const totalGain = currentVal - totalInvested;
+  const returnPct = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
+  
+  return {
+    totalInvested,
+    currentValue: currentVal,
+    totalGain,
+    returnPct
+  };
+}
+
+// Dashboard Page Rendering
+function renderDashboard() {
+  const dataInitialized = localStorage.getItem('moyeniz_investments') !== null;
+  
+  const activeContent = document.getElementById('dashboard-active-content');
+  const emptyContent = document.getElementById('dashboard-empty-content');
+  const btnDownloadTop = document.getElementById('btn-download-portfolio-top');
+  
+  if (!dataInitialized) {
+    if (activeContent) activeContent.style.display = 'none';
+    if (emptyContent) emptyContent.style.display = 'block';
+    if (btnDownloadTop) btnDownloadTop.style.display = 'none';
+    return;
+  } else {
+    if (activeContent) activeContent.style.display = 'block';
+    if (emptyContent) emptyContent.style.display = 'none';
+    if (btnDownloadTop) btnDownloadTop.style.display = 'inline-flex';
+  }
+
+  const summary = getPortfolioSummary();
+  
+  // Bind simple text properties
+  document.getElementById('val-total-invested').textContent = formatCurrency(summary.totalInvested);
+  document.getElementById('val-current-value').textContent = formatCurrency(summary.currentValue);
+  
+  // Calculate total debt and net worth for dashboard
+  let totalLiabilitiesVal = 0;
+  liabilities.forEach(l => {
+    totalLiabilitiesVal += Number(l.outstanding);
+  });
+  
+  let totalLentVal = 0;
+  let totalBorrowedVal = 0;
+  borrowLent.forEach(bl => {
+    if (bl.status !== 'paid') {
+      const outstandingAmt = Number(bl.outstanding);
+      if (bl.type === 'lent') {
+        totalLentVal += outstandingAmt;
+      } else if (bl.type === 'borrowed') {
+        totalBorrowedVal += outstandingAmt;
+      }
+    }
+  });
+  
+  const netWorthVal = summary.currentValue + totalLentVal - totalLiabilitiesVal - totalBorrowedVal;
+  
+  document.getElementById('val-total-liabilities-dash').textContent = formatCurrency(totalLiabilitiesVal);
+  document.getElementById('val-total-borrowed-dash').textContent = formatCurrency(totalBorrowedVal);
+  document.getElementById('val-total-lent-dash').textContent = formatCurrency(totalLentVal);
+  document.getElementById('val-net-worth').textContent = formatCurrency(netWorthVal);
+  
+  const gainEl = document.getElementById('val-total-return');
+  gainEl.textContent = formatCurrency(summary.totalGain);
+  
+  const returnBadge = document.getElementById('badge-total-return-pct');
+  returnBadge.textContent = formatPercent(summary.returnPct);
+  
+  // Return card status styling
+  const returnCard = document.getElementById('card-total-return');
+  const returnIcon = document.getElementById('icon-total-return');
+  
+  returnCard.classList.remove('success', 'warning', 'blue');
+  returnBadge.classList.remove('up', 'down', 'neutral');
+  
+  if (summary.totalGain > 0) {
+    returnCard.classList.add('success');
+    returnBadge.classList.add('up');
+    clearContainer(returnIcon);
+    const arrowUp = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    arrowUp.setAttribute('viewBox', '0 0 24 24');
+    arrowUp.setAttribute('fill', 'none');
+    arrowUp.setAttribute('stroke', 'currentColor');
+    arrowUp.setAttribute('stroke-width', '2.5');
+    arrowUp.setAttribute('width', '20');
+    arrowUp.setAttribute('height', '20');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M7 7h10v10M7 17 17 7');
+    arrowUp.appendChild(path);
+    returnIcon.appendChild(arrowUp);
+  } else if (summary.totalGain < 0) {
+    returnCard.classList.add('warning');
+    returnBadge.classList.add('down');
+    clearContainer(returnIcon);
+    const arrowDown = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    arrowDown.setAttribute('viewBox', '0 0 24 24');
+    arrowDown.setAttribute('fill', 'none');
+    arrowDown.setAttribute('stroke', 'currentColor');
+    arrowDown.setAttribute('stroke-width', '2.5');
+    arrowDown.setAttribute('width', '20');
+    arrowDown.setAttribute('height', '20');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M7 17h10V7M17 17 7 7');
+    arrowDown.appendChild(path);
+    returnIcon.appendChild(arrowDown);
+  } else {
+    returnCard.classList.add('blue');
+    returnBadge.classList.add('neutral');
+    clearContainer(returnIcon);
+    const dash = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    dash.setAttribute('viewBox', '0 0 24 24');
+    dash.setAttribute('fill', 'none');
+    dash.setAttribute('stroke', 'currentColor');
+    dash.setAttribute('stroke-width', '2.5');
+    dash.setAttribute('width', '20');
+    dash.setAttribute('height', '20');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    path.setAttribute('x1', '5'); path.setAttribute('y1', '12');
+    path.setAttribute('x2', '19'); path.setAttribute('y2', '12');
+    dash.appendChild(path);
+    returnIcon.appendChild(dash);
+  }
+  
+  // Calculate weighted approximate CAGR based on asset allocations
+  // Custom estimates based on average durations
+  let weightedRor = 0;
+  if (summary.currentValue > 0) {
+    let equitySum = 0;
+    let debtSum = 0;
+    let goldSum = 0;
+    investments.forEach(inv => {
+      const cur = Number(inv.currentAmount);
+      if (inv.assetClass === 'indian-stock' || inv.assetClass === 'us-stock' || (inv.assetClass === 'indian-mutual-fund' && inv.subtype !== 'flexi')) {
+        equitySum += cur;
+      } else if (inv.assetClass === 'indian-mutual-fund' && inv.subtype === 'flexi') {
+        equitySum += cur * 0.7;
+        debtSum += cur * 0.3;
+      } else if (inv.assetClass === 'gold') {
+        goldSum += cur;
+      } else {
+        debtSum += cur;
+      }
+    });
+    
+    // Average return expectations: Equity 14%, Gold 8%, Debt 6.8%
+    const totalVal = summary.currentValue;
+    weightedRor = ((equitySum * 14.2) + (goldSum * 8.5) + (debtSum * 6.9)) / totalVal;
+  }
+  
+  document.getElementById('val-portfolio-cagr').textContent = weightedRor > 0 ? weightedRor.toFixed(1) + '%' : '0.0%';
+  
+  // Render Allocation Chart
+  renderAllocationChart(summary.currentValue);
+  
+  // Render Performance Bar Chart
+  renderPerformanceChart();
+  
+  // Render Insights and Score
+  renderInsights(summary);
+  
+  // Render Profit and Loss Heatmaps
+  renderHeatmaps();
+}
+
+// Generate custom SVG Doughnut Pie Chart
+function renderAllocationChart(totalPortfolioVal) {
+  const container = document.getElementById('allocation-chart-container');
+  const legend = document.getElementById('allocation-legend');
+  clearContainer(container);
+  clearContainer(legend);
+  
+  if (totalPortfolioVal === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No asset allocation data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    container.appendChild(emptyMsg);
+    return;
+  }
+  
+  // Calculate allocation sizes by class
+  const classTotals = {};
+  investments.forEach(inv => {
+    const val = Number(inv.currentAmount);
+    classTotals[inv.assetClass] = (classTotals[inv.assetClass] || 0) + val;
+  });
+  
+  const sortedClasses = Object.keys(classTotals).map(key => ({
+    key,
+    value: classTotals[key],
+    pct: (classTotals[key] / totalPortfolioVal) * 100
+  })).sort((a, b) => b.value - a.value);
+  
+  // Build SVG Doughnut (expanded radii to reduce blank space and maximize size)
+  const size = 400;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r_out = 190;
+  const r_in = 110;
+  
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.classList.add('svg-chart');
+  svg.style.width = '370px';
+  svg.style.height = '370px';
+  
+  appendSVGDefs(svg);
+  
+  let currentAngle = -Math.PI / 2; // start from top
+  
+  sortedClasses.forEach((catData) => {
+    const category = ASSET_CATEGORIES[catData.key];
+    const angleRange = (catData.pct / 100) * 2 * Math.PI;
+    const endAngle = currentAngle + angleRange;
+    
+    // Draw doughnut slice
+    const path = createSVGElement('path');
+    path.classList.add('chart-slice');
+    
+    // Math coordinates
+    const x1_out = cx + r_out * Math.cos(currentAngle);
+    const y1_out = cy + r_out * Math.sin(currentAngle);
+    const x2_out = cx + r_out * Math.cos(endAngle);
+    const y2_out = cy + r_out * Math.sin(endAngle);
+    
+    const x1_in = cx + r_in * Math.cos(currentAngle);
+    const y1_in = cy + r_in * Math.sin(currentAngle);
+    const x2_in = cx + r_in * Math.cos(endAngle);
+    const y2_in = cy + r_in * Math.sin(endAngle);
+    
+    const largeArc = angleRange > Math.PI ? 1 : 0;
+    
+    const d = `M ${x1_out} ${y1_out} A ${r_out} ${r_out} 0 ${largeArc} 1 ${x2_out} ${y2_out} L ${x2_in} ${y2_in} A ${r_in} ${r_in} 0 ${largeArc} 0 ${x1_in} ${y1_in} Z`;
+    
+    path.setAttribute('d', d);
+    path.setAttribute('fill', `url(#grad-${catData.key})`);
+    
+    // Calculate category investments details for tooltip
+    let catInvested = 0;
+    let catCurrent = 0;
+    investments.forEach(inv => {
+      if (inv.assetClass === catData.key) {
+        catInvested += Number(inv.investedAmount);
+        catCurrent += Number(inv.currentAmount);
+      }
+    });
+    
+    const catGain = catCurrent - catInvested;
+    const catReturnPct = catInvested > 0 ? (catGain / catInvested) * 100 : 0;
+    
+    // Event bindings for Tooltip
+    path.addEventListener('mousemove', (e) => {
+      showTooltip(e, category.label, catInvested, catCurrent, catGain, catReturnPct);
+    });
+    path.addEventListener('mouseleave', hideTooltip);
+    
+    svg.appendChild(path);
+    currentAngle = endAngle;
+    
+    // Append Legend Item
+    const legItem = document.createElement('div');
+    legItem.classList.add('legend-item');
+    
+    const infoCol = document.createElement('div');
+    infoCol.classList.add('legend-info');
+    
+    const dot = document.createElement('span');
+    dot.classList.add('legend-color-box');
+    dot.style.background = `linear-gradient(135deg, ${category.color}, ${category.colorDark})`;
+    
+    const textLabel = document.createElement('span');
+    textLabel.classList.add('legend-name');
+    textLabel.textContent = category.label;
+    
+    infoCol.appendChild(dot);
+    infoCol.appendChild(textLabel);
+    
+    const valCol = document.createElement('div');
+    valCol.classList.add('legend-val');
+    
+    const numSpan = document.createElement('span');
+    numSpan.textContent = formatCurrency(catData.value);
+    
+    const pctSpan = document.createElement('span');
+    pctSpan.classList.add('legend-pct');
+    pctSpan.textContent = catData.pct.toFixed(1) + '%';
+    
+    valCol.appendChild(numSpan);
+    valCol.appendChild(pctSpan);
+    
+    legItem.appendChild(infoCol);
+    legItem.appendChild(valCol);
+    
+    // Match legend hover with chart slice hover
+    legItem.addEventListener('mouseenter', () => {
+      path.style.transform = 'scale(1.05)';
+      path.style.filter = `drop-shadow(0 0 10px ${category.color}88)`;
+    });
+    legItem.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+    });
+    
+    legend.appendChild(legItem);
+  });
+  
+  // Center circle helper (glassmorphic overlay inside)
+  const innerCircle = createSVGElement('circle');
+  innerCircle.setAttribute('cx', cx.toString());
+  innerCircle.setAttribute('cy', cy.toString());
+  innerCircle.setAttribute('r', (r_in - 2).toString());
+  innerCircle.setAttribute('fill', 'var(--bg-inner-circle, #ffffff)');
+  svg.appendChild(innerCircle);
+  
+  container.appendChild(svg);
+}
+
+// Generate Grouped SVG Bar Chart
+function renderPerformanceChart() {
+  const container = document.getElementById('performance-chart-container');
+  clearContainer(container);
+  
+  // Calculate performance by class
+  const classData = {};
+  Object.keys(ASSET_CATEGORIES).forEach(key => {
+    classData[key] = { invested: 0, current: 0 };
+  });
+  
+  investments.forEach(inv => {
+    if (classData[inv.assetClass]) {
+      classData[inv.assetClass].invested += Number(inv.investedAmount);
+      classData[inv.assetClass].current += Number(inv.currentAmount);
+    }
+  });
+  
+  // Filter out classes with 0 invested
+  const activeKeys = Object.keys(classData).filter(key => classData[key].invested > 0);
+  
+  if (activeKeys.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No performance data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    container.appendChild(emptyMsg);
+    return;
+  }
+  
+  // SVG setups
+  const svgWidth = 840;
+  const svgHeight = 280;
+  const margin = { top: 20, right: 20, bottom: 40, left: 65 };
+  const chartWidth = svgWidth - margin.left - margin.right;
+  const chartHeight = svgHeight - margin.top - margin.bottom;
+  
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+  svg.classList.add('svg-chart');
+  
+  appendSVGDefs(svg);
+  
+  // Find max value to scale Y axis
+  let maxVal = 0;
+  activeKeys.forEach(key => {
+    maxVal = Math.max(maxVal, classData[key].invested, classData[key].current);
+  });
+  // Pad the max value for aesthetics
+  maxVal = maxVal * 1.15;
+  if (maxVal === 0) maxVal = 10000;
+  
+  // Draw Y grid lines and ticks
+  const ticksCount = 4;
+  for (let i = 0; i <= ticksCount; i++) {
+    const ratio = i / ticksCount;
+    const yVal = maxVal * ratio;
+    const y = margin.top + chartHeight - (ratio * chartHeight);
+    
+    // Grid Line
+    if (i > 0) {
+      const grid = createSVGElement('line');
+      grid.setAttribute('x1', margin.left.toString());
+      grid.setAttribute('y1', y.toString());
+      grid.setAttribute('x2', (margin.left + chartWidth).toString());
+      grid.setAttribute('y2', y.toString());
+      grid.classList.add('chart-grid-line');
+      svg.appendChild(grid);
+    }
+    
+    // Y Label
+    const text = createSVGElement('text');
+    text.setAttribute('x', (margin.left - 10).toString());
+    text.setAttribute('y', (y + 4).toString());
+    text.setAttribute('text-anchor', 'end');
+    text.classList.add('chart-axis-text');
+    
+    // Custom compact labeling
+    let cleanText = '';
+    if (yVal >= 10000000) {
+      cleanText = '₹' + (yVal / 10000000).toFixed(1) + 'Cr';
+    } else if (yVal >= 100000) {
+      cleanText = '₹' + (yVal / 100000).toFixed(0) + 'L';
+    } else if (yVal >= 1000) {
+      cleanText = '₹' + (yVal / 1000).toFixed(0) + 'k';
+    } else {
+      cleanText = '₹' + yVal.toFixed(0);
+    }
+    text.textContent = cleanText;
+    svg.appendChild(text);
+  }
+  
+  // X axis line
+  const xAxis = createSVGElement('line');
+  xAxis.setAttribute('x1', margin.left.toString());
+  xAxis.setAttribute('y1', (margin.top + chartHeight).toString());
+  xAxis.setAttribute('x2', (margin.left + chartWidth).toString());
+  xAxis.setAttribute('y2', (margin.top + chartHeight).toString());
+  xAxis.classList.add('chart-axis-line');
+  svg.appendChild(xAxis);
+  
+  // Draw bars
+  const groupCount = activeKeys.length;
+  const groupWidth = chartWidth / groupCount;
+  const barPadding = 4;
+  
+  // Cap max bar width to prevent bloated bars on wide layouts
+  let barWidth = (groupWidth - 24) / 2;
+  const maxBarWidth = 36;
+  if (barWidth > maxBarWidth) {
+    barWidth = maxBarWidth;
+  }
+  
+  activeKeys.forEach((key, idx) => {
+    const label = ASSET_CATEGORIES[key].label;
+    const invested = classData[key].invested;
+    const current = classData[key].current;
+    
+    // Center the bar pair inside the category group space
+    const groupInsideWidth = (barWidth * 2) + barPadding;
+    const offset = (groupWidth - groupInsideWidth) / 2;
+    const xGroupStart = margin.left + (idx * groupWidth) + offset;
+    
+    // Heights
+    const hInvested = (invested / maxVal) * chartHeight;
+    const hCurrent = (current / maxVal) * chartHeight;
+    
+    // Bar coordinates
+    const xInvested = xGroupStart;
+    const yInvested = margin.top + chartHeight - hInvested;
+    
+    const xCurrent = xGroupStart + barWidth + barPadding;
+    const yCurrent = margin.top + chartHeight - hCurrent;
+    
+    // Draw Invested Bar (Linear Gradient Slate Gray / Indigo Mix)
+    const rectInv = createSVGElement('rect');
+    rectInv.setAttribute('x', xInvested.toString());
+    rectInv.setAttribute('y', yInvested.toString());
+    rectInv.setAttribute('width', barWidth.toString());
+    rectInv.setAttribute('height', Math.max(2, hInvested).toString());
+    rectInv.setAttribute('rx', '4');
+    rectInv.setAttribute('fill', 'url(#grad-indian-stock)'); // Indigo gradient
+    rectInv.classList.add('chart-bar');
+    
+    // Draw Current Bar (Green Gradient if gain, Rose Gradient if loss)
+    const rectCur = createSVGElement('rect');
+    rectCur.setAttribute('x', xCurrent.toString());
+    rectCur.setAttribute('y', yCurrent.toString());
+    rectCur.setAttribute('width', barWidth.toString());
+    rectCur.setAttribute('height', Math.max(2, hCurrent).toString());
+    rectCur.setAttribute('rx', '4');
+    rectCur.setAttribute('fill', current >= invested ? 'url(#grad-up)' : 'url(#grad-down)');
+    rectCur.classList.add('chart-bar');
+    
+    // Tooltip event attachments
+    const plAmount = current - invested;
+    const plPct = invested > 0 ? (plAmount / invested) * 100 : 0;
+    
+    rectInv.addEventListener('mousemove', (e) => {
+      showTooltip(e, `${label} (Invested)`, invested, current, plAmount, plPct);
+    });
+    rectInv.addEventListener('mouseleave', hideTooltip);
+    
+    rectCur.addEventListener('mousemove', (e) => {
+      showTooltip(e, `${label} (Current)`, invested, current, plAmount, plPct);
+    });
+    rectCur.addEventListener('mouseleave', hideTooltip);
+    
+    svg.appendChild(rectInv);
+    svg.appendChild(rectCur);
+    
+    // X Label text
+    const labelText = createSVGElement('text');
+    labelText.setAttribute('x', (xGroupStart + barWidth + (barPadding / 2)).toString());
+    labelText.setAttribute('y', (margin.top + chartHeight + 20).toString());
+    labelText.setAttribute('text-anchor', 'middle');
+    labelText.classList.add('chart-axis-text');
+    labelText.textContent = label;
+    svg.appendChild(labelText);
+  });
+  
+  container.appendChild(svg);
+}
+
+// Interactive Tooltip Helpers
+function showTooltip(event, title, invested, current, pl, pct) {
+  const tooltip = document.getElementById('chart-tooltip');
+  const tTitle = document.getElementById('chart-tooltip-title');
+  const tInvested = document.getElementById('chart-tooltip-invested');
+  const tCurrent = document.getElementById('chart-tooltip-current');
+  const tPl = document.getElementById('chart-tooltip-pl');
+  
+  tTitle.textContent = title;
+  tInvested.textContent = formatCurrency(invested);
+  tCurrent.textContent = formatCurrency(current);
+  
+  tPl.textContent = formatCurrency(pl) + ` (${formatPercent(pct)})`;
+  tPl.className = 'chart-tooltip-value ' + (pl > 0 ? 'positive' : pl < 0 ? 'negative' : '');
+  
+  // Position tooltip relative to container boundaries
+  const container = document.querySelector('.main-wrapper');
+  const rect = container.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = (y - 12) + 'px';
+  tooltip.style.opacity = '1';
+}
+
+function hideTooltip() {
+  const tooltip = document.getElementById('chart-tooltip');
+  tooltip.style.opacity = '0';
+}
+
+// Generate Financial Insights & Wealth Health Rating
+function renderInsights(summary) {
+  const insightsList = document.getElementById('insights-list-container');
+  clearContainer(insightsList);
+  
+  if (investments.length === 0) {
+    const emptyItem = document.createElement('div');
+    emptyItem.textContent = 'Add investments to unlock wealth insights.';
+    emptyItem.style.color = 'var(--text-muted)';
+    emptyItem.style.fontSize = '0.9rem';
+    insightsList.appendChild(emptyItem);
+    
+    // Default score
+    updateHealthGauge(0, 'No Data');
+    return;
+  }
+  
+  const classTotals = {};
+  investments.forEach(inv => {
+    const cur = Number(inv.currentAmount);
+    classTotals[inv.assetClass] = (classTotals[inv.assetClass] || 0) + cur;
+  });
+  
+  const totalVal = summary.currentValue;
+  
+  // Calculate exposures
+  const equityVal = (classTotals['indian-stock'] || 0) + (classTotals['us-stock'] || 0) + ((classTotals['indian-mutual-fund'] || 0) * 0.85); // assume 85% equity in MFs
+  const debtVal = (classTotals['fd'] || 0) + (classTotals['bonds'] || 0) + (classTotals['epfo'] || 0) + (classTotals['savings'] || 0) + ((classTotals['indian-mutual-fund'] || 0) * 0.15);
+  const goldVal = classTotals['gold'] || 0;
+  
+  const equityPct = totalVal > 0 ? (equityVal / totalVal) * 100 : 0;
+  const goldPct = totalVal > 0 ? (goldVal / totalVal) * 100 : 0;
+  const debtPct = totalVal > 0 ? (debtVal / totalVal) * 100 : 0;
+  
+  // Find top performing and bottom performing individual assets
+  let bestAsset = null;
+  let worstAsset = null;
+  let bestPct = -Infinity;
+  let worstPct = Infinity;
+  
+  investments.forEach(inv => {
+    const invAmt = Number(inv.investedAmount);
+    const curAmt = Number(inv.currentAmount);
+    if (invAmt > 5000) { // filter out small ones
+      const retPct = ((curAmt - invAmt) / invAmt) * 100;
+      if (retPct > bestPct) {
+        bestPct = retPct;
+        bestAsset = inv;
+      }
+      if (retPct < worstPct) {
+        worstPct = retPct;
+        worstAsset = inv;
+      }
+    }
+  });
+  
+  const insights = [];
+  
+  // Insight 1: Equity Profiling
+  if (equityPct > 65) {
+    insights.push({
+      type: 'warning',
+      title: 'Aggressive Equity Exposure',
+      desc: `Equities represent ${equityPct.toFixed(0)}% of your portfolio. While great for inflation-beating long-term growth, be prepared for high volatility.`
+    });
+  } else if (equityPct >= 40 && equityPct <= 65) {
+    insights.push({
+      type: 'positive',
+      title: 'Balanced Growth Profile',
+      desc: `Your equity exposure is at a healthy ${equityPct.toFixed(0)}%. This provides a solid balance between capital appreciation and risk mitigation.`
+    });
+  } else if (equityPct > 0 && equityPct < 40) {
+    insights.push({
+      type: 'info',
+      title: 'Conservative Wealth Profile',
+      desc: `Equities make up only ${equityPct.toFixed(0)}% of your capital. Consider increasing stock/mutual fund exposure to avoid purchasing power erosion from inflation.`
+    });
+  }
+  
+  // Insight 2: Gold Hedge Checking
+  if (goldPct >= 5 && goldPct <= 15) {
+    insights.push({
+      type: 'positive',
+      title: 'Optimal Gold Allocation',
+      desc: `Gold represents ${goldPct.toFixed(0)}% of your portfolio. This forms an excellent hedge against currency depreciation and market corrections.`
+    });
+  } else if (goldPct > 15) {
+    insights.push({
+      type: 'warning',
+      title: 'Overweight in Precious Metals',
+      desc: `Precious metals comprise ${goldPct.toFixed(0)}% of your assets. Gold is stable but lacks compounding yields; consider reallocating to growth assets.`
+    });
+  } else {
+    insights.push({
+      type: 'info',
+      title: 'Low Inflation Hedge',
+      desc: `Gold is less than 5% of your portfolio. Consider allocating a small portion (e.g. 5-10% in SGBs or Gold ETFs) as portfolio insurance.`
+    });
+  }
+  
+  // Insight 3: Performance Highlights
+  if (bestAsset && bestPct > 10) {
+    insights.push({
+      type: 'positive',
+      title: `Top Performer: ${bestAsset.name}`,
+      desc: `Your investment has achieved a return of ${formatPercent(bestPct)}, growing to ${formatCurrency(bestAsset.currentAmount)}.`
+    });
+  }
+  if (worstAsset && worstPct < -5) {
+    insights.push({
+      type: 'negative',
+      title: `Underperformer Alert: ${worstAsset.name}`,
+      desc: `This asset is currently down by ${formatPercent(worstPct)} (Current Value: ${formatCurrency(worstAsset.currentAmount)}). Monitor for potential changes in fundamentals.`
+    });
+  }
+  
+  // Insight 4: Liquidity / Cash Buffer
+  const savingsVal = classTotals['savings'] || 0;
+  const savingsPct = totalVal > 0 ? (savingsVal / totalVal) * 100 : 0;
+  if (savingsPct > 20) {
+    insights.push({
+      type: 'info',
+      title: 'High Liquid Cash Balance',
+      desc: `Savings account represents ${savingsPct.toFixed(0)}% of your assets. Move excess liquidity to arbitrage funds or short-term FDs for higher tax-adjusted yields.`
+    });
+  } else if (savingsPct > 0 && savingsPct < 3) {
+    insights.push({
+      type: 'warning',
+      title: 'Low Liquidity Buffer',
+      desc: `Your cash account holds only ${savingsPct.toFixed(1)}% of your net worth. Ensure you maintain at least 3-6 months of expenses in highly liquid bank balances.`
+    });
+  }
+  
+  // Insight 5: Global Diversification Check
+  const usStockVal = classTotals['us-stock'] || 0;
+  const usStockPct = totalVal > 0 ? (usStockVal / totalVal) * 100 : 0;
+  if (usStockPct > 15) {
+    insights.push({
+      type: 'positive',
+      title: 'Strong Global Hedge',
+      desc: `US stocks make up ${usStockPct.toFixed(0)}% of your portfolio, providing solid geographical diversification and protecting your wealth against local currency depreciation.`
+    });
+  } else if (usStockPct > 0 && usStockPct <= 15) {
+    insights.push({
+      type: 'info',
+      title: 'International Exposure Active',
+      desc: `You have a ${usStockPct.toFixed(1)}% allocation to international equities. Increasing this towards 10-15% can further lower overall portfolio correlation.`
+    });
+  } else {
+    insights.push({
+      type: 'warning',
+      title: 'Zero International Diversification',
+      desc: 'You have 0% allocated to global markets. Consider adding US equities or international mutual funds to hedge against geographical concentration risks.'
+    });
+  }
+
+  // Insight 6: Asset Mix Check
+  if (totalVal > 0) {
+    insights.push({
+      type: 'info',
+      title: `Equity-to-Debt Mix: ${equityPct.toFixed(0)}:${debtPct.toFixed(0)}`,
+      desc: `Your asset mix is ${equityPct.toFixed(0)}% equities and ${debtPct.toFixed(0)}% fixed income/debt. Ensure this fits your risk tolerance and age guidelines.`
+    });
+  }
+
+  // Insight 7: Diversification Score Commentary
+  const classCount = Object.keys(classTotals).length;
+  if (classCount < 4) {
+    insights.push({
+      type: 'warning',
+      title: 'Under-diversified Portfolio',
+      desc: `Your capital spans only ${classCount} distinct asset classes. Spreading allocations into fixed deposits, gold, or debt mutual funds can reduce volatility.`
+    });
+  } else if (classCount >= 6) {
+    insights.push({
+      type: 'positive',
+      title: 'Excellent Asset Class Variety',
+      desc: `Your holdings are spread over ${classCount} different asset classes, creating a robust shield against major single-sector corrections.`
+    });
+  }
+
+  // Liabilities and Debt Insights
+  let totalLiabilitiesVal = 0;
+  let totalMonthlyEMIs = 0;
+  let weightedInterestSum = 0;
+  
+  liabilities.forEach(l => {
+    totalLiabilitiesVal += Number(l.outstanding);
+    totalMonthlyEMIs += Number(l.emi);
+    weightedInterestSum += (Number(l.outstanding) * Number(l.rate));
+  });
+  
+  const avgDebtRate = totalLiabilitiesVal > 0 ? (weightedInterestSum / totalLiabilitiesVal) : 0;
+  const debtAssetRatio = totalVal > 0 ? (totalLiabilitiesVal / totalVal) * 100 : 0;
+
+  // Insight 8: Debt-to-Asset Leverage
+  if (totalLiabilitiesVal > 0) {
+    if (debtAssetRatio > 50) {
+      insights.push({
+        type: 'negative',
+        title: `High Debt Leverage (${debtAssetRatio.toFixed(0)}%)`,
+        desc: `Your outstanding debt is over 50% of your current asset value. Consider minimizing discretionary expenses and prepaying high-interest loans.`
+      });
+    } else if (debtAssetRatio >= 20 && debtAssetRatio <= 50) {
+      insights.push({
+        type: 'warning',
+        title: `Moderate Debt Leverage (${debtAssetRatio.toFixed(0)}%)`,
+        desc: `Your debt-to-asset ratio is at a moderate level of ${debtAssetRatio.toFixed(0)}%. Avoid acquiring new liabilities and focus on paying down existing loans.`
+      });
+    } else {
+      insights.push({
+        type: 'positive',
+        title: `Healthy Debt Leverage (${debtAssetRatio.toFixed(0)}%)`,
+        desc: `Your debt-to-asset ratio is a very healthy ${debtAssetRatio.toFixed(0)}%. Excellent capital leverage safety.`
+      });
+    }
+  } else {
+    insights.push({
+      type: 'positive',
+      title: '100% Debt-Free Portfolio',
+      desc: 'You have no outstanding liabilities or loan EMIs. Your assets represent pure wealth, maximizing your compounding growth potential.'
+    });
+  }
+
+  // Insight 9: Emergency Reserve EMI Coverage
+  let liquidAssets = 0;
+  investments.forEach(inv => {
+    if (inv.assetClass === 'savings' || inv.assetClass === 'fd') {
+      liquidAssets += Number(inv.currentAmount);
+    }
+  });
+  
+  if (totalMonthlyEMIs > 0) {
+    const monthsCoverage = liquidAssets / totalMonthlyEMIs;
+    if (monthsCoverage < 3) {
+      insights.push({
+        type: 'negative',
+        title: 'Critical Emergency Cover',
+        desc: `Your liquid reserves (Savings + FD: ${formatCurrency(liquidAssets)}) cover less than 3 months of your loan EMIs (${formatCurrency(totalMonthlyEMIs)}/mo). Build up emergency savings immediately.`
+      });
+    } else if (monthsCoverage >= 3 && monthsCoverage < 6) {
+      insights.push({
+        type: 'warning',
+        title: 'Low Emergency Buffer',
+        desc: `Your liquid reserves cover ${monthsCoverage.toFixed(1)} months of loan EMIs. It is recommended to maintain at least 6 months of EMI coverage (${formatCurrency(totalMonthlyEMIs * 6)}).`
+      });
+    } else {
+      insights.push({
+        type: 'positive',
+        title: 'Solid Emergency Cover',
+        desc: `Your liquid reserves cover ${monthsCoverage.toFixed(0)} months of EMIs, providing a strong safety net against income disruptions.`
+      });
+    }
+  }
+
+  // Insight 10: High-cost Debt Refinancing alert
+  if (totalLiabilitiesVal > 0 && avgDebtRate > 9.0) {
+    insights.push({
+      type: 'warning',
+      title: `High Average Debt Cost (${avgDebtRate.toFixed(2)}%)`,
+      desc: `Your weighted average interest rate is high. Consider making lump-sum prepayments or looking for lower-interest balance transfer options.`
+    });
+  }
+  
+  // Bind insights list to the DOM safely
+  insights.forEach(insight => {
+    const item = document.createElement('div');
+    item.className = `insight-item ${insight.type}`;
+    
+    const iconWrapper = document.createElement('div');
+    iconWrapper.classList.add('insight-icon');
+    
+    // Custom inline SVGs for insight alert icons
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('width', '18');
+    svg.setAttribute('height', '18');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    
+    if (insight.type === 'positive') {
+      path.setAttribute('d', 'M22 11.08V12a10 10 0 1 1-5.93-9.14');
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      poly.setAttribute('points', '22 4 12 14.01 9 11.01');
+      svg.appendChild(path);
+      svg.appendChild(poly);
+    } else if (insight.type === 'warning' || insight.type === 'negative') {
+      path.setAttribute('d', 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z');
+      const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line1.setAttribute('x1', '12'); line1.setAttribute('y1', '9'); line1.setAttribute('x2', '12'); line1.setAttribute('y2', '13');
+      const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line2.setAttribute('x1', '12'); line2.setAttribute('y1', '17'); line2.setAttribute('x2', '12.01'); line2.setAttribute('y2', '17');
+      svg.appendChild(path);
+      svg.appendChild(line1);
+      svg.appendChild(line2);
+    } else {
+      path.setAttribute('d', 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z');
+      const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line1.setAttribute('x1', '12'); line1.setAttribute('y1', '16'); line1.setAttribute('x2', '12'); line1.setAttribute('y2', '12');
+      const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line2.setAttribute('x1', '12'); line2.setAttribute('y1', '8'); line2.setAttribute('x2', '12.01'); line2.setAttribute('y2', '8');
+      svg.appendChild(path);
+      svg.appendChild(line1);
+      svg.appendChild(line2);
+    }
+    
+    iconWrapper.appendChild(svg);
+    
+    const textCol = document.createElement('div');
+    textCol.classList.add('insight-text-wrapper');
+    
+    const labelTitle = document.createElement('span');
+    labelTitle.classList.add('insight-title');
+    labelTitle.textContent = insight.title;
+    
+    const labelDesc = document.createElement('span');
+    labelDesc.classList.add('insight-desc');
+    labelDesc.textContent = insight.desc;
+    
+    textCol.appendChild(labelTitle);
+    textCol.appendChild(labelDesc);
+    
+    item.appendChild(iconWrapper);
+    item.appendChild(textCol);
+    insightsList.appendChild(item);
+  });
+  
+  // Calculate Wealth Diversification Score
+  // Logic: points given for distribution + asset count
+  let score = classCount * 10; // e.g., 6 classes = 60 points
+  
+  // Check concentration (no single class should exceed 45%)
+  let maxConc = 0;
+  Object.keys(classTotals).forEach(key => {
+    maxConc = Math.max(maxConc, (classTotals[key] / totalVal) * 100);
+  });
+  
+  if (maxConc <= 30) {
+    score += 40;
+  } else if (maxConc <= 45) {
+    score += 25;
+  } else if (maxConc <= 60) {
+    score += 10;
+  }
+  
+  // Cap at 100
+  score = Math.min(100, score);
+  
+  let healthDescText = '';
+  if (score > 80) {
+    healthDescText = 'Your portfolio is <span>Highly Diversified</span>, minimizing category-specific shocks.';
+  } else if (score >= 50) {
+    healthDescText = 'Your portfolio is <span>Moderately Diversified</span>. Consider spreading new allocations.';
+  } else {
+    healthDescText = 'Your portfolio is <span>Concentrated</span>. High risk of volatility due to cluster holdings.';
+  }
+  
+  updateHealthGauge(score, healthDescText);
+}
+
+// Update the dynamic SVG circle gauge
+function updateHealthGauge(score, descHTMLText) {
+  const gaugeFill = document.getElementById('health-gauge-fill');
+  const scoreText = document.getElementById('health-score-text');
+  const scoreDesc = document.getElementById('health-score-desc');
+  
+  scoreText.textContent = score.toString();
+  
+  // Wait, standard XSS check: description contains html (span). We can insert span securely by creating it, or parsing safely.
+  // Instead of innerHTML, let's parse description string or set via secure element helpers
+  clearContainer(scoreDesc);
+  const parts = descHTMLText.split('<span>');
+  if (parts.length > 1) {
+    const beforeText = document.createTextNode(parts[0]);
+    const highlightParts = parts[1].split('</span>');
+    const span = document.createElement('span');
+    span.textContent = highlightParts[0];
+    span.style.color = score > 80 ? 'var(--color-success)' : score >= 50 ? 'var(--color-warning)' : 'var(--color-danger)';
+    const afterText = document.createTextNode(highlightParts[1]);
+    
+    scoreDesc.appendChild(beforeText);
+    scoreDesc.appendChild(span);
+    scoreDesc.appendChild(afterText);
+  } else {
+    scoreDesc.textContent = descHTMLText;
+  }
+  
+  // Circle circumference is 2 * Math.PI * r = 2 * 3.14159 * 55 = 345.57
+  const circumference = 345.57;
+  const strokeOffset = circumference - (score / 100) * circumference;
+  
+  gaugeFill.style.strokeDasharray = circumference.toString();
+  gaugeFill.style.strokeDashoffset = strokeOffset.toString();
+  
+  // Change color of gauge dynamically
+  if (score > 80) {
+    gaugeFill.style.stroke = 'var(--color-success)';
+  } else if (score >= 50) {
+    gaugeFill.style.stroke = 'var(--color-warning)';
+  } else {
+    gaugeFill.style.stroke = 'var(--color-danger)';
+  }
+}
+
+// Investments List View Rendering
+let currentFilter = 'all';
+let searchQuery = '';
+
+function renderInvestments() {
+  const container = document.getElementById('investments-list-container');
+  clearContainer(container);
+  
+  // Filter investments
+  const filtered = investments.filter(inv => {
+    const matchesFilter = currentFilter === 'all' || inv.assetClass === currentFilter;
+    const matchesSearch = inv.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          ((ASSET_CATEGORIES[inv.assetClass] && ASSET_CATEGORIES[inv.assetClass].label) || '').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+  
+  if (filtered.length === 0) {
+    const emptyState = document.createElement('div');
+    emptyState.classList.add('empty-state');
+    
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('stroke-width', '1.5');
+    icon.setAttribute('stroke-linecap', 'round');
+    icon.setAttribute('stroke-linejoin', 'round');
+    icon.classList.add('empty-icon');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z');
+    icon.appendChild(path);
+    
+    const title = document.createElement('h4');
+    title.classList.add('empty-title');
+    title.textContent = 'No investments found';
+    
+    const desc = document.createElement('p');
+    desc.classList.add('empty-desc');
+    desc.textContent = investments.length === 0 
+      ? 'Start by adding your stocks, mutual funds, gold, fixed deposits, and other savings.'
+      : 'No active holdings match your filter criteria or search query.';
+      
+    const cta = document.createElement('button');
+    cta.classList.add('btn', 'btn-primary');
+    cta.textContent = 'Add Investment';
+    cta.addEventListener('click', () => openModal());
+    
+    emptyState.appendChild(icon);
+    emptyState.appendChild(title);
+    emptyState.appendChild(desc);
+    if (investments.length === 0) {
+      emptyState.appendChild(cta);
+    }
+    
+    container.appendChild(emptyState);
+    return;
+  }
+  
+  // Generate list cards
+  filtered.forEach(inv => {
+    const card = document.createElement('div');
+    card.classList.add('investment-card');
+    
+    // Main column
+    const colMain = document.createElement('div');
+    colMain.classList.add('asset-main-info');
+    
+    const badgeRow = document.createElement('div');
+    badgeRow.style.display = 'flex';
+    badgeRow.style.alignItems = 'center';
+    badgeRow.style.gap = '8px';
+    
+    const badge = document.createElement('span');
+    badge.className = `asset-badge ${inv.assetClass}`;
+    badge.textContent = (ASSET_CATEGORIES[inv.assetClass] && ASSET_CATEGORIES[inv.assetClass].label) || inv.assetClass;
+    badgeRow.appendChild(badge);
+    
+    if (inv.subtype && inv.subtype !== 'none') {
+      const subtypeMap = {
+        'large': 'Large Cap', 'mid': 'Mid Cap', 'small': 'Small Cap', 'flexi': 'Flexi Cap',
+        'physical': 'Physical', 'etf': 'Gold ETF/SGB'
+      };
+      const subBadge = document.createElement('span');
+      subBadge.classList.add('asset-badge');
+      subBadge.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+      subBadge.style.color = 'var(--text-secondary)';
+      subBadge.textContent = subtypeMap[inv.subtype] || inv.subtype;
+      badgeRow.appendChild(subBadge);
+    }
+    
+    const nameText = document.createElement('span');
+    nameText.classList.add('asset-name');
+    nameText.textContent = inv.name;
+    
+    colMain.appendChild(badgeRow);
+    colMain.appendChild(nameText);
+    
+    // Invested Amount Column
+    const colInvested = document.createElement('div');
+    colInvested.classList.add('asset-data-col');
+    const lblInvested = document.createElement('span');
+    lblInvested.classList.add('asset-data-label');
+    lblInvested.textContent = 'Invested';
+    const valInvested = document.createElement('span');
+    valInvested.classList.add('asset-data-value');
+    valInvested.textContent = formatCurrency(inv.investedAmount);
+    colInvested.appendChild(lblInvested);
+    colInvested.appendChild(valInvested);
+    
+    // Current Amount Column
+    const colCurrent = document.createElement('div');
+    colCurrent.classList.add('asset-data-col');
+    const lblCurrent = document.createElement('span');
+    lblCurrent.classList.add('asset-data-label');
+    lblCurrent.textContent = 'Current Value';
+    const valCurrent = document.createElement('span');
+    valCurrent.classList.add('asset-data-value');
+    valCurrent.textContent = formatCurrency(inv.currentAmount);
+    colCurrent.appendChild(lblCurrent);
+    colCurrent.appendChild(valCurrent);
+    
+    // P&L Column
+    const plAmt = inv.currentAmount - inv.investedAmount;
+    const plPct = inv.investedAmount > 0 ? (plAmt / inv.investedAmount) * 100 : 0;
+    
+    const colPl = document.createElement('div');
+    colPl.classList.add('pl-col');
+    const valPl = document.createElement('span');
+    valPl.className = 'pl-val ' + (plAmt > 0 ? 'positive' : plAmt < 0 ? 'negative' : 'neutral');
+    valPl.textContent = formatCurrency(plAmt);
+    
+    const pctPl = document.createElement('span');
+    pctPl.className = 'pl-pct ' + (plAmt > 0 ? 'positive' : plAmt < 0 ? 'negative' : 'neutral');
+    pctPl.textContent = formatPercent(plPct);
+    
+    colPl.appendChild(valPl);
+    colPl.appendChild(pctPl);
+    
+    // Last Updated Column
+    const colDate = document.createElement('div');
+    colDate.classList.add('asset-data-col');
+    const lblDate = document.createElement('span');
+    lblDate.classList.add('asset-data-label');
+    lblDate.textContent = 'Last Updated';
+    const valDate = document.createElement('span');
+    valDate.style.fontSize = '0.8rem';
+    valDate.style.color = 'var(--text-secondary)';
+    valDate.textContent = new Date(inv.lastUpdated).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+    colDate.appendChild(lblDate);
+    colDate.appendChild(valDate);
+    
+    // Action column
+    const colActions = document.createElement('div');
+    colActions.classList.add('card-actions');
+    
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'icon-btn';
+    btnEdit.setAttribute('aria-label', 'Edit Investment');
+    const editSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    editSvg.setAttribute('viewBox', '0 0 24 24');
+    editSvg.setAttribute('fill', 'none');
+    editSvg.setAttribute('stroke', 'currentColor');
+    editSvg.setAttribute('stroke-width', '2');
+    editSvg.setAttribute('width', '16');
+    editSvg.setAttribute('height', '16');
+    const editPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    editPath.setAttribute('d', 'M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z');
+    editSvg.appendChild(editPath);
+    btnEdit.appendChild(editSvg);
+    btnEdit.addEventListener('click', () => openModal(inv));
+    
+    const btnDelete = document.createElement('button');
+    btnDelete.className = 'icon-btn';
+    btnDelete.setAttribute('aria-label', 'Delete Investment');
+    btnDelete.style.color = 'var(--color-danger)';
+    const deleteSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    deleteSvg.setAttribute('viewBox', '0 0 24 24');
+    deleteSvg.setAttribute('fill', 'none');
+    deleteSvg.setAttribute('stroke', 'currentColor');
+    deleteSvg.setAttribute('stroke-width', '2');
+    deleteSvg.setAttribute('width', '16');
+    deleteSvg.setAttribute('height', '16');
+    const deletePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    deletePath.setAttribute('d', 'M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2');
+    deleteSvg.appendChild(deletePath);
+    btnDelete.appendChild(deleteSvg);
+    btnDelete.addEventListener('click', () => {
+      // Direct modal confirmation not allowed, but secure custom modal is standard.
+      // We will perform deletion immediately and log/notify or trigger deletion directly.
+      if (confirm(`Are you sure you want to delete ${inv.name}?`)) {
+        deleteInvestment(inv.id);
+      }
+    });
+    
+    colActions.appendChild(btnEdit);
+    colActions.appendChild(btnDelete);
+    
+    // Assemble card
+    card.appendChild(colMain);
+    card.appendChild(colInvested);
+    card.appendChild(colCurrent);
+    card.appendChild(colPl);
+    card.appendChild(colDate);
+    card.appendChild(colActions);
+    
+    container.appendChild(card);
+  });
+}
+
+function initFilterHandlers() {
+  const container = document.getElementById('asset-filters-container');
+  const chips = container.querySelectorAll('.filter-chip');
+  
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentFilter = chip.getAttribute('data-filter');
+      renderInvestments();
+    });
+  });
+  
+  const searchInput = document.getElementById('input-search');
+  searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    renderInvestments();
+  });
+
+  // Borrow & Lent filters
+  const blContainer = document.getElementById('borrow-lent-filters-container');
+  if (blContainer) {
+    const blChips = blContainer.querySelectorAll('.filter-chip');
+    blChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        blChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        currentBLFilter = chip.getAttribute('data-filter');
+        renderBorrowLent();
+      });
+    });
+  }
+
+  const blSearch = document.getElementById('input-search-borrow-lent');
+  if (blSearch) {
+    blSearch.addEventListener('input', (e) => {
+      searchQueryBorrowLent = e.target.value;
+      renderBorrowLent();
+    });
+  }
+}
+
+// Add/Edit Modals logic
+function openModal(invObj = null) {
+  const overlay = document.getElementById('investment-modal');
+  const titleText = document.getElementById('modal-title-text');
+  
+  // Form inputs
+  const inputId = document.getElementById('input-id');
+  const inputClass = document.getElementById('input-asset-class');
+  const inputSubtype = document.getElementById('input-subtype');
+  const inputName = document.getElementById('input-name');
+  const inputInvested = document.getElementById('input-invested-amount');
+  const inputCurrent = document.getElementById('input-current-amount');
+  
+  if (invObj) {
+    titleText.textContent = 'Edit Investment';
+    inputId.value = invObj.id;
+    inputClass.value = invObj.assetClass;
+    
+    // Load subtypes first
+    updateSubtypeOptions(invObj.assetClass);
+    if (invObj.subtype && invObj.subtype !== 'none') {
+      inputSubtype.value = invObj.subtype;
+    }
+    
+    inputName.value = invObj.name;
+    inputInvested.value = invObj.investedAmount;
+    inputCurrent.value = invObj.currentAmount;
+  } else {
+    titleText.textContent = 'Add Investment';
+    inputId.value = '';
+    inputClass.value = '';
+    updateSubtypeOptions('');
+    inputName.value = '';
+    inputInvested.value = '';
+    inputCurrent.value = '';
+  }
+  
+  overlay.classList.add('active-modal');
+}
+
+function closeModal() {
+  const overlay = document.getElementById('investment-modal');
+  overlay.classList.remove('active-modal');
+}
+
+function updateSubtypeOptions(assetClass) {
+  const group = document.getElementById('group-subtype');
+  const select = document.getElementById('input-subtype');
+  clearContainer(select);
+  
+  if (SUBTYPES[assetClass]) {
+    group.style.display = 'flex';
+    select.required = true;
+    
+    // Empty default option
+    const def = document.createElement('option');
+    def.value = '';
+    def.disabled = true;
+    def.selected = true;
+    def.textContent = 'Select Subtype';
+    select.appendChild(def);
+    
+    SUBTYPES[assetClass].forEach(opt => {
+      const el = document.createElement('option');
+      el.value = opt.value;
+      el.textContent = opt.label;
+      select.appendChild(el);
+    });
+  } else {
+    group.style.display = 'none';
+    select.required = false;
+  }
+}
+
+function downloadPortfolioJSON() {
+  const backupData = {
+    investments: investments,
+    liabilities: liabilities,
+    borrowLent: borrowLent
+  };
+  
+  const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'moyeniz.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function handleUploadJSON(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (Array.isArray(data.investments) && Array.isArray(data.liabilities)) {
+        investments = data.investments;
+        liabilities = data.liabilities;
+        borrowLent = Array.isArray(data.borrowLent) ? data.borrowLent : [];
+        saveToStorage();
+        
+        // Close welcome wizard if open
+        const welcome = document.getElementById('welcome-overlay');
+        if (welcome) {
+          welcome.classList.remove('active-modal');
+        }
+        
+        // Re-render currently active view
+        const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
+        if (activeTab === 'dashboard') renderDashboard();
+        if (activeTab === 'investments') renderInvestments();
+        if (activeTab === 'projections') renderProjections();
+        if (activeTab === 'liabilities') renderLiabilities();
+        if (activeTab === 'borrow-lent') renderBorrowLent();
+        
+        alert('Portfolio data loaded successfully!');
+      } else {
+        alert('Invalid data format. JSON must contain "investments" and "liabilities" arrays.');
+      }
+    } catch(err) {
+      alert('Error parsing JSON file. Please ensure it is a valid JSON document.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function initModalHandlers() {
+  const btnClose = document.getElementById('btn-close-modal');
+  const btnCancel = document.getElementById('btn-cancel-modal');
+  const addBtn = document.getElementById('btn-add-investment');
+  const selectClass = document.getElementById('input-asset-class');
+  const form = document.getElementById('investment-form');
+  const btnReset = document.getElementById('btn-reset-data');
+  
+  // JSON Backup Actions
+  const btnDownload = document.getElementById('btn-download-json');
+  if (btnDownload) {
+    btnDownload.addEventListener('click', (e) => {
+      e.stopPropagation();
+      downloadPortfolioJSON();
+    });
+  }
+
+  const settingsFileInput = document.getElementById('settings-file-input');
+  if (settingsFileInput) {
+    settingsFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleUploadJSON(e.target.files[0]);
+      }
+    });
+  }
+
+  // Dashboard Header Download Action
+  const btnDownloadTop = document.getElementById('btn-download-portfolio-top');
+  if (btnDownloadTop) {
+    btnDownloadTop.addEventListener('click', () => {
+      downloadPortfolioJSON();
+    });
+  }
+
+  // Inline Setup panel file dropper triggers
+  const setupDropper = document.getElementById('setup-dropper');
+  const setupFileInput = document.getElementById('setup-file-input');
+  
+  if (setupDropper && setupFileInput) {
+    setupDropper.addEventListener('click', () => {
+      setupFileInput.click();
+    });
+    
+    setupFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleUploadJSON(e.target.files[0]);
+      }
+    });
+    
+    setupDropper.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      setupDropper.classList.add('dragover');
+    });
+    
+    setupDropper.addEventListener('dragleave', () => {
+      setupDropper.classList.remove('dragover');
+    });
+    
+    setupDropper.addEventListener('drop', (e) => {
+      e.preventDefault();
+      setupDropper.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        handleUploadJSON(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  // Load sample data trigger
+  const btnSetupSample = document.getElementById('setup-btn-sample');
+  if (btnSetupSample) {
+    btnSetupSample.addEventListener('click', () => {
+      investments = [...SAMPLE_PORTFOLIO];
+      liabilities = [...SAMPLE_LIABILITIES];
+      borrowLent = [...SAMPLE_BORROW_LENT];
+      saveToStorage();
+      renderDashboard();
+    });
+  }
+
+  // Start scratch trigger
+  const btnSetupScratch = document.getElementById('setup-btn-scratch');
+  if (btnSetupScratch) {
+    btnSetupScratch.addEventListener('click', () => {
+      investments = [];
+      liabilities = [];
+      borrowLent = [];
+      saveToStorage();
+      renderDashboard();
+    });
+  }
+  
+  btnClose.addEventListener('click', closeModal);
+  btnCancel.addEventListener('click', closeModal);
+  addBtn.addEventListener('click', () => openModal());
+  
+  selectClass.addEventListener('change', (e) => {
+    updateSubtypeOptions(e.target.value);
+  });
+  
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveInvestmentForm();
+  });
+  
+  btnReset.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (confirm('This will restore the beautiful pre-populated sample portfolio. All custom edits will be lost. Proceed?')) {
+      investments = [...SAMPLE_PORTFOLIO];
+      liabilities = [...SAMPLE_LIABILITIES];
+      borrowLent = [...SAMPLE_BORROW_LENT];
+      saveToStorage();
+      
+      const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
+      if (activeTab === 'dashboard') renderDashboard();
+      if (activeTab === 'investments') renderInvestments();
+      if (activeTab === 'projections') renderProjections();
+      if (activeTab === 'liabilities') renderLiabilities();
+      if (activeTab === 'borrow-lent') renderBorrowLent();
+    }
+  });
+
+  // Settings dropdown toggle logic
+  const btnSettings = document.getElementById('btn-settings-toggle');
+  const settingsDropdown = document.getElementById('settings-dropdown-menu');
+  if (btnSettings && settingsDropdown) {
+    btnSettings.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isVisible = settingsDropdown.style.display === 'block';
+      settingsDropdown.style.display = isVisible ? 'none' : 'block';
+    });
+    document.addEventListener('click', () => {
+      settingsDropdown.style.display = 'none';
+    });
+    settingsDropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+
+  // Clear cached data handler
+  const btnClearCache = document.getElementById('btn-clear-cache');
+  if (btnClearCache) {
+    btnClearCache.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm('This will permanently delete your cached portfolio (investments, liabilities, and cashflows) from this browser\'s local storage. This action cannot be undone unless you have downloaded a backup. Proceed?')) {
+        localStorage.removeItem('moyeniz_investments');
+        localStorage.removeItem('moyeniz_liabilities');
+        localStorage.removeItem('moyeniz_borrow_lent');
+        investments = [];
+        liabilities = [];
+        borrowLent = [];
+        
+        // Hide settings menu
+        if (settingsDropdown) settingsDropdown.style.display = 'none';
+        
+        // Return to first tab and re-render empty dashboard
+        const links = document.querySelectorAll('.nav-link');
+        const views = document.querySelectorAll('.page-view');
+        const viewTitle = document.getElementById('view-title');
+        const viewSubtitle = document.getElementById('view-subtitle');
+        
+        links.forEach(l => l.classList.remove('active'));
+        const tabDash = document.getElementById('tab-dashboard');
+        if (tabDash) tabDash.classList.add('active');
+        
+        views.forEach(v => v.classList.remove('active-view'));
+        const activeView = document.getElementById('view-dashboard');
+        if (activeView) activeView.classList.add('active-view');
+        
+        if (viewTitle) viewTitle.textContent = 'Dashboard';
+        if (viewSubtitle) viewSubtitle.textContent = 'An overview of your complete financial portfolio.';
+        
+        renderDashboard();
+        alert('Cached browser data cleared successfully.');
+      }
+    });
+  }
+
+  // Liability Modal Handlers
+  const btnCloseL = document.getElementById('btn-close-liability-modal');
+  const btnCancelL = document.getElementById('btn-cancel-liability-modal');
+  const btnAddL = document.getElementById('btn-add-liability');
+  const formL = document.getElementById('liability-form');
+  
+  if (btnCloseL) btnCloseL.addEventListener('click', closeLiabilityModal);
+  if (btnCancelL) btnCancelL.addEventListener('click', closeLiabilityModal);
+  if (btnAddL) btnAddL.addEventListener('click', () => openLiabilityModal());
+  if (formL) {
+    formL.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveLiabilityForm();
+    });
+  }
+  
+  const searchL = document.getElementById('input-search-liabilities');
+  if (searchL) {
+    searchL.addEventListener('input', (e) => {
+      searchQueryLiabilities = e.target.value;
+      renderLiabilities();
+    });
+  }
+
+  // Borrow & Lent modal bindings
+  const btnCloseBL = document.getElementById('btn-close-borrow-lent-modal');
+  const btnCancelBL = document.getElementById('btn-cancel-borrow-lent-modal');
+  const btnAddBL = document.getElementById('btn-add-borrow-lent');
+  const formBL = document.getElementById('borrow-lent-form');
+  
+  if (btnCloseBL) btnCloseBL.addEventListener('click', closeBorrowLentModal);
+  if (btnCancelBL) btnCancelBL.addEventListener('click', closeBorrowLentModal);
+  if (btnAddBL) btnAddBL.addEventListener('click', () => openBorrowLentModal());
+  if (formBL) {
+    formBL.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveBorrowLentForm();
+    });
+  }
+
+  // Payment log modal bindings
+  const btnClosePay = document.getElementById('btn-close-payment-modal');
+  const btnCancelPay = document.getElementById('btn-cancel-payment-modal');
+  const formPay = document.getElementById('payment-log-form');
+  
+  if (btnClosePay) btnClosePay.addEventListener('click', closePaymentModal);
+  if (btnCancelPay) btnCancelPay.addEventListener('click', closePaymentModal);
+  if (formPay) {
+    formPay.addEventListener('submit', (e) => {
+      e.preventDefault();
+      savePaymentForm();
+    });
+  }
+}
+
+function saveInvestmentForm() {
+  const id = document.getElementById('input-id').value;
+  const assetClass = document.getElementById('input-asset-class').value;
+  const subtype = document.getElementById('input-subtype').value || 'none';
+  const name = document.getElementById('input-name').value;
+  const investedAmount = Number(document.getElementById('input-invested-amount').value);
+  const currentAmount = Number(document.getElementById('input-current-amount').value);
+  
+  if (id) {
+    // Edit mode
+    const idx = investments.findIndex(inv => inv.id === id);
+    if (idx !== -1) {
+      investments[idx] = {
+        ...investments[idx],
+        assetClass,
+        subtype,
+        name,
+        investedAmount,
+        currentAmount,
+        lastUpdated: new Date().toISOString()
+      };
+    }
+  } else {
+    // Add mode
+    const newId = crypto.randomUUID ? crypto.randomUUID() : 'rand-' + Math.random().toString(36).substring(2, 9);
+    investments.push({
+      id: newId,
+      assetClass,
+      subtype,
+      name,
+      investedAmount,
+      currentAmount,
+      lastUpdated: new Date().toISOString()
+    });
+  }
+  
+  saveToStorage();
+  closeModal();
+  
+  // Re-render current active view
+  const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
+  if (activeTab === 'dashboard') renderDashboard();
+  if (activeTab === 'investments') renderInvestments();
+  if (activeTab === 'projections') renderProjections();
+}
+
+function deleteInvestment(id) {
+  investments = investments.filter(inv => inv.id !== id);
+  saveToStorage();
+  renderInvestments();
+}
+
+// Projections Page Compound Calculator Line Chart
+function renderProjections() {
+  const summary = getPortfolioSummary();
+  const baseAmt = summary.currentValue;
+  
+  document.getElementById('span-proj-base-amt').textContent = formatCurrency(baseAmt);
+  
+  const sipAmt = Number(document.getElementById('slider-sip').value);
+  const years = Number(document.getElementById('slider-years').value);
+  const ror = Number(document.getElementById('slider-ror').value);
+  
+  // Update numerical labels
+  document.getElementById('val-sip-amt').textContent = formatCurrency(sipAmt);
+  document.getElementById('val-years').textContent = `${years} Year${years > 1 ? 's' : ''}`;
+  document.getElementById('val-ror').textContent = `${ror}%`;
+  
+  // Compound Math
+  const monthlyRate = ror / 100 / 12;
+  const totalMonths = years * 12;
+  
+  let currentProj = baseAmt;
+  let currentInvested = baseAmt;
+  const pointsProj = [{ year: 0, value: baseAmt }];
+  const pointsInvested = [{ year: 0, value: baseAmt }];
+  
+  for (let month = 1; month <= totalMonths; month++) {
+    currentProj = currentProj * (1 + monthlyRate) + sipAmt;
+    currentInvested += sipAmt;
+    
+    // Log data boundaries annually
+    if (month % 12 === 0) {
+      pointsProj.push({ year: month / 12, value: currentProj });
+      pointsInvested.push({ year: month / 12, value: currentInvested });
+    }
+  }
+  
+  const totalProjVal = currentProj;
+  const totalInvestedVal = currentInvested;
+  const wealthGains = totalProjVal - totalInvestedVal;
+  
+  document.getElementById('val-proj-invested').textContent = formatCurrency(totalInvestedVal);
+  document.getElementById('val-proj-gains').textContent = formatCurrency(wealthGains);
+  document.getElementById('val-proj-total').textContent = formatCurrency(totalProjVal);
+  
+  // Render Line Chart
+  renderProjectionLineChart(pointsProj, pointsInvested, years);
+}
+
+function renderProjectionLineChart(projData, investedData, maxYears) {
+  const container = document.getElementById('projection-chart-container');
+  clearContainer(container);
+  
+  const svgWidth = 600;
+  const svgHeight = 280;
+  const margin = { top: 20, right: 20, bottom: 40, left: 70 };
+  const chartWidth = svgWidth - margin.left - margin.right;
+  const chartHeight = svgHeight - margin.top - margin.bottom;
+  
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+  svg.classList.add('svg-chart');
+  
+  appendSVGDefs(svg);
+  
+  // Max Y value
+  const maxVal = projData[projData.length - 1].value * 1.05;
+  
+  // Draw Y grid and labels
+  const ticks = 4;
+  for (let i = 0; i <= ticks; i++) {
+    const ratio = i / ticks;
+    const yVal = maxVal * ratio;
+    const y = margin.top + chartHeight - (ratio * chartHeight);
+    
+    if (i > 0) {
+      const line = createSVGElement('line');
+      line.setAttribute('x1', margin.left.toString());
+      line.setAttribute('y1', y.toString());
+      line.setAttribute('x2', (margin.left + chartWidth).toString());
+      line.setAttribute('y2', y.toString());
+      line.classList.add('chart-grid-line');
+      svg.appendChild(line);
+    }
+    
+    const text = createSVGElement('text');
+    text.setAttribute('x', (margin.left - 10).toString());
+    text.setAttribute('y', (y + 4).toString());
+    text.setAttribute('text-anchor', 'end');
+    text.classList.add('chart-axis-text');
+    
+    let label = '';
+    if (yVal >= 10000000) {
+      label = '₹' + (yVal / 10000000).toFixed(1) + 'Cr';
+    } else if (yVal >= 100000) {
+      label = '₹' + (yVal / 100000).toFixed(0) + 'L';
+    } else if (yVal >= 1000) {
+      label = '₹' + (yVal / 1000).toFixed(0) + 'k';
+    } else {
+      label = '₹' + yVal.toFixed(0);
+    }
+    text.textContent = label;
+    svg.appendChild(text);
+  }
+  
+  // Draw X axis grid and labels (every 2/5 years based on total range)
+  const step = maxYears <= 10 ? 1 : maxYears <= 20 ? 2 : 5;
+  for (let yr = 0; yr <= maxYears; yr += step) {
+    const ratio = yr / maxYears;
+    const x = margin.left + (ratio * chartWidth);
+    
+    // Label X
+    const text = createSVGElement('text');
+    text.setAttribute('x', x.toString());
+    text.setAttribute('y', (margin.top + chartHeight + 20).toString());
+    text.setAttribute('text-anchor', 'middle');
+    text.classList.add('chart-axis-text');
+    text.textContent = `Yr ${yr}`;
+    svg.appendChild(text);
+  }
+  
+  // Map points to SVG coordinates
+  const scalePoint = (p) => {
+    const rx = p.year / maxYears;
+    const ry = p.value / maxVal;
+    return {
+      x: margin.left + (rx * chartWidth),
+      y: margin.top + chartHeight - (ry * chartHeight),
+      value: p.value,
+      year: p.year
+    };
+  };
+  
+  const mappedProj = projData.map(scalePoint);
+  const mappedInvested = investedData.map(scalePoint);
+  
+  // Create Polyline string
+  const polylineStr = (points) => points.map(p => `${p.x},${p.y}`).join(' ');
+  
+  // Area fill below Wealth line
+  const areaPathStr = `M ${mappedProj[0].x} ${margin.top + chartHeight} ` + 
+                     mappedProj.map(p => `L ${p.x} ${p.y}`).join(' ') + 
+                     ` L ${mappedProj[mappedProj.length - 1].x} ${margin.top + chartHeight} Z`;
+  
+  const area = createSVGElement('path');
+  area.setAttribute('d', areaPathStr);
+  area.setAttribute('fill', 'url(#grad-proj-area)');
+  svg.appendChild(area);
+  
+  // Invested Line (Gray dashed line)
+  const lineInv = createSVGElement('polyline');
+  lineInv.setAttribute('points', polylineStr(mappedInvested));
+  lineInv.setAttribute('fill', 'none');
+  lineInv.setAttribute('stroke', 'var(--text-muted)');
+  lineInv.setAttribute('stroke-width', '2');
+  lineInv.setAttribute('stroke-dasharray', '5,5');
+  svg.appendChild(lineInv);
+  
+  // Projected Line (Indigo Solid Line)
+  const lineProj = createSVGElement('polyline');
+  lineProj.setAttribute('points', polylineStr(mappedProj));
+  lineProj.setAttribute('fill', 'none');
+  lineProj.setAttribute('stroke', 'var(--color-primary)');
+  lineProj.setAttribute('stroke-width', '3');
+  svg.appendChild(lineProj);
+  
+  // Plot dots and attach Tooltips
+  mappedProj.forEach((p, idx) => {
+    const dot = createSVGElement('circle');
+    dot.setAttribute('cx', p.x.toString());
+    dot.setAttribute('cy', p.y.toString());
+    dot.setAttribute('r', '5');
+    dot.setAttribute('fill', 'var(--color-primary)');
+    dot.setAttribute('stroke', '#070913');
+    dot.setAttribute('stroke-width', '2');
+    dot.style.cursor = 'pointer';
+    dot.style.transition = 'transform 0.15s ease';
+    
+    dot.addEventListener('mouseenter', () => {
+      dot.setAttribute('r', '7');
+    });
+    
+    // Attach Tooltip
+    dot.addEventListener('mousemove', (e) => {
+      const investedAtYr = mappedInvested[idx].value;
+      const totalAtYr = p.value;
+      const gainAtYr = totalAtYr - investedAtYr;
+      const returnPct = investedAtYr > 0 ? (gainAtYr / investedAtYr) * 100 : 0;
+      
+      showTooltip(e, `Year ${p.year} Growth`, investedAtYr, totalAtYr, gainAtYr, returnPct);
+    });
+    
+    dot.addEventListener('mouseleave', () => {
+      dot.setAttribute('r', '5');
+      hideTooltip();
+    });
+    
+    svg.appendChild(dot);
+  });
+  
+  container.appendChild(svg);
+}
+
+// Dynamic Heatmaps Rendering
+function renderHeatmaps() {
+  const profitContainer = document.getElementById('profit-heatmap-container');
+  const lossContainer = document.getElementById('loss-heatmap-container');
+  clearContainer(profitContainer);
+  clearContainer(lossContainer);
+  
+  const profits = [];
+  const losses = [];
+  
+  investments.forEach(inv => {
+    const invAmt = Number(inv.investedAmount);
+    const curAmt = Number(inv.currentAmount);
+    if (invAmt === 0) return;
+    
+    const diff = curAmt - invAmt;
+    const pct = (diff / invAmt) * 100;
+    
+    if (diff > 0) {
+      profits.push({ inv, diff, pct });
+    } else if (diff < 0) {
+      losses.push({ inv, diff, pct });
+    }
+  });
+  
+  profits.sort((a, b) => b.pct - a.pct);
+  losses.sort((a, b) => a.pct - b.pct);
+  
+  if (profits.length === 0) {
+    const empty = document.createElement('div');
+    empty.textContent = 'No profitable assets.';
+    empty.style.color = 'var(--text-muted)';
+    empty.style.fontSize = '0.8rem';
+    empty.style.gridColumn = '1 / -1';
+    profitContainer.appendChild(empty);
+  } else {
+    profits.forEach(item => {
+      const opacity = Math.min(0.85, 0.12 + (item.pct / 40) * 0.73);
+      const block = document.createElement('div');
+      block.className = 'heatmap-block';
+      block.style.backgroundColor = `rgba(16, 185, 129, ${opacity})`;
+      block.style.color = opacity > 0.45 ? '#ffffff' : 'var(--text-primary)';
+      
+      const name = document.createElement('span');
+      name.className = 'heatmap-block-name';
+      name.textContent = item.inv.name;
+      
+      const val = document.createElement('span');
+      val.className = 'heatmap-block-val';
+      val.textContent = formatCurrency(item.inv.currentAmount);
+      
+      const pct = document.createElement('span');
+      pct.className = 'heatmap-block-pct';
+      pct.textContent = `+${item.pct.toFixed(1)}%`;
+      if (opacity > 0.45) {
+        pct.style.color = '#ffffff';
+      } else {
+        pct.style.color = 'var(--color-success)';
+      }
+      
+      block.appendChild(name);
+      block.appendChild(val);
+      block.appendChild(pct);
+      
+      block.addEventListener('mousemove', (e) => {
+        showTooltip(e, item.inv.name, item.inv.investedAmount, item.inv.currentAmount, item.diff, item.pct);
+      });
+      block.addEventListener('mouseleave', hideTooltip);
+      
+      profitContainer.appendChild(block);
+    });
+  }
+  
+  if (losses.length === 0) {
+    const empty = document.createElement('div');
+    empty.textContent = 'No assets in loss.';
+    empty.style.color = 'var(--text-muted)';
+    empty.style.fontSize = '0.8rem';
+    empty.style.gridColumn = '1 / -1';
+    lossContainer.appendChild(empty);
+  } else {
+    losses.forEach(item => {
+      const absPct = Math.abs(item.pct);
+      const opacity = Math.min(0.85, 0.12 + (absPct / 20) * 0.73);
+      const block = document.createElement('div');
+      block.className = 'heatmap-block';
+      block.style.backgroundColor = `rgba(244, 63, 94, ${opacity})`;
+      block.style.color = opacity > 0.45 ? '#ffffff' : 'var(--text-primary)';
+      
+      const name = document.createElement('span');
+      name.className = 'heatmap-block-name';
+      name.textContent = item.inv.name;
+      
+      const val = document.createElement('span');
+      val.className = 'heatmap-block-val';
+      val.textContent = formatCurrency(item.inv.currentAmount);
+      
+      const pct = document.createElement('span');
+      pct.className = 'heatmap-block-pct';
+      pct.textContent = `${item.pct.toFixed(1)}%`;
+      if (opacity > 0.45) {
+        pct.style.color = '#ffffff';
+      } else {
+        pct.style.color = 'var(--color-danger)';
+      }
+      
+      block.appendChild(name);
+      block.appendChild(val);
+      block.appendChild(pct);
+      
+      block.addEventListener('mousemove', (e) => {
+        showTooltip(e, item.inv.name, item.inv.investedAmount, item.inv.currentAmount, item.diff, item.pct);
+      });
+      block.addEventListener('mouseleave', hideTooltip);
+      
+      lossContainer.appendChild(block);
+    });
+  }
+}
+
+// Liabilities View Logic
+function renderLiabilities() {
+  const container = document.getElementById('liabilities-list-container');
+  clearContainer(container);
+  
+  let totalOutstanding = 0;
+  let totalEmi = 0;
+  let weightedInterestSum = 0;
+  
+  liabilities.forEach(l => {
+    totalOutstanding += Number(l.outstanding);
+    totalEmi += Number(l.emi);
+    weightedInterestSum += (Number(l.outstanding) * Number(l.rate));
+  });
+  
+  const avgRate = totalOutstanding > 0 ? (weightedInterestSum / totalOutstanding) : 0;
+  const summary = getPortfolioSummary();
+  const assetsVal = summary.currentValue;
+  const debtAssetRatio = assetsVal > 0 ? (totalOutstanding / assetsVal) * 100 : 0;
+  
+  document.getElementById('val-total-liabilities').textContent = formatCurrency(totalOutstanding);
+  document.getElementById('val-total-emis').textContent = formatCurrency(totalEmi);
+  document.getElementById('val-debt-asset-ratio').textContent = debtAssetRatio.toFixed(1) + '%';
+  document.getElementById('val-avg-debt-rate').textContent = avgRate.toFixed(2) + '%';
+  
+  const filtered = liabilities.filter(l => {
+    const matchesSearch = l.name.toLowerCase().includes(searchQueryLiabilities.toLowerCase()) || 
+                          (LIABILITY_TYPES[l.type] || '').toLowerCase().includes(searchQueryLiabilities.toLowerCase());
+    return matchesSearch;
+  });
+  
+  if (filtered.length === 0) {
+    const emptyState = document.createElement('div');
+    emptyState.classList.add('empty-state');
+    
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('stroke-width', '1.5');
+    icon.setAttribute('stroke-linecap', 'round');
+    icon.setAttribute('stroke-linejoin', 'round');
+    icon.classList.add('empty-icon');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6');
+    icon.appendChild(path);
+    
+    const title = document.createElement('h4');
+    title.classList.add('empty-title');
+    title.textContent = 'No liabilities found';
+    
+    const desc = document.createElement('p');
+    desc.classList.add('empty-desc');
+    desc.textContent = liabilities.length === 0 
+      ? 'Start tracking your debts, home loans, car loans, and EMIs to monitor leverage.'
+      : 'No active loans match your search criteria.';
+      
+    emptyState.appendChild(icon);
+    emptyState.appendChild(title);
+    emptyState.appendChild(desc);
+    
+    container.appendChild(emptyState);
+    return;
+  }
+  
+  filtered.forEach(l => {
+    const card = document.createElement('div');
+    card.classList.add('investment-card');
+    
+    const colMain = document.createElement('div');
+    colMain.classList.add('asset-main-info');
+    
+    const badgeRow = document.createElement('div');
+    badgeRow.style.display = 'flex';
+    badgeRow.style.alignItems = 'center';
+    badgeRow.style.gap = '8px';
+    
+    const badge = document.createElement('span');
+    badge.className = 'asset-badge bonds';
+    badge.textContent = LIABILITY_TYPES[l.type] || l.type;
+    badgeRow.appendChild(badge);
+    
+    const nameText = document.createElement('span');
+    nameText.classList.add('asset-name');
+    nameText.textContent = l.name;
+    
+    colMain.appendChild(badgeRow);
+    colMain.appendChild(nameText);
+    
+    const colOutstanding = document.createElement('div');
+    colOutstanding.classList.add('asset-data-col');
+    const lblOutstanding = document.createElement('span');
+    lblOutstanding.classList.add('asset-data-label');
+    lblOutstanding.textContent = 'Outstanding';
+    const valOutstanding = document.createElement('span');
+    valOutstanding.classList.add('asset-data-value');
+    valOutstanding.style.color = 'var(--color-danger)';
+    valOutstanding.textContent = formatCurrency(l.outstanding);
+    colOutstanding.appendChild(lblOutstanding);
+    colOutstanding.appendChild(valOutstanding);
+    
+    const colEmi = document.createElement('div');
+    colEmi.classList.add('asset-data-col');
+    const lblEmi = document.createElement('span');
+    lblEmi.classList.add('asset-data-label');
+    lblEmi.textContent = 'Monthly EMI';
+    const valEmi = document.createElement('span');
+    valEmi.classList.add('asset-data-value');
+    valEmi.textContent = formatCurrency(l.emi);
+    colEmi.appendChild(lblEmi);
+    colEmi.appendChild(valEmi);
+    
+    const colRate = document.createElement('div');
+    colRate.classList.add('asset-data-col');
+    const lblRate = document.createElement('span');
+    lblRate.classList.add('asset-data-label');
+    lblRate.textContent = 'Interest Rate';
+    const valRate = document.createElement('span');
+    valRate.classList.add('asset-data-value');
+    valRate.textContent = l.rate.toFixed(2) + '%';
+    colRate.appendChild(lblRate);
+    colRate.appendChild(valRate);
+    
+    const colTenure = document.createElement('div');
+    colTenure.classList.add('asset-data-col');
+    const lblTenure = document.createElement('span');
+    lblTenure.classList.add('asset-data-label');
+    lblTenure.textContent = 'Tenure Left';
+    
+    const tenureContainer = document.createElement('div');
+    tenureContainer.style.display = 'flex';
+    tenureContainer.style.alignItems = 'center';
+    tenureContainer.style.gap = '8px';
+    
+    const valTenure = document.createElement('span');
+    valTenure.classList.add('asset-data-value');
+    valTenure.style.fontSize = '0.85rem';
+    valTenure.textContent = `${l.tenure} Months`;
+    
+    const btnPayEmi = document.createElement('button');
+    btnPayEmi.className = 'btn btn-secondary';
+    btnPayEmi.style.padding = '2px 8px';
+    btnPayEmi.style.fontSize = '0.75rem';
+    btnPayEmi.style.height = 'auto';
+    btnPayEmi.style.lineHeight = '1.2';
+    btnPayEmi.style.borderRadius = '4px';
+    btnPayEmi.style.border = '1px solid var(--border-light)';
+    btnPayEmi.style.background = 'transparent';
+    btnPayEmi.style.cursor = 'pointer';
+    btnPayEmi.textContent = '+1 Paid';
+    btnPayEmi.title = 'Mark 1 EMI as Paid';
+    btnPayEmi.addEventListener('click', (e) => {
+      e.stopPropagation();
+      payOneEMI(l.id);
+    });
+    
+    tenureContainer.appendChild(valTenure);
+    if (Number(l.tenure) > 0) {
+      tenureContainer.appendChild(btnPayEmi);
+    }
+    
+    colTenure.appendChild(lblTenure);
+    colTenure.appendChild(tenureContainer);
+    
+    const colActions = document.createElement('div');
+    colActions.classList.add('card-actions');
+    
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'icon-btn';
+    btnEdit.setAttribute('aria-label', 'Edit Liability');
+    const editSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    editSvg.setAttribute('viewBox', '0 0 24 24');
+    editSvg.setAttribute('fill', 'none');
+    editSvg.setAttribute('stroke', 'currentColor');
+    editSvg.setAttribute('stroke-width', '2');
+    editSvg.setAttribute('width', '16');
+    editSvg.setAttribute('height', '16');
+    const editPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    editPath.setAttribute('d', 'M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z');
+    editSvg.appendChild(editPath);
+    btnEdit.appendChild(editSvg);
+    btnEdit.addEventListener('click', () => openLiabilityModal(l));
+    
+    const btnDelete = document.createElement('button');
+    btnDelete.className = 'icon-btn';
+    btnDelete.setAttribute('aria-label', 'Delete Liability');
+    btnDelete.style.color = 'var(--color-danger)';
+    const deleteSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    deleteSvg.setAttribute('viewBox', '0 0 24 24');
+    deleteSvg.setAttribute('fill', 'none');
+    deleteSvg.setAttribute('stroke', 'currentColor');
+    deleteSvg.setAttribute('stroke-width', '2');
+    deleteSvg.setAttribute('width', '16');
+    deleteSvg.setAttribute('height', '16');
+    const deletePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    deletePath.setAttribute('d', 'M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2');
+    deleteSvg.appendChild(deletePath);
+    btnDelete.appendChild(deleteSvg);
+    btnDelete.addEventListener('click', () => {
+      if (confirm(`Are you sure you want to delete ${l.name}?`)) {
+        deleteLiability(l.id);
+      }
+    });
+    
+    colActions.appendChild(btnEdit);
+    colActions.appendChild(btnDelete);
+    
+    card.appendChild(colMain);
+    card.appendChild(colOutstanding);
+    card.appendChild(colEmi);
+    card.appendChild(colRate);
+    card.appendChild(colTenure);
+    card.appendChild(colActions);
+    
+    // Repayment progress row
+    const totalTenureVal = Number(l.totalTenure || l.tenure || 1);
+    const tenureLeftVal = Number(l.tenure);
+    const monthsPaidVal = Math.max(0, totalTenureVal - tenureLeftVal);
+    const progressPctVal = totalTenureVal > 0 ? Math.min(100, (monthsPaidVal / totalTenureVal) * 100) : 0;
+    const totalRemainingVal = tenureLeftVal * Number(l.emi);
+
+    const progressRow = document.createElement('div');
+    progressRow.classList.add('loan-progress-row');
+
+    const progressTextRow = document.createElement('div');
+    progressTextRow.classList.add('loan-progress-text-row');
+
+    const progressLabel = document.createElement('span');
+    progressLabel.classList.add('loan-progress-label');
+    progressLabel.textContent = `Repayment Progress: ${monthsPaidVal} of ${totalTenureVal} Months Paid (${progressPctVal.toFixed(0)}%)`;
+
+    const progressSubLabel = document.createElement('span');
+    progressSubLabel.textContent = `Remaining EMIs: ${tenureLeftVal} (${formatCurrency(totalRemainingVal)} total remaining)`;
+
+    progressTextRow.appendChild(progressLabel);
+    progressTextRow.appendChild(progressSubLabel);
+
+    const progressTrack = document.createElement('div');
+    progressTrack.classList.add('loan-progress-track');
+
+    const progressFill = document.createElement('div');
+    progressFill.classList.add('loan-progress-fill', l.type);
+    progressFill.style.width = `${progressPctVal}%`;
+
+    progressTrack.appendChild(progressFill);
+    progressRow.appendChild(progressTextRow);
+    progressRow.appendChild(progressTrack);
+
+    // Last paid EMI details
+    const progressMetaRow = document.createElement('div');
+    progressMetaRow.style.display = 'flex';
+    progressMetaRow.style.justifyContent = 'space-between';
+    progressMetaRow.style.fontSize = '0.75rem';
+    progressMetaRow.style.color = 'var(--text-secondary)';
+    progressMetaRow.style.marginTop = '-2px';
+    
+    const lastPaidText = l.lastPaidDate ? new Date(l.lastPaidDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Never';
+    const lastPaidEl = document.createElement('span');
+    lastPaidEl.textContent = `Last Paid EMI Date: ${lastPaidText}`;
+    progressMetaRow.appendChild(lastPaidEl);
+    progressRow.appendChild(progressMetaRow);
+
+    card.appendChild(progressRow);
+    
+    container.appendChild(card);
+  });
+}
+
+function openLiabilityModal(lObj = null) {
+  const overlay = document.getElementById('liability-modal');
+  const titleText = document.getElementById('liability-modal-title-text');
+  
+  const inputId = document.getElementById('input-liability-id');
+  const inputType = document.getElementById('input-liability-type');
+  const inputName = document.getElementById('input-liability-name');
+  const inputOutstanding = document.getElementById('input-liability-outstanding');
+  const inputEmi = document.getElementById('input-liability-emi');
+  const inputRate = document.getElementById('input-liability-rate');
+  const inputTotalTenure = document.getElementById('input-liability-total-tenure');
+  const inputTenure = document.getElementById('input-liability-tenure');
+  const inputLastPaid = document.getElementById('input-liability-last-paid');
+  
+  if (lObj) {
+    titleText.textContent = 'Edit Liability';
+    inputId.value = lObj.id;
+    inputType.value = lObj.type;
+    inputName.value = lObj.name;
+    inputOutstanding.value = lObj.outstanding;
+    inputEmi.value = lObj.emi;
+    inputRate.value = lObj.rate;
+    inputTotalTenure.value = lObj.totalTenure || lObj.tenure;
+    inputTenure.value = lObj.tenure;
+    inputLastPaid.value = lObj.lastPaidDate ? lObj.lastPaidDate.split('T')[0] : '';
+  } else {
+    titleText.textContent = 'Add Liability';
+    inputId.value = '';
+    inputType.value = '';
+    inputName.value = '';
+    inputOutstanding.value = '';
+    inputEmi.value = '';
+    inputRate.value = '';
+    inputTotalTenure.value = '';
+    inputTenure.value = '';
+    inputLastPaid.value = '';
+  }
+  overlay.classList.add('active-modal');
+}
+
+function closeLiabilityModal() {
+  const overlay = document.getElementById('liability-modal');
+  overlay.classList.remove('active-modal');
+}
+
+function saveLiabilityForm() {
+  const id = document.getElementById('input-liability-id').value;
+  const type = document.getElementById('input-liability-type').value;
+  const name = document.getElementById('input-liability-name').value;
+  const outstanding = Number(document.getElementById('input-liability-outstanding').value);
+  const emi = Number(document.getElementById('input-liability-emi').value);
+  const rate = Number(document.getElementById('input-liability-rate').value);
+  const totalTenure = Number(document.getElementById('input-liability-total-tenure').value);
+  const tenure = Number(document.getElementById('input-liability-tenure').value);
+  const lastPaidVal = document.getElementById('input-liability-last-paid').value;
+  const lastPaidDate = lastPaidVal ? new Date(lastPaidVal).toISOString() : null;
+  
+  if (tenure > totalTenure) {
+    alert("Tenure Left cannot be greater than Total Tenure!");
+    return;
+  }
+  
+  if (id) {
+    const idx = liabilities.findIndex(l => l.id === id);
+    if (idx !== -1) {
+      liabilities[idx] = {
+        ...liabilities[idx],
+        type,
+        name,
+        outstanding,
+        emi,
+        rate,
+        totalTenure,
+        tenure,
+        lastPaidDate,
+        lastUpdated: new Date().toISOString()
+      };
+    }
+  } else {
+    const newId = crypto.randomUUID ? crypto.randomUUID() : 'loan-' + Math.random().toString(36).substring(2, 9);
+    liabilities.push({
+      id: newId,
+      type,
+      name,
+      outstanding,
+      emi,
+      rate,
+      totalTenure,
+      tenure,
+      lastPaidDate,
+      lastUpdated: new Date().toISOString()
+    });
+  }
+  
+  saveToStorage();
+  closeLiabilityModal();
+  renderLiabilities();
+}
+
+// Mark EMI as paid and calculate new outstanding & tenure
+function payOneEMI(id) {
+  const l = liabilities.find(item => item.id === id);
+  if (!l) return;
+  
+  const tenureLeftVal = Number(l.tenure);
+  if (tenureLeftVal <= 0) {
+    alert("This liability has already been fully repaid!");
+    return;
+  }
+  
+  const monthlyRate = (Number(l.rate) / 100) / 12;
+  const interestPaid = Number(l.outstanding) * monthlyRate;
+  const principalPaid = Number(l.emi) - interestPaid;
+  
+  l.outstanding = Math.max(0, Number(l.outstanding) - principalPaid);
+  l.tenure = Math.max(0, tenureLeftVal - 1);
+  l.lastPaidDate = new Date().toISOString();
+  
+  saveToStorage();
+  renderLiabilities();
+}
+
+// Delete Liability logic
+function deleteLiability(id) {
+  liabilities = liabilities.filter(l => l.id !== id);
+  saveToStorage();
+  renderLiabilities();
+}
+
+// ==========================================
+// BORROW & LENT LOGIC
+// ==========================================
+
+function openBorrowLentModal(blObj = null) {
+  const overlay = document.getElementById('borrow-lent-modal');
+  const titleText = document.getElementById('borrow-lent-modal-title-text');
+  
+  const inputId = document.getElementById('input-borrow-lent-id');
+  const inputType = document.getElementById('input-borrow-lent-type');
+  const inputPerson = document.getElementById('input-borrow-lent-person');
+  const inputAmount = document.getElementById('input-borrow-lent-amount');
+  const inputDate = document.getElementById('input-borrow-lent-date');
+  const inputNotes = document.getElementById('input-borrow-lent-notes');
+  
+  if (blObj) {
+    titleText.textContent = 'Edit Cashflow Transaction';
+    inputId.value = blObj.id;
+    inputType.value = blObj.type;
+    inputPerson.value = blObj.person;
+    inputAmount.value = blObj.amount;
+    inputAmount.disabled = true;
+    inputDate.value = blObj.date;
+    inputNotes.value = blObj.notes || '';
+  } else {
+    titleText.textContent = 'Add Cashflow Transaction';
+    inputId.value = '';
+    inputType.value = '';
+    inputPerson.value = '';
+    inputAmount.value = '';
+    inputAmount.disabled = false;
+    inputDate.value = new Date().toISOString().split('T')[0];
+    inputNotes.value = '';
+  }
+  overlay.classList.add('active-modal');
+}
+
+function closeBorrowLentModal() {
+  const overlay = document.getElementById('borrow-lent-modal');
+  overlay.classList.remove('active-modal');
+}
+
+function saveBorrowLentForm() {
+  const id = document.getElementById('input-borrow-lent-id').value;
+  const type = document.getElementById('input-borrow-lent-type').value;
+  const person = document.getElementById('input-borrow-lent-person').value;
+  const amount = Number(document.getElementById('input-borrow-lent-amount').value);
+  const date = document.getElementById('input-borrow-lent-date').value;
+  const notes = document.getElementById('input-borrow-lent-notes').value;
+  
+  if (id) {
+    const idx = borrowLent.findIndex(bl => bl.id === id);
+    if (idx !== -1) {
+      const oldVal = borrowLent[idx];
+      let newOutstanding = oldVal.outstanding;
+      if (oldVal.amount !== amount) {
+        const diff = amount - oldVal.amount;
+        newOutstanding = Math.max(0, oldVal.outstanding + diff);
+      }
+      
+      borrowLent[idx] = {
+        ...oldVal,
+        type,
+        person,
+        amount,
+        outstanding: newOutstanding,
+        date,
+        notes,
+        status: newOutstanding === 0 ? 'paid' : oldVal.status
+      };
+    }
+  } else {
+    const newId = 'bl-' + Math.random().toString(36).substring(2, 9);
+    borrowLent.push({
+      id: newId,
+      type,
+      person,
+      amount,
+      outstanding: amount,
+      date,
+      notes,
+      status: 'active',
+      payments: []
+    });
+  }
+  
+  saveToStorage();
+  closeBorrowLentModal();
+  renderBorrowLent();
+}
+
+function openPaymentModal(blId) {
+  const overlay = document.getElementById('payment-log-modal');
+  const bl = borrowLent.find(item => item.id === blId);
+  if (!bl) return;
+  
+  const title = document.getElementById('payment-modal-title');
+  const labelAmt = document.getElementById('lbl-payment-amount');
+  
+  title.textContent = bl.type === 'lent' ? 'Log Collection Received' : 'Log Repayment Paid';
+  labelAmt.textContent = bl.type === 'lent' ? 'Amount Collected (₹)' : 'Amount Paid (₹)';
+  
+  document.getElementById('input-payment-bl-id').value = blId;
+  document.getElementById('input-payment-amount').value = '';
+  document.getElementById('input-payment-amount').max = bl.outstanding;
+  document.getElementById('input-payment-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('input-payment-note').value = '';
+  
+  overlay.classList.add('active-modal');
+}
+
+function closePaymentModal() {
+  const overlay = document.getElementById('payment-log-modal');
+  overlay.classList.remove('active-modal');
+}
+
+function savePaymentForm() {
+  const blId = document.getElementById('input-payment-bl-id').value;
+  const amount = Number(document.getElementById('input-payment-amount').value);
+  const date = document.getElementById('input-payment-date').value;
+  const note = document.getElementById('input-payment-note').value;
+  
+  const bl = borrowLent.find(item => item.id === blId);
+  if (!bl) return;
+  
+  if (amount > bl.outstanding) {
+    alert(`Payment amount (₹${amount}) cannot exceed outstanding balance (₹${bl.outstanding})!`);
+    return;
+  }
+  
+  bl.outstanding = Math.max(0, bl.outstanding - amount);
+  bl.payments.push({
+    date,
+    amount,
+    note: note || (bl.type === 'lent' ? 'Collection' : 'Repayment')
+  });
+  
+  if (bl.outstanding === 0) {
+    bl.status = 'paid';
+  }
+  
+  saveToStorage();
+  closePaymentModal();
+  renderBorrowLent();
+}
+
+function markBLAsPaid(id) {
+  const bl = borrowLent.find(item => item.id === id);
+  if (!bl) return;
+  
+  const remaining = bl.outstanding;
+  if (remaining > 0) {
+    bl.payments.push({
+      date: new Date().toISOString().split('T')[0],
+      amount: remaining,
+      note: 'Settled full outstanding (Marked Paid)'
+    });
+  }
+  bl.outstanding = 0;
+  bl.status = 'paid';
+  
+  saveToStorage();
+  renderBorrowLent();
+}
+
+function deleteBorrowLent(id) {
+  borrowLent = borrowLent.filter(item => item.id !== id);
+  saveToStorage();
+  renderBorrowLent();
+}
+
+function renderBorrowLent() {
+  const container = document.getElementById('borrow-lent-list-container');
+  clearContainer(container);
+  
+  let totalLent = 0;
+  let totalBorrowed = 0;
+  
+  borrowLent.forEach(bl => {
+    if (bl.status !== 'paid') {
+      if (bl.type === 'lent') {
+        totalLent += Number(bl.outstanding);
+      } else if (bl.type === 'borrowed') {
+        totalBorrowed += Number(bl.outstanding);
+      }
+    }
+  });
+  
+  const netBL = totalLent - totalBorrowed;
+  
+  // Update section stats
+  document.getElementById('val-total-lent').textContent = formatCurrency(totalLent);
+  document.getElementById('val-total-borrowed').textContent = formatCurrency(totalBorrowed);
+  
+  const netValEl = document.getElementById('val-net-borrow-lent');
+  const netLblEl = document.getElementById('lbl-net-borrow-lent');
+  
+  netValEl.textContent = formatCurrency(Math.abs(netBL));
+  if (netBL > 0) {
+    netValEl.style.color = 'var(--color-success)';
+    netLblEl.textContent = 'Net Receivable (People owe you)';
+  } else if (netBL < 0) {
+    netValEl.style.color = 'var(--color-danger)';
+    netLblEl.textContent = 'Net Payable (You owe people)';
+  } else {
+    netValEl.style.color = 'var(--text-secondary)';
+    netLblEl.textContent = 'Net Balance Settled';
+  }
+  
+  // Filtering & searching
+  const filtered = borrowLent.filter(bl => {
+    const matchesSearch = bl.person.toLowerCase().includes(searchQueryBorrowLent.toLowerCase()) || 
+                          (bl.notes || '').toLowerCase().includes(searchQueryBorrowLent.toLowerCase());
+    
+    let matchesFilter = true;
+    if (currentBLFilter === 'lent') {
+      matchesFilter = bl.type === 'lent' && bl.status !== 'paid';
+    } else if (currentBLFilter === 'borrowed') {
+      matchesFilter = bl.type === 'borrowed' && bl.status !== 'paid';
+    } else if (currentBLFilter === 'history') {
+      matchesFilter = bl.status === 'paid';
+    } else {
+      matchesFilter = bl.status !== 'paid';
+    }
+    
+    return matchesSearch && matchesFilter;
+  });
+  
+  if (filtered.length === 0) {
+    const emptyState = document.createElement('div');
+    emptyState.classList.add('empty-state');
+    
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('stroke-width', '1.5');
+    icon.setAttribute('stroke-linecap', 'round');
+    icon.setAttribute('stroke-linejoin', 'round');
+    icon.classList.add('empty-icon');
+    
+    // shoulders
+    const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path1.setAttribute('d', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2');
+    
+    // head (aligned at cx=9)
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', '9');
+    circle.setAttribute('cy', '7');
+    circle.setAttribute('r', '4');
+    
+    // plus icon (lines)
+    const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line1.setAttribute('x1', '19');
+    line1.setAttribute('x2', '19');
+    line1.setAttribute('y1', '8');
+    line1.setAttribute('y2', '14');
+    
+    const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line2.setAttribute('x1', '16');
+    line2.setAttribute('x2', '22');
+    line2.setAttribute('y1', '11');
+    line2.setAttribute('y2', '11');
+    
+    icon.appendChild(path1);
+    icon.appendChild(circle);
+    icon.appendChild(line1);
+    icon.appendChild(line2);
+    emptyState.appendChild(icon);
+    
+    const title = document.createElement('h4');
+    title.classList.add('empty-title');
+    title.textContent = 'No cashflow entries found';
+    emptyState.appendChild(title);
+    
+    const desc = document.createElement('p');
+    desc.classList.add('empty-desc');
+    desc.textContent = borrowLent.length === 0 
+      ? 'Start logging personal borrowings and lendings to keep track of your cash flows.'
+      : 'No active cashflow records match the selected filter/search.';
+    emptyState.appendChild(desc);
+    
+    container.appendChild(emptyState);
+    return;
+  }
+  
+  filtered.forEach(bl => {
+    const card = document.createElement('div');
+    card.classList.add('investment-card');
+    if (bl.status === 'paid') {
+      card.style.opacity = '0.75';
+    }
+    
+    // Column 1: Info & Type Badge
+    const colMain = document.createElement('div');
+    colMain.classList.add('asset-main-info');
+    
+    const badgeRow = document.createElement('div');
+    badgeRow.style.display = 'flex';
+    badgeRow.style.alignItems = 'center';
+    badgeRow.style.gap = '8px';
+    
+    const typeBadge = document.createElement('span');
+    typeBadge.className = bl.type === 'lent' ? 'asset-badge savings' : 'asset-badge bonds';
+    typeBadge.textContent = bl.type === 'lent' ? 'LENT' : 'BORROWED';
+    badgeRow.appendChild(typeBadge);
+    
+    if (bl.status === 'paid') {
+      const paidBadge = document.createElement('span');
+      paidBadge.className = 'asset-badge gold';
+      paidBadge.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+      paidBadge.style.color = 'var(--color-success)';
+      paidBadge.textContent = 'SETTLED';
+      badgeRow.appendChild(paidBadge);
+    }
+    
+    const personName = document.createElement('span');
+    personName.classList.add('asset-name');
+    personName.textContent = bl.person;
+    
+    colMain.appendChild(badgeRow);
+    colMain.appendChild(personName);
+    
+    // Column 2: Principal
+    const colAmt = document.createElement('div');
+    colAmt.classList.add('asset-data-col');
+    const lblAmt = document.createElement('span');
+    lblAmt.classList.add('asset-data-label');
+    lblAmt.textContent = 'Principal';
+    const valAmt = document.createElement('span');
+    valAmt.classList.add('asset-data-value');
+    valAmt.textContent = formatCurrency(bl.amount);
+    colAmt.appendChild(lblAmt);
+    colAmt.appendChild(valAmt);
+    
+    // Column 3: Outstanding Balance
+    const colOutstanding = document.createElement('div');
+    colOutstanding.classList.add('asset-data-col');
+    const lblOutstanding = document.createElement('span');
+    lblOutstanding.classList.add('asset-data-label');
+    lblOutstanding.textContent = 'Outstanding';
+    const valOutstanding = document.createElement('span');
+    valOutstanding.classList.add('asset-data-value');
+    valOutstanding.style.fontWeight = '700';
+    if (bl.status === 'paid') {
+      valOutstanding.style.color = 'var(--text-muted)';
+      valOutstanding.textContent = '₹0';
+    } else {
+      valOutstanding.style.color = bl.type === 'lent' ? 'var(--color-success)' : 'var(--color-danger)';
+      valOutstanding.textContent = formatCurrency(bl.outstanding);
+    }
+    colOutstanding.appendChild(lblOutstanding);
+    colOutstanding.appendChild(valOutstanding);
+    
+    // Column 4: Date
+    const colDate = document.createElement('div');
+    colDate.classList.add('asset-data-col');
+    const lblDate = document.createElement('span');
+    lblDate.classList.add('asset-data-label');
+    lblDate.textContent = 'Date Initiated';
+    const valDate = document.createElement('span');
+    valDate.style.fontSize = '0.8rem';
+    valDate.style.color = 'var(--text-secondary)';
+    valDate.textContent = new Date(bl.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    colDate.appendChild(lblDate);
+    colDate.appendChild(valDate);
+    
+    // Column 5: Card Actions (Edit, Delete, Pay, Mark Paid)
+    const colActions = document.createElement('div');
+    colActions.classList.add('card-actions');
+    
+    if (bl.status !== 'paid') {
+      const btnPay = document.createElement('button');
+      btnPay.className = 'btn btn-secondary';
+      btnPay.style.padding = '4px 8px';
+      btnPay.style.fontSize = '0.75rem';
+      btnPay.style.height = 'auto';
+      btnPay.style.borderRadius = '4px';
+      btnPay.textContent = bl.type === 'lent' ? '+ Collect' : '+ Repay';
+      btnPay.addEventListener('click', () => openPaymentModal(bl.id));
+      colActions.appendChild(btnPay);
+      
+      const btnSettle = document.createElement('button');
+      btnSettle.className = 'btn btn-secondary';
+      btnSettle.style.padding = '4px 8px';
+      btnSettle.style.fontSize = '0.75rem';
+      btnSettle.style.height = 'auto';
+      btnSettle.style.borderRadius = '4px';
+      btnSettle.textContent = 'Mark Paid';
+      btnSettle.addEventListener('click', () => {
+        if (confirm(`Mark transaction with ${bl.person} as fully settled?`)) {
+          markBLAsPaid(bl.id);
+        }
+      });
+      colActions.appendChild(btnSettle);
+    }
+    
+    const btnEdit = document.createElement('button');
+    btnEdit.className = 'icon-btn';
+    btnEdit.setAttribute('aria-label', 'Edit Transaction');
+    const editSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    editSvg.setAttribute('viewBox', '0 0 24 24');
+    editSvg.setAttribute('fill', 'none');
+    editSvg.setAttribute('stroke', 'currentColor');
+    editSvg.setAttribute('stroke-width', '2');
+    editSvg.setAttribute('width', '16');
+    editSvg.setAttribute('height', '16');
+    const editPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    editPath.setAttribute('d', 'M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z');
+    editSvg.appendChild(editPath);
+    btnEdit.appendChild(editSvg);
+    btnEdit.addEventListener('click', () => openBorrowLentModal(bl));
+    colActions.appendChild(btnEdit);
+    
+    const btnDelete = document.createElement('button');
+    btnDelete.className = 'icon-btn';
+    btnDelete.setAttribute('aria-label', 'Delete Transaction');
+    btnDelete.style.color = 'var(--color-danger)';
+    const deleteSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    deleteSvg.setAttribute('viewBox', '0 0 24 24');
+    deleteSvg.setAttribute('fill', 'none');
+    deleteSvg.setAttribute('stroke', 'currentColor');
+    deleteSvg.setAttribute('stroke-width', '2');
+    deleteSvg.setAttribute('width', '16');
+    deleteSvg.setAttribute('height', '16');
+    const deletePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    deletePath.setAttribute('d', 'M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2');
+    deleteSvg.appendChild(deletePath);
+    btnDelete.appendChild(deleteSvg);
+    btnDelete.addEventListener('click', () => {
+      if (confirm(`Delete cashflow record with ${bl.person}?`)) {
+        deleteBorrowLent(bl.id);
+      }
+    });
+    colActions.appendChild(btnDelete);
+    
+    card.appendChild(colMain);
+    card.appendChild(colAmt);
+    card.appendChild(colOutstanding);
+    card.appendChild(colDate);
+    card.appendChild(colActions);
+    
+    // Collapsible payment logs & history
+    const historyWrapper = document.createElement('div');
+    historyWrapper.classList.add('loan-progress-row');
+    historyWrapper.style.marginTop = '16px';
+    historyWrapper.style.paddingTop = '12px';
+    historyWrapper.style.borderTop = '1px solid var(--border-light)';
+    
+    const historyHeader = document.createElement('div');
+    historyHeader.style.display = 'flex';
+    historyHeader.style.justifyContent = 'space-between';
+    historyHeader.style.alignItems = 'center';
+    historyHeader.style.fontSize = '0.8rem';
+    historyHeader.style.fontWeight = '600';
+    historyHeader.style.color = 'var(--text-primary)';
+    historyHeader.style.cursor = 'pointer';
+    historyHeader.style.userSelect = 'none';
+    
+    const historyTitle = document.createElement('span');
+    historyTitle.textContent = `Transaction Logs (${bl.payments.length} Payments)`;
+    
+    const arrowIcon = document.createElement('span');
+    arrowIcon.style.fontSize = '0.7rem';
+    arrowIcon.style.transition = 'transform 0.2s';
+    arrowIcon.textContent = '▼';
+    
+    historyHeader.appendChild(historyTitle);
+    historyHeader.appendChild(arrowIcon);
+    
+    const historyList = document.createElement('div');
+    historyList.style.display = 'none';
+    historyList.style.flexDirection = 'column';
+    historyList.style.gap = '6px';
+    historyList.style.marginTop = '8px';
+    
+    if (bl.payments.length === 0) {
+      const noPayments = document.createElement('div');
+      noPayments.style.fontSize = '0.75rem';
+      noPayments.style.color = 'var(--text-muted)';
+      noPayments.textContent = 'No payments/collections logged yet.';
+      historyList.appendChild(noPayments);
+    } else {
+      bl.payments.forEach(p => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.fontSize = '0.75rem';
+        item.style.color = 'var(--text-secondary)';
+        item.style.padding = '4px 8px';
+        item.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
+        item.style.borderRadius = '4px';
+        
+        const left = document.createElement('span');
+        const amtBold = document.createElement('strong');
+        amtBold.textContent = formatCurrency(p.amount);
+        left.appendChild(amtBold);
+        left.appendChild(document.createTextNode(` - ${p.note}`));
+        
+        const right = document.createElement('span');
+        right.textContent = new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+        
+        item.appendChild(left);
+        item.appendChild(right);
+        historyList.appendChild(item);
+      });
+    }
+    
+    historyHeader.addEventListener('click', () => {
+      const isVisible = historyList.style.display === 'flex';
+      historyList.style.display = isVisible ? 'none' : 'flex';
+      arrowIcon.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+    });
+    
+    historyWrapper.appendChild(historyHeader);
+    historyWrapper.appendChild(historyList);
+    
+    if (bl.notes) {
+      const notesDiv = document.createElement('div');
+      notesDiv.style.fontSize = '0.75rem';
+      notesDiv.style.color = 'var(--text-secondary)';
+      notesDiv.style.marginTop = '8px';
+      notesDiv.style.fontStyle = 'italic';
+      notesDiv.textContent = `Note: ${bl.notes}`;
+      card.appendChild(notesDiv);
+    }
+    
+    card.appendChild(historyWrapper);
+    container.appendChild(card);
+  });
+}
+
+function initCalculatorSliders() {
+  const sSip = document.getElementById('slider-sip');
+  const sYears = document.getElementById('slider-years');
+  const sRor = document.getElementById('slider-ror');
+  
+  const handleUpdate = () => {
+    renderProjections();
+  };
+  
+  sSip.addEventListener('input', handleUpdate);
+  sYears.addEventListener('input', handleUpdate);
+  sRor.addEventListener('input', handleUpdate);
+}
+
+// Initializer
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadFromStorage();
+  initNavigation();
+  initFilterHandlers();
+  initModalHandlers();
+  initCalculatorSliders();
+  
+  // Render active dashboard view
+  renderDashboard();
+});
