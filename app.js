@@ -97,12 +97,34 @@ function clearContainer(container) {
 }
 
 // Format numbers as currency
+// Format numbers as currency shorthand (K, L, Cr)
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0
-  }).format(amount);
+  const num = Number(amount);
+  if (isNaN(num)) return '₹0';
+  const sign = num < 0 ? '-' : '';
+  const absNum = Math.abs(num);
+
+  let formatted = '';
+  if (absNum >= 10000000) {
+    // Crores
+    formatted = (absNum / 10000000).toFixed(2) + 'Cr';
+  } else if (absNum >= 100000) {
+    // Lakhs
+    formatted = (absNum / 100000).toFixed(2) + 'L';
+  } else if (absNum >= 1000) {
+    // Thousands
+    formatted = (absNum / 1000).toFixed(2) + 'K';
+  } else {
+    // Less than 1000
+    formatted = absNum.toFixed(0);
+  }
+
+  // Remove unnecessary trailing zeroes after decimal point, e.g. "1.50L" -> "1.5L", "15.00K" -> "15K"
+  if (formatted.includes('.')) {
+    formatted = formatted.replace(/\.?0+(?=[A-Za-z]+$)/, '');
+  }
+
+  return `${sign}₹${formatted}`;
 }
 
 function formatPercent(val) {
@@ -4168,6 +4190,16 @@ function initDashboardSectionToggles() {
       }
     });
   });
+
+  const insightsHeader = document.querySelector('.insights-header');
+  if (insightsHeader) {
+    insightsHeader.addEventListener('click', () => {
+      const parent = insightsHeader.closest('.insights-card');
+      if (parent) {
+        parent.classList.toggle('collapsed');
+      }
+    });
+  }
 }
 
 // Initializer

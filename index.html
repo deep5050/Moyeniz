@@ -431,9 +431,18 @@
             <!-- Portfolio Insights & Diversification Rating Stack -->
             <div style="display: flex; flex-direction: column; gap: 24px;">
               <div class="insights-card" style="flex-grow: 1;">
-                <h3 class="chart-card-title" style="margin-bottom: 20px;">Portfolio Insights</h3>
-                <div class="insights-list" id="insights-list-container">
-                  <!-- Insights generated dynamically -->
+                <div class="insights-header" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                  <h3 class="chart-card-title" style="margin: 0;">Portfolio Insights</h3>
+                  <span class="insights-toggle-icon" style="display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </span>
+                </div>
+                <div class="insights-content">
+                  <div class="insights-list" id="insights-list-container">
+                    <!-- Insights generated dynamically -->
+                  </div>
                 </div>
               </div>
 

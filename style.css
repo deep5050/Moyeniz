@@ -431,6 +431,25 @@ h1, h2, h3, h4, h5, h6 {
   transform: rotate(-90deg);
 }
 
+/* Collapsible insights transitions */
+.insights-card .insights-content {
+  max-height: 800px;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-top 0.3s ease;
+  opacity: 1;
+}
+
+.insights-card.collapsed .insights-content {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0 !important;
+  pointer-events: none;
+}
+
+.insights-card.collapsed .insights-toggle-icon {
+  transform: rotate(-90deg);
+}
+
 /* Dashboard Styles */
 .metrics-grid {
   display: grid;
