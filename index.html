@@ -439,46 +439,41 @@
               </div>
             </div>
 
-            <!-- Portfolio Insights & Diversification Rating Stack -->
+            <!-- Mutual Fund Allocation & Savings Account Balance Pie Charts -->
             <div style="display: flex; flex-direction: column; gap: 24px;">
-              <div class="insights-card" style="flex-grow: 1;">
-                <div class="insights-header"
-                  style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
-                  <h3 class="chart-card-title" style="margin: 0;">Portfolio Insights</h3>
-                  <span class="insights-toggle-icon"
-                    style="display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  </span>
+              <!-- Mutual Fund Types Pie Chart -->
+              <div class="chart-card">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="chart-card-title">Mutual Fund Allocation</h3>
+                    <p class="chart-card-subtitle">Breakdown by mutual fund subtype</p>
+                  </div>
                 </div>
-                <div class="insights-content">
-                  <div class="insights-list" id="insights-list-container">
-                    <!-- Insights generated dynamically -->
+                <div class="chart-wrapper" style="flex-direction: column;">
+                  <div id="mf-chart-container" class="chart-svg-container">
+                    <!-- SVG generated dynamically -->
+                  </div>
+                  <div id="mf-legend" class="legend-wrapper">
+                    <!-- Legend generated dynamically -->
                   </div>
                 </div>
               </div>
 
-              <div class="insights-card" style="padding: 24px;">
-                <h3 class="chart-card-title" style="margin-bottom: 12px; text-align: center;">Diversification Rating
-                </h3>
-                <div class="health-score-container"
-                  style="flex-direction: row; justify-content: center; gap: 32px; align-items: center; padding: 0;">
-                  <div class="gauge-svg" style="flex-shrink: 0; width: 140px; height: 140px; position: relative;">
-                    <svg width="140" height="140" viewBox="0 0 140 140"
-                      style="transform: rotate(-90deg); display: block;">
-                      <circle cx="70" cy="70" r="55" class="gauge-bg" />
-                      <circle cx="70" cy="70" r="55" class="gauge-fill" id="health-gauge-fill" stroke-dasharray="345.5"
-                        stroke-dashoffset="345.5" />
-                    </svg>
-                    <div class="gauge-score">
-                      <div class="gauge-score-value" id="health-score-text">0</div>
-                      <div class="gauge-score-label">Score</div>
-                    </div>
+              <!-- Bank Wise Savings Pie Chart -->
+              <div class="chart-card">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="chart-card-title">Savings Account Balance</h3>
+                    <p class="chart-card-subtitle">Distribution across savings bank accounts</p>
                   </div>
-                  <div class="health-status-desc" id="health-score-desc" style="text-align: left; max-width: 250px;">
-                    Analyzing...</div>
+                </div>
+                <div class="chart-wrapper" style="flex-direction: column;">
+                  <div id="savings-chart-container" class="chart-svg-container">
+                    <!-- SVG generated dynamically -->
+                  </div>
+                  <div id="savings-legend" class="legend-wrapper">
+                    <!-- Legend generated dynamically -->
+                  </div>
                 </div>
               </div>
             </div>
@@ -580,6 +575,52 @@
                 <div id="loss-heatmap-container"
                   style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%;">
                   <!-- Dynamic cards -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Portfolio Insights & Diversification Rating Stack (Moved to bottom) -->
+          <div class="charts-grid" style="margin-top: 24px;">
+            <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column;">
+              <div class="insights-header"
+                style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
+                <h3 class="chart-card-title" style="margin: 0;">Portfolio Insights</h3>
+                <span class="insights-toggle-icon"
+                  style="display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </div>
+              <div class="insights-content" style="margin-top: 12px; flex-grow: 1;">
+                <div class="insights-list" id="insights-list-container">
+                  <!-- Insights generated dynamically -->
+                </div>
+              </div>
+            </div>
+
+            <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column; justify-content: center;">
+              <h3 class="chart-card-title" style="margin-bottom: 16px; text-align: center;">Diversification Rating</h3>
+              <div class="health-score-container"
+                style="flex-direction: row; justify-content: center; gap: 32px; align-items: center; padding: 0; flex-grow: 1;">
+                <div class="gauge-svg" style="flex-shrink: 0; width: 140px; height: 140px; position: relative;">
+                  <svg width="140" height="140" viewBox="0 0 140 140"
+                    style="transform: rotate(-90deg); display: block;">
+                    <circle cx="70" cy="70" r="55" class="gauge-bg" />
+                    <circle cx="70" cy="70" r="55" class="gauge-fill" id="health-gauge-fill" stroke-dasharray="345.5"
+                      stroke-dashoffset="345.5" />
+                  </svg>
+                  <div class="gauge-score">
+                    <div class="gauge-score-value" id="health-score-text">0</div>
+                    <div class="gauge-score-label">Score</div>
+                  </div>
+                </div>
+                <div class="health-score-desc-container" style="flex-grow: 1; min-width: 150px;">
+                  <div class="health-status-desc" id="health-score-desc" style="text-align: left; font-size: 0.9rem; line-height: 1.4; color: var(--text-secondary);">
+                    Analyzing...
+                  </div>
                 </div>
               </div>
             </div>

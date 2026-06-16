@@ -498,6 +498,10 @@ function renderDashboard() {
   // Render Allocation Chart
   renderAllocationChart(summary.currentValue);
 
+  // Render Mutual Fund cap types & Savings account distribution charts
+  renderMutualFundChart();
+  renderSavingsChart();
+
   // Render Performance Bar Chart
   renderPerformanceChart();
 
@@ -561,6 +565,10 @@ function renderAllocationChart(totalPortfolioVal) {
 
   appendSVGDefs(svg);
 
+  // Create slices group for z-index layering
+  const slicesGroup = createSVGElement('g');
+  svg.appendChild(slicesGroup);
+
   let currentAngle = -Math.PI / 2; // start from top
 
   sortedClasses.forEach((catData) => {
@@ -603,13 +611,33 @@ function renderAllocationChart(totalPortfolioVal) {
     const catGain = catCurrent - catInvested;
     const catReturnPct = catInvested > 0 ? (catGain / catInvested) * 100 : 0;
 
+    // Dynamic Pop Out calculations
+    const midAngle = currentAngle + angleRange / 2;
+    const popDistance = 12;
+    const dx = popDistance * Math.cos(midAngle);
+    const dy = popDistance * Math.sin(midAngle);
+
+    path.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease';
+    path.style.transformOrigin = 'center';
+
+    // Hover listeners for the slice
+    path.addEventListener('mouseenter', () => {
+      slicesGroup.appendChild(path); // bring to front
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
+    });
+    path.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+    });
+
     // Event bindings for Tooltip
     path.addEventListener('mousemove', (e) => {
       showTooltip(e, category.label, catInvested, catCurrent, catGain, catReturnPct);
     });
     path.addEventListener('mouseleave', hideTooltip);
 
-    svg.appendChild(path);
+    slicesGroup.appendChild(path);
     currentAngle = endAngle;
 
     // Append Legend Item
@@ -646,14 +674,23 @@ function renderAllocationChart(totalPortfolioVal) {
     legItem.appendChild(infoCol);
     legItem.appendChild(valCol);
 
-    // Match legend hover with chart slice hover
+    // Legend hover interactions
+    legItem.style.transition = 'transform 0.2s ease, background-color 0.2s ease';
+    legItem.style.borderRadius = '6px';
+    legItem.style.padding = '4px 6px';
+
     legItem.addEventListener('mouseenter', () => {
-      path.style.transform = 'scale(1.05)';
-      path.style.filter = `drop-shadow(0 0 10px ${category.color}88)`;
+      slicesGroup.appendChild(path); // bring to front
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
+      legItem.style.transform = 'translateX(4px)';
+      legItem.style.backgroundColor = 'var(--bg-light)';
     });
     legItem.addEventListener('mouseleave', () => {
       path.style.transform = '';
       path.style.filter = '';
+      legItem.style.transform = '';
+      legItem.style.backgroundColor = '';
     });
 
     legend.appendChild(legItem);
@@ -668,6 +705,293 @@ function renderAllocationChart(totalPortfolioVal) {
   svg.appendChild(innerCircle);
 
   container.appendChild(svg);
+}
+
+// Reusable Doughnut Chart Generator with 3D Pop-out Hover Animations
+function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, titlePrefix) {
+  const size = 320;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r_out = 145;
+  const r_in = 85;
+
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.classList.add('svg-chart');
+  svg.style.width = '100%';
+  svg.style.height = 'auto';
+  svg.style.maxWidth = '250px';
+  svg.style.maxHeight = '250px';
+
+  const defs = createSVGElement('defs');
+  items.forEach(item => {
+    const grad = createSVGElement('linearGradient');
+    grad.setAttribute('id', `grad-${idPrefix}-${item.key}`);
+    grad.setAttribute('x1', '0%');
+    grad.setAttribute('y1', '0%');
+    grad.setAttribute('x2', '100%');
+    grad.setAttribute('y2', '100%');
+
+    const stop1 = createSVGElement('stop');
+    stop1.setAttribute('offset', '0%');
+    stop1.setAttribute('stop-color', item.color);
+
+    const stop2 = createSVGElement('stop');
+    stop2.setAttribute('offset', '100%');
+    stop2.setAttribute('stop-color', item.colorDark);
+
+    grad.appendChild(stop1);
+    grad.appendChild(stop2);
+    defs.appendChild(grad);
+  });
+  svg.appendChild(defs);
+
+  const slicesGroup = createSVGElement('g');
+  svg.appendChild(slicesGroup);
+
+  let currentAngle = -Math.PI / 2; // start from top
+
+  items.forEach((item) => {
+    const angleRange = (item.pct / 100) * 2 * Math.PI;
+    const endAngle = currentAngle + angleRange;
+
+    // Draw doughnut slice
+    const path = createSVGElement('path');
+    path.classList.add('chart-slice');
+
+    // Math coordinates
+    const x1_out = cx + r_out * Math.cos(currentAngle);
+    const y1_out = cy + r_out * Math.sin(currentAngle);
+    const x2_out = cx + r_out * Math.cos(endAngle);
+    const y2_out = cy + r_out * Math.sin(endAngle);
+
+    const x1_in = cx + r_in * Math.cos(currentAngle);
+    const y1_in = cy + r_in * Math.sin(currentAngle);
+    const x2_in = cx + r_in * Math.cos(endAngle);
+    const y2_in = cy + r_in * Math.sin(endAngle);
+
+    const largeArc = angleRange > Math.PI ? 1 : 0;
+
+    const d = `M ${x1_out} ${y1_out} A ${r_out} ${r_out} 0 ${largeArc} 1 ${x2_out} ${y2_out} L ${x2_in} ${y2_in} A ${r_in} ${r_in} 0 ${largeArc} 0 ${x1_in} ${y1_in} Z`;
+
+    path.setAttribute('d', d);
+    path.setAttribute('fill', `url(#grad-${idPrefix}-${item.key})`);
+
+    // Dynamic Pop Out calculations
+    const midAngle = currentAngle + angleRange / 2;
+    const popDistance = 8;
+    const dx = popDistance * Math.cos(midAngle);
+    const dy = popDistance * Math.sin(midAngle);
+
+    path.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease';
+    path.style.transformOrigin = 'center';
+
+    // Tooltip statistics
+    let groupInvested = 0;
+    let groupCurrent = item.value;
+
+    if (idPrefix === 'mf-subtype') {
+      investments.forEach(inv => {
+        if (inv.assetClass === 'indian-mutual-fund' && (inv.subtype || 'none') === item.key) {
+          groupInvested += Number(inv.investedAmount) || 0;
+        }
+      });
+    } else {
+      groupInvested = item.value;
+    }
+
+    const groupGain = groupCurrent - groupInvested;
+    const groupReturnPct = groupInvested > 0 ? (groupGain / groupInvested) * 100 : 0;
+
+    // Hover listeners for the slice
+    path.addEventListener('mouseenter', () => {
+      slicesGroup.appendChild(path); // bring to front
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
+    });
+    path.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+    });
+
+    path.addEventListener('mousemove', (e) => {
+      showTooltip(e, `${titlePrefix}: ${item.label}`, groupInvested, groupCurrent, groupGain, groupReturnPct);
+    });
+    path.addEventListener('mouseleave', hideTooltip);
+
+    slicesGroup.appendChild(path);
+    currentAngle = endAngle;
+
+    // Append Legend Item
+    const legItem = document.createElement('div');
+    legItem.classList.add('legend-item');
+
+    const infoCol = document.createElement('div');
+    infoCol.classList.add('legend-info');
+
+    const dot = document.createElement('span');
+    dot.classList.add('legend-color-box');
+    dot.style.background = `linear-gradient(135deg, ${item.color}, ${item.colorDark})`;
+
+    const textLabel = document.createElement('span');
+    textLabel.classList.add('legend-name');
+    textLabel.textContent = item.label;
+
+    infoCol.appendChild(dot);
+    infoCol.appendChild(textLabel);
+
+    const valCol = document.createElement('div');
+    valCol.classList.add('legend-val');
+
+    const numSpan = document.createElement('span');
+    numSpan.textContent = formatCurrency(item.value);
+
+    const pctSpan = document.createElement('span');
+    pctSpan.classList.add('legend-pct');
+    pctSpan.textContent = item.pct.toFixed(1) + '%';
+
+    valCol.appendChild(numSpan);
+    valCol.appendChild(pctSpan);
+
+    legItem.appendChild(infoCol);
+    legItem.appendChild(valCol);
+
+    legItem.style.transition = 'transform 0.2s ease, background-color 0.2s ease';
+    legItem.style.borderRadius = '6px';
+    legItem.style.padding = '4px 6px';
+
+    legItem.addEventListener('mouseenter', () => {
+      slicesGroup.appendChild(path); // bring to front
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
+      legItem.style.transform = 'translateX(4px)';
+      legItem.style.backgroundColor = 'var(--bg-light)';
+    });
+    legItem.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+      legItem.style.transform = '';
+      legItem.style.backgroundColor = '';
+    });
+
+    legend.appendChild(legItem);
+  });
+
+  const innerCircle = createSVGElement('circle');
+  innerCircle.setAttribute('cx', cx.toString());
+  innerCircle.setAttribute('cy', cy.toString());
+  innerCircle.setAttribute('r', (r_in - 2).toString());
+  innerCircle.setAttribute('fill', 'var(--bg-inner-circle, #ffffff)');
+  svg.appendChild(innerCircle);
+
+  container.appendChild(svg);
+}
+
+// Generate Mutual Fund subtype Doughnut Chart
+function renderMutualFundChart() {
+  const container = document.getElementById('mf-chart-container');
+  const legend = document.getElementById('mf-legend');
+  clearContainer(container);
+  clearContainer(legend);
+
+  const mfInvestments = investments.filter(inv => inv.assetClass === 'indian-mutual-fund');
+  let totalMFVal = 0;
+  const subtypeTotals = {};
+
+  mfInvestments.forEach(inv => {
+    const val = Number(inv.currentAmount) || 0;
+    totalMFVal += val;
+    const subtype = inv.subtype || 'none';
+    subtypeTotals[subtype] = (subtypeTotals[subtype] || 0) + val;
+  });
+
+  if (totalMFVal === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No mutual fund allocation data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    emptyMsg.style.fontSize = '0.85rem';
+    emptyMsg.style.padding = '20px';
+    emptyMsg.style.textAlign = 'center';
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  const mfSubtypeMap = {
+    'large': { label: 'Large Cap', color: '#3b82f6', colorDark: '#1d4ed8' },
+    'mid': { label: 'Mid Cap', color: '#10b981', colorDark: '#047857' },
+    'small': { label: 'Small Cap', color: '#f43f5e', colorDark: '#be123c' },
+    'flexi': { label: 'Flexi Cap', color: '#a855f7', colorDark: '#6d28d9' },
+    'none': { label: 'Unspecified', color: '#64748b', colorDark: '#475569' }
+  };
+
+  const sortedSubtypes = Object.keys(subtypeTotals).map(key => {
+    const info = mfSubtypeMap[key] || { label: key.charAt(0).toUpperCase() + key.slice(1), color: '#8b5cf6', colorDark: '#5b21b6' };
+    return {
+      key,
+      label: info.label,
+      value: subtypeTotals[key],
+      pct: (subtypeTotals[key] / totalMFVal) * 100,
+      color: info.color,
+      colorDark: info.colorDark
+    };
+  }).sort((a, b) => b.value - a.value);
+
+  renderReusableDoughnut(container, legend, sortedSubtypes, totalMFVal, 'mf-subtype', 'Mutual Fund');
+}
+
+// Generate Bank-wise Savings Account balances Doughnut Chart
+function renderSavingsChart() {
+  const container = document.getElementById('savings-chart-container');
+  const legend = document.getElementById('savings-legend');
+  clearContainer(container);
+  clearContainer(legend);
+
+  const savingsInvestments = investments.filter(inv => inv.assetClass === 'savings');
+  let totalSavingsVal = 0;
+  const bankTotals = {};
+
+  savingsInvestments.forEach(inv => {
+    const val = Number(inv.currentAmount) || 0;
+    totalSavingsVal += val;
+    const name = inv.name || 'Savings Account';
+    bankTotals[name] = (bankTotals[name] || 0) + val;
+  });
+
+  if (totalSavingsVal === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No savings account balance data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    emptyMsg.style.fontSize = '0.85rem';
+    emptyMsg.style.padding = '20px';
+    emptyMsg.style.textAlign = 'center';
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  const bankColors = [
+    { color: '#3b82f6', colorDark: '#1d4ed8' },
+    { color: '#0ea5e9', colorDark: '#0284c7' },
+    { color: '#10b981', colorDark: '#047857' },
+    { color: '#14b8a6', colorDark: '#0d9488' },
+    { color: '#a855f7', colorDark: '#6d28d9' },
+    { color: '#f59e0b', colorDark: '#d97706' },
+    { color: '#f43f5e', colorDark: '#be123c' },
+    { color: '#6366f1', colorDark: '#4f46e5' }
+  ];
+
+  const sortedBanks = Object.keys(bankTotals).map((name, idx) => {
+    const colorInfo = bankColors[idx % bankColors.length];
+    return {
+      key: `bank-${idx}`,
+      label: name,
+      value: bankTotals[name],
+      pct: (bankTotals[name] / totalSavingsVal) * 100,
+      color: colorInfo.color,
+      colorDark: colorInfo.colorDark
+    };
+  }).sort((a, b) => b.value - a.value);
+
+  renderReusableDoughnut(container, legend, sortedBanks, totalSavingsVal, 'savings-bank', 'Savings');
 }
 
 // Generate Grouped SVG Bar Chart SVG Element
