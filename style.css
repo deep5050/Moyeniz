@@ -723,6 +723,45 @@ svg.svg-chart {
   color: var(--text-primary);
 }
 
+/* Asset Allocation side-by-side layout on desktop */
+.asset-allocation-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.asset-allocation-wrapper .chart-svg-container {
+  flex: 0 0 auto;
+  max-width: 260px;
+  max-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asset-allocation-wrapper .legend-wrapper {
+  flex: 1 1 auto;
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 16px;
+}
+
+@media (max-width: 768px) {
+  .asset-allocation-wrapper {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .asset-allocation-wrapper .legend-wrapper {
+    padding-left: 8px;
+    max-width: 100%;
+  }
+}
+
 /* Asset Allocation Side Legend */
 .legend-wrapper {
   display: flex;

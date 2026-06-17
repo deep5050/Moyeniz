@@ -293,10 +293,6 @@ function initNavigation() {
         viewTitle.textContent = 'Investments';
         // viewSubtitle.textContent = 'View, filter, and manage individual assets.';
         renderInvestments();
-      } else if (tabName === 'projections') {
-        viewTitle.textContent = 'Projections';
-        // viewSubtitle.textContent = 'Simulate future wealth based on compound assumptions.';
-        renderProjections();
       } else if (tabName === 'liabilities') {
         viewTitle.textContent = 'Liabilities & EMIs';
         // viewSubtitle.textContent = 'Track your loans, monthly outflows, and overall leverage.';
@@ -519,6 +515,9 @@ function renderDashboard() {
 
   // Render Profit and Loss Heatmaps
   renderHeatmaps();
+
+  // Render Projections on Dashboard
+  renderProjections();
 }
 
 // Generate custom SVG Doughnut Pie Chart
@@ -2813,7 +2812,6 @@ function handleUploadJSON(file) {
         const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
         if (activeTab === 'dashboard') renderDashboard();
         if (activeTab === 'investments') renderInvestments();
-        if (activeTab === 'projections') renderProjections();
         if (activeTab === 'liabilities') renderLiabilities();
         if (activeTab === 'borrow-lent') renderBorrowLent();
         if (activeTab === 'salary') renderSalaries();
@@ -2968,7 +2966,6 @@ function initModalHandlers() {
       const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
       if (activeTab === 'dashboard') renderDashboard();
       if (activeTab === 'investments') renderInvestments();
-      if (activeTab === 'projections') renderProjections();
       if (activeTab === 'liabilities') renderLiabilities();
       if (activeTab === 'borrow-lent') renderBorrowLent();
       if (activeTab === 'salary') renderSalaries();
@@ -3163,7 +3160,6 @@ function saveInvestmentForm() {
   const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
   if (activeTab === 'dashboard') renderDashboard();
   if (activeTab === 'investments') renderInvestments();
-  if (activeTab === 'projections') renderProjections();
 }
 
 function deleteInvestment(id) {
@@ -5085,7 +5081,6 @@ window.addEventListener('resize', () => {
         renderDashboardHistoryChart(getPortfolioHistory());
         renderNetWorthChart(getNetWorthHistory());
       }
-    } else if (activeTabName === 'projections') {
       renderProjections();
     } else if (activeTabName === 'salary') {
       renderSalaryChart(salaries);
@@ -5988,7 +5983,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const activeTabName = activeTabLink ? activeTabLink.getAttribute('data-tab') : 'dashboard';
   if (activeTabName === 'dashboard') renderDashboard();
   else if (activeTabName === 'investments') renderInvestments();
-  else if (activeTabName === 'projections') renderProjections();
   else if (activeTabName === 'liabilities') renderLiabilities();
   else if (activeTabName === 'borrow-lent') renderBorrowLent();
   else if (activeTabName === 'salary') renderSalaries();
