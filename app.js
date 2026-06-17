@@ -100,7 +100,7 @@ function clearContainer(container) {
 // Format numbers as currency shorthand (K, L, Cr)
 function formatCurrency(amount) {
   const num = Number(amount);
-  if (isNaN(num)) return '₹0';
+  if (isNaN(num)) return '₹0.00';
   const sign = num < 0 ? '-' : '';
   const absNum = Math.abs(num);
 
@@ -116,12 +116,7 @@ function formatCurrency(amount) {
     formatted = (absNum / 1000).toFixed(2) + 'K';
   } else {
     // Less than 1000
-    formatted = absNum.toFixed(0);
-  }
-
-  // Remove unnecessary trailing zeroes after decimal point, e.g. "1.50L" -> "1.5L", "15.00K" -> "15K"
-  if (formatted.includes('.')) {
-    formatted = formatted.replace(/\.?0+(?=[A-Za-z]+$)/, '');
+    formatted = absNum.toFixed(2);
   }
 
   return `${sign}₹${formatted}`;
@@ -697,19 +692,24 @@ function renderAllocationChart(totalPortfolioVal) {
     legItem.style.borderRadius = '6px';
     legItem.style.padding = '4px 6px';
 
-    legItem.addEventListener('mouseenter', () => {
+    legItem.addEventListener('mouseenter', (e) => {
       resetAllSlices();
       slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
       legItem.style.transform = 'translateX(4px)';
       legItem.style.backgroundColor = 'var(--bg-light)';
+      showTooltip(e, category.label, catInvested, catCurrent, catGain, catReturnPct);
+    });
+    legItem.addEventListener('mousemove', (e) => {
+      showTooltip(e, category.label, catInvested, catCurrent, catGain, catReturnPct);
     });
     legItem.addEventListener('mouseleave', () => {
       path.style.transform = '';
       path.style.filter = '';
       legItem.style.transform = '';
       legItem.style.backgroundColor = '';
+      hideTooltip();
     });
 
     legend.appendChild(legItem);
@@ -906,19 +906,45 @@ function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, ti
     legItem.style.borderRadius = '6px';
     legItem.style.padding = '4px 6px';
 
-    legItem.addEventListener('mouseenter', () => {
+    legItem.addEventListener('mouseenter', (e) => {
       resetAllSlices();
       slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
       legItem.style.transform = 'translateX(4px)';
       legItem.style.backgroundColor = 'var(--bg-light)';
+
+      if (idPrefix === 'mf-sip') {
+        const targetInv = investments.find(inv => inv.name === item.label && inv.assetClass === 'indian-mutual-fund');
+        const sipTotalInvested = targetInv ? Number(targetInv.investedAmount) : 0;
+        const sipTotalCurrent = targetInv ? Number(targetInv.currentAmount) : 0;
+        const pl = sipTotalCurrent - sipTotalInvested;
+        const pct = sipTotalInvested > 0 ? (pl / sipTotalInvested) * 100 : 0;
+        showTooltip(e, `${titlePrefix}: ${item.label}`, item.value, sipTotalInvested, pl, pct, ['SIP Amount:', 'Total Invested:', 'P&L:']);
+      } else {
+        showTooltip(e, `${titlePrefix}: ${item.label}`, groupInvested, groupCurrent, groupGain, groupReturnPct);
+      }
     });
+
+    legItem.addEventListener('mousemove', (e) => {
+      if (idPrefix === 'mf-sip') {
+        const targetInv = investments.find(inv => inv.name === item.label && inv.assetClass === 'indian-mutual-fund');
+        const sipTotalInvested = targetInv ? Number(targetInv.investedAmount) : 0;
+        const sipTotalCurrent = targetInv ? Number(targetInv.currentAmount) : 0;
+        const pl = sipTotalCurrent - sipTotalInvested;
+        const pct = sipTotalInvested > 0 ? (pl / sipTotalInvested) * 100 : 0;
+        showTooltip(e, `${titlePrefix}: ${item.label}`, item.value, sipTotalInvested, pl, pct, ['SIP Amount:', 'Total Invested:', 'P&L:']);
+      } else {
+        showTooltip(e, `${titlePrefix}: ${item.label}`, groupInvested, groupCurrent, groupGain, groupReturnPct);
+      }
+    });
+
     legItem.addEventListener('mouseleave', () => {
       path.style.transform = '';
       path.style.filter = '';
       legItem.style.transform = '';
       legItem.style.backgroundColor = '';
+      hideTooltip();
     });
 
     legend.appendChild(legItem);
