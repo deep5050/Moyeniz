@@ -213,10 +213,11 @@ async function loadFromStorage() {
     return;
   }
 
-  // Try to fetch custom "moyeniz.json" from server root
+  // Try to fetch custom "moyeniz.json" from server root (optional feature for self-hosted installs)
+  // A 404 on GitHub Pages is expected and is intentionally silenced.
   try {
-    const response = await fetch('moyeniz.json');
-    if (response.ok) {
+    const response = await fetch('moyeniz.json', { method: 'GET', cache: 'no-store' });
+    if (response.status === 200) {
       const backup = await response.json();
       if (Array.isArray(backup.investments) && Array.isArray(backup.liabilities)) {
         investments = backup.investments;
@@ -224,12 +225,11 @@ async function loadFromStorage() {
         borrowLent = Array.isArray(backup.borrowLent) ? backup.borrowLent : [];
         salaries = Array.isArray(backup.salaries) ? backup.salaries : [];
         saveToStorage();
-        console.log('Successfully loaded config from server root.');
-        return;
       }
     }
-  } catch (err) {
-    console.log('No root config moyeniz.json found in server directory.');
+    // Any non-200 (e.g. 404) is silently ignored; file is optional.
+  } catch (_err) {
+    // Network failure (offline, CORS, etc.) — silently ignored.
   }
 }
 
