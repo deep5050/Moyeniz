@@ -245,8 +245,8 @@ function updateTopActions(tabName) {
       btnDownloadTop.style.display = 'inline-flex';
     } else {
       btnDownloadTop.style.display = 'none';
-      const syncDropdown = document.getElementById('sync-portfolio-dropdown');
-      if (syncDropdown) syncDropdown.classList.remove('show');
+      const syncModal = document.getElementById('sync-portfolio-modal');
+      if (syncModal) syncModal.classList.remove('active-modal');
     }
   }
 
@@ -362,8 +362,8 @@ function renderDashboard() {
     if (btnDownloadTop) {
       btnDownloadTop.style.display = activeTabName === 'dashboard' ? 'inline-flex' : 'none';
       if (activeTabName !== 'dashboard') {
-        const syncDropdown = document.getElementById('sync-portfolio-dropdown');
-        if (syncDropdown) syncDropdown.classList.remove('show');
+        const syncModal = document.getElementById('sync-portfolio-modal');
+        if (syncModal) syncModal.classList.remove('active-modal');
       }
     }
     const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
@@ -6020,41 +6020,41 @@ async function handleGDriveRestoreClick(noConfirm = false) {
 
 // Initialize settings page and sync dropdown handlers
 function initSettingsHandlers() {
-  // Sync dropdown toggling
+  // Sync portfolio popup modal toggle
   const btnSyncPortfolio = document.getElementById('btn-sync-portfolio');
-  const syncDropdown = document.getElementById('sync-portfolio-dropdown');
+  const syncModal = document.getElementById('sync-portfolio-modal');
 
-  if (btnSyncPortfolio && syncDropdown) {
-    btnSyncPortfolio.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isVisible = syncDropdown.classList.contains('show');
-      if (isVisible) {
-        syncDropdown.classList.remove('show');
-      } else {
-        syncDropdown.classList.add('show');
-      }
+  if (btnSyncPortfolio && syncModal) {
+    btnSyncPortfolio.addEventListener('click', () => {
+      syncModal.classList.add('active-modal');
     });
 
-    document.addEventListener('click', () => {
-      syncDropdown.classList.remove('show');
-    });
+    const btnCloseSync = document.getElementById('btn-close-sync-modal');
+    if (btnCloseSync) {
+      btnCloseSync.addEventListener('click', () => {
+        syncModal.classList.remove('active-modal');
+      });
+    }
 
-    syncDropdown.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
+    const btnCancelSync = document.getElementById('btn-cancel-sync-modal');
+    if (btnCancelSync) {
+      btnCancelSync.addEventListener('click', () => {
+        syncModal.classList.remove('active-modal');
+      });
+    }
 
-    const btnSyncDownload = document.getElementById('btn-sync-download-json');
-    if (btnSyncDownload) {
-      btnSyncDownload.addEventListener('click', () => {
-        syncDropdown.classList.remove('show');
+    const btnPopupDownload = document.getElementById('btn-popup-download-json');
+    if (btnPopupDownload) {
+      btnPopupDownload.addEventListener('click', () => {
+        syncModal.classList.remove('active-modal');
         downloadPortfolioJSON();
       });
     }
 
-    const btnSyncGDrive = document.getElementById('btn-sync-gdrive');
-    if (btnSyncGDrive) {
-      btnSyncGDrive.addEventListener('click', async () => {
-        syncDropdown.classList.remove('show');
+    const btnPopupSyncGDrive = document.getElementById('btn-popup-sync-gdrive');
+    if (btnPopupSyncGDrive) {
+      btnPopupSyncGDrive.addEventListener('click', async () => {
+        syncModal.classList.remove('active-modal');
         await handleGDriveBackupClick();
       });
     }

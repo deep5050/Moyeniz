@@ -9,7 +9,8 @@
   <title>Moyeniz - Privacy-First Portfolio Tracker</title>
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' https://accounts.google.com/gsi/client; connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com;">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%236366f1'/><text x='16' y='23' font-size='18' text-anchor='middle' font-family='sans-serif' fill='white'>₹</text></svg>">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%236366f1'/><text x='16' y='23' font-size='18' text-anchor='middle' font-family='sans-serif' fill='white'>₹</text></svg>">
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -104,7 +105,8 @@
       </nav>
 
       <div class="sidebar-footer" style="padding: 10px 0; border-top: 1px solid var(--color-border); width: 100%;">
-        <a class="nav-link" id="btn-settings-toggle" data-tab="settings" aria-label="Settings" style="width: 100%; display: flex; align-items: center; text-decoration: none;">
+        <a class="nav-link" id="btn-settings-toggle" data-tab="settings" aria-label="Settings"
+          style="width: 100%; display: flex; align-items: center; text-decoration: none;">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings" width="16" height="16">
             <path
@@ -135,44 +137,17 @@
           <!-- <p id="view-subtitle">An overview of your complete financial portfolio.</p> -->
         </div>
         <div class="top-actions">
-          <div class="dropdown-container">
-            <button class="btn btn-secondary" id="btn-sync-portfolio" style="display: none;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw" width="15"
-                height="15" style="margin-right: 6px;">
-                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                <path d="M3 3v5h5" />
-                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-                <path d="M16 16h5v5" />
-              </svg>
-              <span class="btn-text">Sync Portfolio</span>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" width="12"
-                height="12" style="margin-left: 6px;">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-            <div class="dropdown-menu" id="sync-portfolio-dropdown">
-              <button class="dropdown-item" id="btn-sync-download-json">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download" width="14"
-                  height="14">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Download JSON File
-              </button>
-              <button class="dropdown-item" id="btn-sync-gdrive">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud" width="14"
-                  height="14">
-                  <path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.48 0-.96.06-1.42.17A6 6 0 0 0 3.5 13A5.5 5.5 0 0 0 9 18.5h8.5Z" />
-                </svg>
-                Sync with Google Drive
-              </button>
-            </div>
-          </div>
+          <button class="btn btn-secondary" id="btn-sync-portfolio" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-cw"
+              width="15" height="15" style="margin-right: 6px;">
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+              <path d="M16 16h5v5" />
+            </svg>
+            <span class="btn-text">Sync Portfolio</span>
+          </button>
           <button class="btn btn-secondary" id="btn-download-pdf-top" style="display: none;">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" width="16"
@@ -829,7 +804,8 @@
                   </svg>
                 </div>
                 <h3 class="setup-card-title">4. Sync from Google Drive</h3>
-                <p class="setup-card-desc">Restore your investments, liabilities, and settings from a previous backup on your Google Drive.</p>
+                <p class="setup-card-desc">Restore your investments, liabilities, and settings from a previous backup on
+                  your Google Drive.</p>
               </div>
             </div>
             <p class="empty-dashboard-privacy"
@@ -1238,9 +1214,12 @@
           <!-- Card 1: Google Drive Sync -->
           <div class="settings-card">
             <div class="settings-card-header">
-              <div class="settings-card-icon" style="color: var(--color-primary); background-color: rgba(99, 102, 241, 0.08);">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
-                  <path d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.48 0-.96.06-1.42.17A6 6 0 0 0 3.5 13A5.5 5.5 0 0 0 9 18.5h8.5Z" />
+              <div class="settings-card-icon"
+                style="color: var(--color-primary); background-color: rgba(99, 102, 241, 0.08);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+                  <path
+                    d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.48 0-.96.06-1.42.17A6 6 0 0 0 3.5 13A5.5 5.5 0 0 0 9 18.5h8.5Z" />
                 </svg>
               </div>
               <div>
@@ -1250,7 +1229,9 @@
             </div>
             <div class="settings-card-body">
               <div class="gdrive-info-box">
-                <p><strong>🔒 Privacy-First Design:</strong> Moyeniz uses a hidden <strong>App Data Folder</strong> on your personal Google Drive. This folder is completely private, isolated from other websites/apps, and cannot be accessed or read by the Moyeniz developers. Your data is 100% yours.</p>
+                <p><strong>🔒 Privacy-First Design:</strong> Moyeniz uses a hidden <strong>App Data Folder</strong> on
+                  your personal Google Drive. This folder is completely private, isolated from other websites/apps, and
+                  cannot be accessed or read by the Moyeniz developers. Your data is 100% yours.</p>
               </div>
               <div class="gdrive-status-container">
                 <span class="status-label">Status:</span>
@@ -1261,7 +1242,9 @@
                   Connect Google Account
                 </button>
                 <button class="btn btn-secondary" id="btn-page-gdrive-backup">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right: 6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"
+                    style="margin-right: 6px;">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
@@ -1269,7 +1252,9 @@
                   Backup to Drive
                 </button>
                 <button class="btn btn-secondary" id="btn-page-gdrive-restore">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right: 6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"
+                    style="margin-right: 6px;">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
@@ -1283,8 +1268,10 @@
           <!-- Card 2: Local Backups & Data Management -->
           <div class="settings-card">
             <div class="settings-card-header">
-              <div class="settings-card-icon" style="color: var(--color-warning); background-color: rgba(245, 158, 11, 0.08);">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
+              <div class="settings-card-icon"
+                style="color: var(--color-warning); background-color: rgba(245, 158, 11, 0.08);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24">
                   <ellipse cx="12" cy="5" rx="9" ry="3" />
                   <path d="M3 5V19A9 3 0 0 0 21 19V5" />
                   <path d="M3 12A9 3 0 0 0 21 12" />
@@ -1296,18 +1283,27 @@
               </div>
             </div>
             <div class="settings-card-body">
+              <div class="gdrive-info-box" style="border-left-color: var(--color-warning);">
+                <p>💡 <strong>Note on Local Backups:</strong> Save local data to your device manually. Your data is 100%
+                  yours. All the temporary modifications will be lost if you clear the browser cache, browser cookies,
+                  or use the app in incognito mode.</p>
+              </div>
               <div class="settings-actions">
                 <button class="btn btn-secondary" id="btn-page-download-json">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right: 6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"
+                    style="margin-right: 6px;">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
                   Download Backup (.json)
                 </button>
-                <label for="page-settings-file-input" class="btn btn-secondary" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-sizing: border-box; margin: 0; padding: 8px 16px;">
+                <label for="page-settings-file-input" class="btn btn-secondary"
+                  style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-sizing: border-box; margin: 0; padding: 8px 16px;">
                   <input type="file" id="page-settings-file-input" accept=".json" style="display: none;">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
@@ -1315,14 +1311,18 @@
                   Upload Backup (.json)
                 </label>
                 <button class="btn btn-secondary" id="btn-page-reset-data">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right: 6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"
+                    style="margin-right: 6px;">
                     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                     <path d="M3 3v5h5" />
                   </svg>
                   Reset Sample Data
                 </button>
                 <button class="btn btn-danger-outline" id="btn-page-clear-cache">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right: 6px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"
+                    style="margin-right: 6px;">
                     <polyline points="3 6 5 6 21 6" />
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                   </svg>
@@ -1661,6 +1661,74 @@
           <button type="submit" class="btn btn-primary">Save Entry</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Sync Portfolio Modal Overlay -->
+  <div class="modal-overlay" id="sync-portfolio-modal">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Sync Portfolio</h3>
+        <button class="modal-close" id="btn-close-sync-modal">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x">
+            <line x1="18" x2="6" y1="6" y2="18" />
+            <line x1="6" x2="18" y1="6" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding: 16px 0; display: flex; flex-direction: column; gap: 14px;">
+        <p style="font-size: 0.85rem; color: var(--color-text-secondary); line-height: 1.45; margin: 0 0 6px 0;">
+          Choose how you would like to backup or sync your investment portfolio data.
+        </p>
+
+        <!-- Option 1: Download JSON -->
+        <button class="btn btn-secondary" id="btn-popup-download-json"
+          style="display: flex; align-items: center; justify-content: flex-start; gap: 14px; padding: 14px; width: 100%; border-radius: var(--radius-md); text-align: left; background-color: var(--color-surface-2); border: 1px solid var(--color-border); cursor: pointer;">
+          <div
+            style="color: var(--color-primary); background-color: rgba(99, 102, 241, 0.08); padding: 8px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-weight: 600; font-size: 0.88rem; color: var(--color-text-primary);">Download JSON
+              File</span>
+            <span
+              style="font-size: 0.72rem; color: var(--color-text-secondary); font-weight: normal; line-height: 1.3;">Save
+              a local `.json` backup copy to your computer/phone.</span>
+          </div>
+        </button>
+
+        <!-- Option 2: Sync to Google Drive -->
+        <button class="btn btn-secondary" id="btn-popup-sync-gdrive"
+          style="display: flex; align-items: center; justify-content: flex-start; gap: 14px; padding: 14px; width: 100%; border-radius: var(--radius-md); text-align: left; background-color: var(--color-surface-2); border: 1px solid var(--color-border); cursor: pointer;">
+          <div
+            style="color: var(--color-accent); background-color: var(--color-accent-subtle); padding: 8px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+              <path
+                d="M17.5 19A3.5 3.5 0 0 0 21 15.5c0-2.79-2.54-4.5-5-4.5-.48 0-.96.06-1.42.17A6 6 0 0 0 3.5 13A5.5 5.5 0 0 0 9 18.5h8.5Z" />
+            </svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-weight: 600; font-size: 0.88rem; color: var(--color-text-primary);">Upload/Sync to Google
+              Drive</span>
+            <span
+              style="font-size: 0.72rem; color: var(--color-text-secondary); font-weight: normal; line-height: 1.3;">Save
+              data to your secure, hidden App Data Folder on Google Drive.</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="form-actions" style="margin-top: 8px;">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-sync-modal"
+          style="width: 100%; justify-content: center;">Cancel</button>
+      </div>
     </div>
   </div>
 
