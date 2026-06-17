@@ -63,16 +63,7 @@
               Investments
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" id="tab-projections" data-tab="projections">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-line-chart">
-                <path d="M3 3v18h18" />
-                <path d="m19 9-5 5-4-4-3 3" />
-              </svg>
-              Projections
-            </a>
-          </li>
+
           <li class="nav-item">
             <a class="nav-link" id="tab-liabilities" data-tab="liabilities">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -440,7 +431,7 @@
                     <p class="chart-card-subtitle">Portfolio spread across categories</p>
                   </div>
                 </div>
-                <div class="chart-wrapper" style="flex-direction: column;">
+                <div class="chart-wrapper asset-allocation-wrapper">
                   <div id="allocation-chart-container" class="chart-svg-container">
                     <!-- SVG pie chart generated dynamically -->
                   </div>
@@ -662,10 +653,10 @@
             </div>
           </div>
 
-          <!-- Portfolio Insights & Diversification Rating Stack -->
-          <div class="dashboard-section" id="section-insights-diversification" style="margin-top: 24px;">
+          <!-- Portfolio Insights & Growth Projections Section -->
+          <div class="dashboard-section" id="section-insights-projections" style="margin-top: 24px;">
             <div class="section-header">
-              <h2 class="section-title">Portfolio Insights &amp; Diversification</h2>
+              <h2 class="section-title">Portfolio Insights &amp; Growth Projections</h2>
               <span class="section-toggle-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
@@ -675,6 +666,7 @@
             </div>
             <div class="section-content">
               <div class="charts-grid" style="margin-bottom: 0;">
+                <!-- Left: Portfolio Insights -->
                 <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column; margin-bottom: 0;">
                   <h3 class="chart-card-title" style="margin: 0 0 16px 0;">Portfolio Insights</h3>
                   <div class="insights-list" id="insights-list-container">
@@ -682,27 +674,99 @@
                   </div>
                 </div>
 
-                <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column; justify-content: center; margin-bottom: 0;">
-                  <h3 class="chart-card-title" style="margin-bottom: 16px; text-align: center;">Diversification Rating</h3>
-                  <div class="health-score-container"
-                    style="flex-direction: row; justify-content: center; gap: 32px; align-items: center; padding: 0; flex-grow: 1;">
-                    <div class="gauge-svg" style="flex-shrink: 0; width: 140px; height: 140px; position: relative;">
-                      <svg width="140" height="140" viewBox="0 0 140 140"
-                        style="transform: rotate(-90deg); display: block;">
-                        <circle cx="70" cy="70" r="55" class="gauge-bg" />
-                        <circle cx="70" cy="70" r="55" class="gauge-fill" id="health-gauge-fill" stroke-dasharray="345.5"
-                          stroke-dashoffset="345.5" />
-                      </svg>
-                      <div class="gauge-score">
-                        <div class="gauge-score-value" id="health-score-text">0</div>
-                        <div class="gauge-score-label">Score</div>
+                <!-- Right: Growth Projections -->
+                <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column; margin-bottom: 0; gap: 20px;">
+                  <h3 class="chart-card-title" style="margin: 0;">Growth Projections</h3>
+                  
+                  <div style="display: flex; gap: 20px; flex-direction: column; flex-grow: 1;">
+                    <!-- Calculator Panel (Compact) -->
+                    <div class="calculator-panel" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 16px; margin: 0; width: 100%;">
+                      <div class="range-slider-group">
+                        <div class="range-slider-header">
+                          <span class="range-slider-label">Monthly SIP Addition</span>
+                          <span class="range-slider-val" id="val-sip-amt">₹10,000</span>
+                        </div>
+                        <input type="range" class="slider" id="slider-sip" min="0" max="100000" step="1000" value="15000">
+                      </div>
+
+                      <div class="range-slider-group" style="margin-top: 12px;">
+                        <div class="range-slider-header">
+                          <span class="range-slider-label">Investment Period</span>
+                          <span class="range-slider-val" id="val-years">10 Years</span>
+                        </div>
+                        <input type="range" class="slider" id="slider-years" min="1" max="30" step="1" value="10">
+                      </div>
+
+                      <div class="range-slider-group" style="margin-top: 12px;">
+                        <div class="range-slider-header">
+                          <span class="range-slider-label">Average Annual Growth Rate</span>
+                          <span class="range-slider-val" id="val-ror">10%</span>
+                        </div>
+                        <input type="range" class="slider" id="slider-ror" min="2" max="24" step="0.5" value="11.5">
+                      </div>
+
+                      <div style="margin-top: 10px; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">
+                        <p>Starting with current portfolio value of <strong id="span-proj-base-amt">₹0</strong>.</p>
                       </div>
                     </div>
-                    <div class="health-score-desc-container" style="flex-grow: 1; min-width: 150px;">
-                      <div class="health-status-desc" id="health-score-desc" style="text-align: left; font-size: 0.9rem; line-height: 1.4; color: var(--text-secondary);">
-                        Analyzing...
+
+                    <!-- Summary & Chart -->
+                    <div style="display: flex; flex-direction: column; gap: 12px; flex-grow: 1;">
+                      <div class="projection-summary" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px; background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-md); border: 1px solid var(--border-light); font-size: 0.75rem; text-align: center; margin-bottom: 0;">
+                        <div class="projection-summary-item">
+                          <span class="projection-summary-label" style="font-size: 0.65rem;">Total Contribs</span>
+                          <span id="val-proj-invested" class="projection-summary-val" style="font-size: 0.95rem;">₹0</span>
+                        </div>
+                        <div class="projection-summary-item">
+                          <span class="projection-summary-label" style="font-size: 0.65rem;">Wealth Gain</span>
+                          <span id="val-proj-gains" class="projection-summary-val highlight" style="font-size: 0.95rem;">₹0</span>
+                        </div>
+                        <div class="projection-summary-item">
+                          <span class="projection-summary-label" style="font-size: 0.65rem;">Projected Val</span>
+                          <span id="val-proj-total" class="projection-summary-val highlight" style="font-size: 0.95rem; color: var(--color-primary);">₹0</span>
+                        </div>
+                      </div>
+
+                      <div class="projection-chart-wrapper" style="min-height: 180px; flex-grow: 1; display: flex; align-items: center; justify-content: center; margin: 0;">
+                        <div id="projection-chart-container" class="chart-svg-container">
+                          <!-- SVG projection line chart generated dynamically -->
+                        </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diversification Rating Section -->
+          <div class="dashboard-section" id="section-diversification" style="margin-top: 24px;">
+            <div class="section-header">
+              <h2 class="section-title">Diversification Rating</h2>
+              <span class="section-toggle-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="section-content">
+              <div class="insights-card" style="padding: 16px 24px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 32px; width: 100%;">
+                <div class="gauge-svg" style="flex-shrink: 0; width: 90px; height: 90px; position: relative;">
+                  <svg width="90" height="90" viewBox="0 0 140 140"
+                    style="transform: rotate(-90deg); display: block;">
+                    <circle cx="70" cy="70" r="55" class="gauge-bg" />
+                    <circle cx="70" cy="70" r="55" class="gauge-fill" id="health-gauge-fill" stroke-dasharray="345.5"
+                      stroke-dashoffset="345.5" />
+                  </svg>
+                  <div class="gauge-score" style="width: 100%; text-align: center;">
+                    <div class="gauge-score-value" id="health-score-text" style="font-size: 1.35rem;">0</div>
+                    <div class="gauge-score-label" style="font-size: 0.55rem; margin-top: 1px;">Score</div>
+                  </div>
+                </div>
+                <div class="health-score-desc-container" style="flex-grow: 1;">
+                  <div class="health-status-desc" id="health-score-desc" style="text-align: left; font-size: 0.9rem; line-height: 1.4; color: var(--text-secondary);">
+                    Analyzing...
                   </div>
                 </div>
               </div>
@@ -811,75 +875,7 @@
         </button>
       </section>
 
-      <!-- VIEW 3: Projections -->
-      <section class="page-view" id="view-projections">
-        <div class="projection-grid">
-          <!-- Slide Panel Calculator -->
-          <div class="calculator-panel">
-            <h3 class="chart-card-title">Future Growth Assumptions</h3>
 
-            <div class="range-slider-group">
-              <div class="range-slider-header">
-                <span class="range-slider-label">Monthly SIP Addition</span>
-                <span class="range-slider-val" id="val-sip-amt">₹10,000</span>
-              </div>
-              <input type="range" class="slider" id="slider-sip" min="0" max="100000" step="1000" value="15000">
-            </div>
-
-            <div class="range-slider-group">
-              <div class="range-slider-header">
-                <span class="range-slider-label">Investment Period</span>
-                <span class="range-slider-val" id="val-years">10 Years</span>
-              </div>
-              <input type="range" class="slider" id="slider-years" min="1" max="30" step="1" value="10">
-            </div>
-
-            <div class="range-slider-group">
-              <div class="range-slider-header">
-                <span class="range-slider-label">Average Annual Growth Rate</span>
-                <span class="range-slider-val" id="val-ror">10%</span>
-              </div>
-              <input type="range" class="slider" id="slider-ror" min="2" max="24" step="0.5" value="11.5">
-            </div>
-
-            <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5;">
-              <p><strong>Note:</strong> Projections start with your current portfolio value of <span
-                  id="span-proj-base-amt">₹0</span>. The SIP amounts are compounded monthly at the custom rate.</p>
-            </div>
-          </div>
-
-          <!-- Growth Chart Output -->
-          <div class="projection-card">
-            <div class="chart-card-header">
-              <div>
-                <h3 class="chart-card-title">Wealth Growth Trajectory</h3>
-                <p class="chart-card-subtitle">Compounded projections for the next decade</p>
-              </div>
-            </div>
-
-            <div class="projection-summary">
-              <div class="projection-summary-item">
-                <span class="projection-summary-label">Total Contributions</span>
-                <span class="projection-summary-val" id="val-proj-invested">₹0</span>
-              </div>
-              <div class="projection-summary-item">
-                <span class="projection-summary-label">Estimated Wealth Gain</span>
-                <span class="projection-summary-val" id="val-proj-gains">₹0</span>
-              </div>
-              <div class="projection-summary-item">
-                <span class="projection-summary-label">Total Projected Value</span>
-                <span class="projection-summary-val highlight" id="val-proj-total">₹0</span>
-              </div>
-            </div>
-
-            <div class="projection-chart-wrapper">
-              <div id="projection-chart-container" class="chart-svg-container">
-                <!-- SVG projection line chart generated dynamically -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- VIEW 4: Liabilities -->
       <section class="page-view" id="view-liabilities">
