@@ -235,7 +235,7 @@ async function loadFromStorage() {
 
 // Update Visibility of Top Action Buttons (Download Portfolio / Add Investment)
 function updateTopActions(tabName) {
-  const btnDownloadTop = document.getElementById('btn-download-portfolio-top');
+  const btnDownloadTop = document.getElementById('btn-sync-portfolio');
   const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
   const btnAddInvestment = document.getElementById('btn-add-investment');
   const dataInitialized = localStorage.getItem('moyeniz_investments') !== null;
@@ -245,6 +245,8 @@ function updateTopActions(tabName) {
       btnDownloadTop.style.display = 'inline-flex';
     } else {
       btnDownloadTop.style.display = 'none';
+      const syncDropdown = document.getElementById('sync-portfolio-dropdown');
+      if (syncDropdown) syncDropdown.classList.remove('show');
     }
   }
 
@@ -306,6 +308,9 @@ function initNavigation() {
         viewTitle.textContent = 'Salary Tracker';
         // viewSubtitle.textContent = 'Track salary trends, credits, deductions, and increments over time.';
         renderSalaries();
+      } else if (tabName === 'settings') {
+        viewTitle.textContent = 'Settings';
+        renderSettings();
       }
 
       updateTopActions(tabName);
@@ -340,7 +345,7 @@ function renderDashboard() {
 
   const activeContent = document.getElementById('dashboard-active-content');
   const emptyContent = document.getElementById('dashboard-empty-content');
-  const btnDownloadTop = document.getElementById('btn-download-portfolio-top');
+  const btnDownloadTop = document.getElementById('btn-sync-portfolio');
 
   if (!dataInitialized) {
     if (activeContent) activeContent.style.display = 'none';
@@ -356,6 +361,10 @@ function renderDashboard() {
     const activeTabName = activeTabLink ? activeTabLink.getAttribute('data-tab') : 'dashboard';
     if (btnDownloadTop) {
       btnDownloadTop.style.display = activeTabName === 'dashboard' ? 'inline-flex' : 'none';
+      if (activeTabName !== 'dashboard') {
+        const syncDropdown = document.getElementById('sync-portfolio-dropdown');
+        if (syncDropdown) syncDropdown.classList.remove('show');
+      }
     }
     const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
     if (btnDownloadPdfTop) {
@@ -2867,33 +2876,6 @@ function initModalHandlers() {
   const addBtn = document.getElementById('btn-add-investment');
   const selectClass = document.getElementById('input-asset-class');
   const form = document.getElementById('investment-form');
-  const btnReset = document.getElementById('btn-reset-data');
-
-  // JSON Backup Actions
-  const btnDownload = document.getElementById('btn-download-json');
-  if (btnDownload) {
-    btnDownload.addEventListener('click', (e) => {
-      e.stopPropagation();
-      downloadPortfolioJSON();
-    });
-  }
-
-  const settingsFileInput = document.getElementById('settings-file-input');
-  if (settingsFileInput) {
-    settingsFileInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        handleUploadJSON(e.target.files[0]);
-      }
-    });
-  }
-
-  // Dashboard Header Download Action
-  const btnDownloadTop = document.getElementById('btn-download-portfolio-top');
-  if (btnDownloadTop) {
-    btnDownloadTop.addEventListener('click', () => {
-      downloadPortfolioJSON();
-    });
-  }
 
   // Dashboard Header PDF Report Action
   const btnDownloadPdfTop = document.getElementById('btn-download-pdf-top');
@@ -2985,84 +2967,6 @@ function initModalHandlers() {
     e.preventDefault();
     saveInvestmentForm();
   });
-
-  btnReset.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (confirm('This will restore the beautiful pre-populated sample portfolio. All custom edits will be lost. Proceed?')) {
-      investments = [...SAMPLE_PORTFOLIO];
-      liabilities = [...SAMPLE_LIABILITIES];
-      borrowLent = [...SAMPLE_BORROW_LENT];
-      salaries = [...SAMPLE_SALARIES];
-      saveToStorage();
-
-      const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
-      if (activeTab === 'dashboard') renderDashboard();
-      if (activeTab === 'investments') renderInvestments();
-      if (activeTab === 'liabilities') renderLiabilities();
-      if (activeTab === 'borrow-lent') renderBorrowLent();
-      if (activeTab === 'salary') renderSalaries();
-
-      updateTopActions(activeTab);
-    }
-  });
-
-  // Settings dropdown toggle logic
-  const btnSettings = document.getElementById('btn-settings-toggle');
-  const settingsDropdown = document.getElementById('settings-dropdown-menu');
-  if (btnSettings && settingsDropdown) {
-    btnSettings.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isVisible = settingsDropdown.style.display === 'block';
-      settingsDropdown.style.display = isVisible ? 'none' : 'block';
-    });
-    document.addEventListener('click', () => {
-      settingsDropdown.style.display = 'none';
-    });
-    settingsDropdown.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-  }
-
-  // Clear cached data handler
-  const btnClearCache = document.getElementById('btn-clear-cache');
-  if (btnClearCache) {
-    btnClearCache.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (confirm('This will permanently delete your cached portfolio (investments, liabilities, and cashflows) from this browser\'s local storage. This action cannot be undone unless you have downloaded a backup. Proceed?')) {
-        localStorage.removeItem('moyeniz_investments');
-        localStorage.removeItem('moyeniz_liabilities');
-        localStorage.removeItem('moyeniz_borrow_lent');
-        localStorage.removeItem('moyeniz_salaries');
-        investments = [];
-        liabilities = [];
-        borrowLent = [];
-        salaries = [];
-
-        // Hide settings menu
-        if (settingsDropdown) settingsDropdown.style.display = 'none';
-
-        // Return to first tab and re-render empty dashboard
-        const links = document.querySelectorAll('.nav-link');
-        const views = document.querySelectorAll('.page-view');
-        const viewTitle = document.getElementById('view-title');
-        const viewSubtitle = document.getElementById('view-subtitle');
-
-        links.forEach(l => l.classList.remove('active'));
-        const tabDash = document.getElementById('tab-dashboard');
-        if (tabDash) tabDash.classList.add('active');
-
-        views.forEach(v => v.classList.remove('active-view'));
-        const activeView = document.getElementById('view-dashboard');
-        if (activeView) activeView.classList.add('active-view');
-
-        if (viewTitle) viewTitle.textContent = 'Dashboard';
-        if (viewSubtitle) viewSubtitle.textContent = 'An overview of your complete financial portfolio.';
-
-        renderDashboard();
-        alert('Cached browser data cleared successfully.');
-      }
-    });
-  }
 
   // Liability Modal Handlers
   const btnCloseL = document.getElementById('btn-close-liability-modal');
@@ -6008,6 +5912,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initDashboardSectionToggles();
   initFilterHandlers();
   initModalHandlers();
+  initSettingsHandlers();
   initCalculatorSliders();
   initGoogleDriveSync();
 
@@ -6019,6 +5924,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   else if (activeTabName === 'liabilities') renderLiabilities();
   else if (activeTabName === 'borrow-lent') renderBorrowLent();
   else if (activeTabName === 'salary') renderSalaries();
+  else if (activeTabName === 'settings') renderSettings();
 
   updateTopActions(activeTabName);
 });
@@ -6039,44 +5945,60 @@ function maskEmail(email) {
 
 // Update UI status safely
 function updateGDriveStatus(message, isError = false) {
-  const statusEl = document.getElementById('gdrive-status');
+  const statusEl = document.getElementById('page-gdrive-status');
   if (statusEl) {
     statusEl.textContent = message;
     if (isError) {
-      statusEl.style.color = 'var(--color-danger)';
+      statusEl.style.color = 'var(--color-negative)';
     } else {
-      statusEl.style.color = 'var(--text-secondary)';
+      statusEl.style.color = 'var(--color-text-secondary)';
     }
   }
 }
 
 // Update standard connected state
 function updateSyncStatusUI() {
+  const btnConnect = document.getElementById('btn-page-gdrive-connect');
   if (googleAccessToken && googleUserEmail) {
-    updateGDriveStatus(`Sync: Connected (${maskEmail(googleUserEmail)})`);
+    updateGDriveStatus(`Connected (${maskEmail(googleUserEmail)})`);
+    if (btnConnect) btnConnect.textContent = 'Disconnect Google Account';
   } else {
-    updateGDriveStatus('Sync: Not Connected');
+    updateGDriveStatus('Not Connected');
+    if (btnConnect) btnConnect.textContent = 'Connect Google Account';
   }
 }
 
-// Initializer for Google Identity Services & button events
-function initGoogleDriveSync() {
-  const btnBackup = document.getElementById('btn-gdrive-backup');
-  const btnRestore = document.getElementById('btn-gdrive-restore');
+// Settings Page Render
+function renderSettings() {
+  updateSyncStatusUI();
+}
 
-  if (!btnBackup || !btnRestore) return;
+async function handleGDriveBackupClick() {
+  if (!googleTokenClient) {
+    alert('Google Drive API is blocked or not loaded. Check your connection or Content Security Policy.');
+    return;
+  }
+  if (!googleAccessToken) {
+    pendingGDriveAction = 'backup';
+    googleTokenClient.requestAccessToken();
+  } else {
+    await performGDriveBackup();
+  }
+}
 
-  // Add click listeners
-  btnBackup.addEventListener('click', async () => {
+async function handleGDriveRestoreClick(noConfirm = false) {
+  if (!googleTokenClient) {
+    alert('Google Drive API is blocked or not loaded. Check your connection or Content Security Policy.');
+    return;
+  }
+  if (noConfirm) {
     if (!googleAccessToken) {
-      pendingGDriveAction = 'backup';
+      pendingGDriveAction = 'restore';
       googleTokenClient.requestAccessToken();
     } else {
-      await performGDriveBackup();
+      await performGDriveRestore();
     }
-  });
-
-  btnRestore.addEventListener('click', async () => {
+  } else {
     if (gdriveRestoreConfirmTimeout) {
       clearTimeout(gdriveRestoreConfirmTimeout);
       gdriveRestoreConfirmTimeout = null;
@@ -6093,8 +6015,165 @@ function initGoogleDriveSync() {
         updateSyncStatusUI();
       }, 4000);
     }
-  });
+  }
+}
 
+// Initialize settings page and sync dropdown handlers
+function initSettingsHandlers() {
+  // Sync dropdown toggling
+  const btnSyncPortfolio = document.getElementById('btn-sync-portfolio');
+  const syncDropdown = document.getElementById('sync-portfolio-dropdown');
+
+  if (btnSyncPortfolio && syncDropdown) {
+    btnSyncPortfolio.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isVisible = syncDropdown.classList.contains('show');
+      if (isVisible) {
+        syncDropdown.classList.remove('show');
+      } else {
+        syncDropdown.classList.add('show');
+      }
+    });
+
+    document.addEventListener('click', () => {
+      syncDropdown.classList.remove('show');
+    });
+
+    syncDropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    const btnSyncDownload = document.getElementById('btn-sync-download-json');
+    if (btnSyncDownload) {
+      btnSyncDownload.addEventListener('click', () => {
+        syncDropdown.classList.remove('show');
+        downloadPortfolioJSON();
+      });
+    }
+
+    const btnSyncGDrive = document.getElementById('btn-sync-gdrive');
+    if (btnSyncGDrive) {
+      btnSyncGDrive.addEventListener('click', async () => {
+        syncDropdown.classList.remove('show');
+        await handleGDriveBackupClick();
+      });
+    }
+  }
+
+  // Dashboard Empty setup GDrive restore button
+  const btnSetupGDrive = document.getElementById('setup-btn-gdrive');
+  if (btnSetupGDrive) {
+    btnSetupGDrive.addEventListener('click', async () => {
+      await handleGDriveRestoreClick(true);
+    });
+  }
+
+  // Dedicated settings page buttons
+  const btnConnect = document.getElementById('btn-page-gdrive-connect');
+  const btnBackup = document.getElementById('btn-page-gdrive-backup');
+  const btnRestore = document.getElementById('btn-page-gdrive-restore');
+
+  if (btnConnect) {
+    btnConnect.addEventListener('click', () => {
+      if (googleAccessToken) {
+        googleAccessToken = null;
+        googleUserEmail = '';
+        updateSyncStatusUI();
+      } else {
+        if (googleTokenClient) {
+          googleTokenClient.requestAccessToken();
+        } else {
+          alert('Google Drive API is blocked or not loaded. Check your connection or Content Security Policy.');
+        }
+      }
+    });
+  }
+
+  if (btnBackup) {
+    btnBackup.addEventListener('click', async () => {
+      await handleGDriveBackupClick();
+    });
+  }
+
+  if (btnRestore) {
+    btnRestore.addEventListener('click', async () => {
+      await handleGDriveRestoreClick();
+    });
+  }
+
+  const btnDownloadJson = document.getElementById('btn-page-download-json');
+  if (btnDownloadJson) {
+    btnDownloadJson.addEventListener('click', () => {
+      downloadPortfolioJSON();
+    });
+  }
+
+  const settingsFileInput = document.getElementById('page-settings-file-input');
+  if (settingsFileInput) {
+    settingsFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleUploadJSON(e.target.files[0]);
+      }
+    });
+  }
+
+  const btnResetData = document.getElementById('btn-page-reset-data');
+  if (btnResetData) {
+    btnResetData.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm('This will restore the beautiful pre-populated sample portfolio. All custom edits will be lost. Proceed?')) {
+        investments = [...SAMPLE_PORTFOLIO];
+        liabilities = [...SAMPLE_LIABILITIES];
+        borrowLent = [...SAMPLE_BORROW_LENT];
+        salaries = [...SAMPLE_SALARIES];
+        saveToStorage();
+        renderSettings();
+        
+        const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
+        if (activeTab === 'dashboard') renderDashboard();
+      }
+    });
+  }
+
+  const btnClearCache = document.getElementById('btn-page-clear-cache');
+  if (btnClearCache) {
+    btnClearCache.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm('DANGER: This will permanently delete your cached portfolio (investments, liabilities, and cashflows) from this browser\'s local storage. This action cannot be undone unless you have downloaded a backup. Proceed?')) {
+        localStorage.removeItem('moyeniz_investments');
+        localStorage.removeItem('moyeniz_liabilities');
+        localStorage.removeItem('moyeniz_borrow_lent');
+        localStorage.removeItem('moyeniz_salaries');
+        investments = [];
+        liabilities = [];
+        borrowLent = [];
+        salaries = [];
+        
+        renderSettings();
+
+        // Redirect to dashboard
+        const links = document.querySelectorAll('.nav-link');
+        const views = document.querySelectorAll('.page-view');
+        const viewTitle = document.getElementById('view-title');
+
+        links.forEach(l => l.classList.remove('active'));
+        const tabDash = document.getElementById('tab-dashboard');
+        if (tabDash) tabDash.classList.add('active');
+
+        views.forEach(v => v.classList.remove('active-view'));
+        const activeView = document.getElementById('view-dashboard');
+        if (activeView) activeView.classList.add('active-view');
+
+        if (viewTitle) viewTitle.textContent = 'Dashboard';
+        renderDashboard();
+        alert('Cached browser data cleared successfully.');
+      }
+    });
+  }
+}
+
+// Initializer for Google Identity Services client
+function initGoogleDriveSync() {
   // Load GIS token client
   if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
     googleTokenClient = google.accounts.oauth2.initTokenClient({
@@ -6122,9 +6201,7 @@ function initGoogleDriveSync() {
     });
   } else {
     // If the library script is not loaded or blocked
-    updateGDriveStatus('Sync: Google API Blocked');
-    btnBackup.disabled = true;
-    btnRestore.disabled = true;
+    updateGDriveStatus('Google API Blocked');
   }
 }
 
