@@ -501,6 +501,7 @@ function renderDashboard() {
   // Render Mutual Fund cap types & Savings account distribution charts
   renderMutualFundChart();
   renderSavingsChart();
+  renderSipChart();
 
   // Render Performance Bar Chart
   renderPerformanceChart();
@@ -852,7 +853,16 @@ function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, ti
     });
 
     path.addEventListener('mousemove', (e) => {
-      showTooltip(e, `${titlePrefix}: ${item.label}`, groupInvested, groupCurrent, groupGain, groupReturnPct);
+      if (idPrefix === 'mf-sip') {
+        const targetInv = investments.find(inv => inv.name === item.label && inv.assetClass === 'indian-mutual-fund');
+        const sipTotalInvested = targetInv ? Number(targetInv.investedAmount) : 0;
+        const sipTotalCurrent = targetInv ? Number(targetInv.currentAmount) : 0;
+        const pl = sipTotalCurrent - sipTotalInvested;
+        const pct = sipTotalInvested > 0 ? (pl / sipTotalInvested) * 100 : 0;
+        showTooltip(e, `${titlePrefix}: ${item.label}`, item.value, sipTotalInvested, pl, pct, ['SIP Amount:', 'Total Invested:', 'P&L:']);
+      } else {
+        showTooltip(e, `${titlePrefix}: ${item.label}`, groupInvested, groupCurrent, groupGain, groupReturnPct);
+      }
     });
     path.addEventListener('mouseleave', hideTooltip);
 
@@ -1030,6 +1040,72 @@ function renderSavingsChart() {
   }).sort((a, b) => b.value - a.value);
 
   renderReusableDoughnut(container, legend, sortedBanks, totalSavingsVal, 'savings-bank', 'Savings');
+}
+
+function recordSipPaid(id) {
+  const inv = investments.find(i => i.id === id);
+  if (inv && Number(inv.sipAmount) > 0) {
+    const sip = Number(inv.sipAmount);
+    inv.investedAmount = Number(inv.investedAmount) + sip;
+    inv.currentAmount = Number(inv.currentAmount) + sip;
+    inv.lastUpdated = new Date().toISOString();
+    saveToStorage();
+    renderInvestments();
+  }
+}
+
+// Generate SIP Contributions per Fund Doughnut Chart
+function renderSipChart() {
+  const container = document.getElementById('sip-chart-container');
+  const legend = document.getElementById('sip-legend');
+  clearContainer(container);
+  clearContainer(legend);
+
+  const mfSipInvestments = investments.filter(inv => inv.assetClass === 'indian-mutual-fund' && Number(inv.sipAmount) > 0);
+  let totalSipVal = 0;
+  const sipTotals = {};
+
+  mfSipInvestments.forEach(inv => {
+    const val = Number(inv.sipAmount) || 0;
+    totalSipVal += val;
+    sipTotals[inv.name] = (sipTotals[inv.name] || 0) + val;
+  });
+
+  if (totalSipVal === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No active mutual fund SIP contributions found.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    emptyMsg.style.fontSize = '0.85rem';
+    emptyMsg.style.padding = '20px';
+    emptyMsg.style.textAlign = 'center';
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  const sipColors = [
+    { color: '#a855f7', colorDark: '#6d28d9' },
+    { color: '#3b82f6', colorDark: '#1d4ed8' },
+    { color: '#10b981', colorDark: '#047857' },
+    { color: '#f59e0b', colorDark: '#d97706' },
+    { color: '#ec4899', colorDark: '#be185d' },
+    { color: '#0ea5e9', colorDark: '#0284c7' },
+    { color: '#f43f5e', colorDark: '#be123c' },
+    { color: '#6366f1', colorDark: '#4f46e5' }
+  ];
+
+  const sortedSips = Object.keys(sipTotals).map((name, idx) => {
+    const colorInfo = sipColors[idx % sipColors.length];
+    return {
+      key: `sip-${idx}`,
+      label: name,
+      value: sipTotals[name],
+      pct: (sipTotals[name] / totalSipVal) * 100,
+      color: colorInfo.color,
+      colorDark: colorInfo.colorDark
+    };
+  }).sort((a, b) => b.value - a.value);
+
+  renderReusableDoughnut(container, legend, sortedSips, totalSipVal, 'mf-sip', 'Monthly SIP');
 }
 
 // Generate Grouped SVG Bar Chart SVG Element
@@ -1856,44 +1932,55 @@ function showNetWorthTooltip(event, title, netWorth, assets, liabilities, salary
 }
 
 // Interactive Tooltip Helpers
-function showTooltip(event, title, invested, current, pl, pct) {
+function showTooltip(event, title, invested, current, pl, pct, customLabels = null) {
   const tooltip = document.getElementById('chart-tooltip');
-  if (!document.getElementById('chart-tooltip-title')) {
-    tooltip.innerHTML = `
-      <div id="chart-tooltip-title" class="chart-tooltip-title">Category</div>
-      <div class="chart-tooltip-row">
-        <span id="chart-tooltip-label-1">Invested:</span>
-        <span id="chart-tooltip-invested" class="chart-tooltip-value">₹0</span>
-      </div>
-      <div class="chart-tooltip-row">
-        <span id="chart-tooltip-label-2">Current:</span>
-        <span id="chart-tooltip-current" class="chart-tooltip-value">₹0</span>
-      </div>
-      <div class="chart-tooltip-row">
-        <span id="chart-tooltip-label-3">P&amp;L:</span>
-        <span id="chart-tooltip-pl" class="chart-tooltip-value">₹0 (+0%)</span>
-      </div>
-    `;
-  }
-  const tTitle = document.getElementById('chart-tooltip-title');
-  const tInvested = document.getElementById('chart-tooltip-invested');
-  const tCurrent = document.getElementById('chart-tooltip-current');
-  const tPl = document.getElementById('chart-tooltip-pl');
+  
+  // Clear any existing children to build a fresh, secure DOM structure
+  tooltip.replaceChildren();
 
-  // Reset labels to default
-  const l1 = document.getElementById('chart-tooltip-label-1');
-  const l2 = document.getElementById('chart-tooltip-label-2');
-  const l3 = document.getElementById('chart-tooltip-label-3');
-  if (l1) l1.textContent = 'Invested:';
-  if (l2) l2.textContent = 'Current:';
-  if (l3) l3.textContent = 'P&L:';
-
+  const tTitle = document.createElement('div');
+  tTitle.id = 'chart-tooltip-title';
+  tTitle.className = 'chart-tooltip-title';
   tTitle.textContent = title;
-  tInvested.textContent = formatCurrency(invested);
-  tCurrent.textContent = formatCurrency(current);
+  tooltip.appendChild(tTitle);
 
-  tPl.textContent = formatCurrency(pl) + ` (${formatPercent(pct)})`;
-  tPl.className = 'chart-tooltip-value ' + (pl > 0 ? 'positive' : pl < 0 ? 'negative' : '');
+  const labels = customLabels || ['Invested:', 'Current:', 'P&L:'];
+
+  // Row 1
+  const r1 = document.createElement('div');
+  r1.className = 'chart-tooltip-row';
+  const r1_lbl = document.createElement('span');
+  r1_lbl.textContent = labels[0];
+  const r1_val = document.createElement('span');
+  r1_val.className = 'chart-tooltip-value';
+  r1_val.textContent = formatCurrency(invested);
+  r1.appendChild(r1_lbl);
+  r1.appendChild(r1_val);
+  tooltip.appendChild(r1);
+
+  // Row 2
+  const r2 = document.createElement('div');
+  r2.className = 'chart-tooltip-row';
+  const r2_lbl = document.createElement('span');
+  r2_lbl.textContent = labels[1];
+  const r2_val = document.createElement('span');
+  r2_val.className = 'chart-tooltip-value';
+  r2_val.textContent = formatCurrency(current);
+  r2.appendChild(r2_lbl);
+  r2.appendChild(r2_val);
+  tooltip.appendChild(r2);
+
+  // Row 3
+  const r3 = document.createElement('div');
+  r3.className = 'chart-tooltip-row';
+  const r3_lbl = document.createElement('span');
+  r3_lbl.textContent = labels[2];
+  const r3_val = document.createElement('span');
+  r3_val.className = 'chart-tooltip-value ' + (pl > 0 ? 'positive' : pl < 0 ? 'negative' : '');
+  r3_val.textContent = formatCurrency(pl) + ` (${formatPercent(pct)})`;
+  r3.appendChild(r3_lbl);
+  r3.appendChild(r3_val);
+  tooltip.appendChild(r3);
 
   // Position tooltip relative to container boundaries
   const container = document.querySelector('.main-wrapper');
@@ -2476,6 +2563,30 @@ function renderInvestments() {
     const colActions = document.createElement('div');
     colActions.classList.add('card-actions');
 
+    if (inv.assetClass === 'indian-mutual-fund' && Number(inv.sipAmount) > 0) {
+      // Add a sub-text under the name in colMain
+      const sipSubText = document.createElement('div');
+      sipSubText.style.fontSize = '0.75rem';
+      sipSubText.style.color = 'var(--text-secondary)';
+      sipSubText.style.marginTop = '4px';
+      sipSubText.textContent = `SIP: ${formatCurrency(inv.sipAmount)} / month`;
+      colMain.appendChild(sipSubText);
+
+      // Create "+1 SIP" quick-action button
+      const btnSipPaid = document.createElement('button');
+      btnSipPaid.className = 'btn btn-secondary btn-sm';
+      btnSipPaid.style.padding = '4px 8px';
+      btnSipPaid.style.fontSize = '0.75rem';
+      btnSipPaid.style.marginRight = '8px';
+      btnSipPaid.textContent = '+1 SIP';
+      btnSipPaid.title = `Record SIP payment of ${formatCurrency(inv.sipAmount)}`;
+      btnSipPaid.addEventListener('click', (e) => {
+        e.stopPropagation();
+        recordSipPaid(inv.id);
+      });
+      colActions.appendChild(btnSipPaid);
+    }
+
     const btnEdit = document.createElement('button');
     btnEdit.className = 'icon-btn';
     btnEdit.setAttribute('aria-label', 'Edit Investment');
@@ -2585,6 +2696,8 @@ function openModal(invObj = null) {
   const inputInvested = document.getElementById('input-invested-amount');
   const inputCurrent = document.getElementById('input-current-amount');
   const inputPurchaseDate = document.getElementById('input-purchase-date');
+  const inputSip = document.getElementById('input-sip-amount');
+  const rowSip = document.getElementById('row-sip');
 
   if (invObj) {
     titleText.textContent = 'Edit Investment';
@@ -2601,6 +2714,14 @@ function openModal(invObj = null) {
     inputInvested.value = invObj.investedAmount;
     inputCurrent.value = invObj.currentAmount;
     inputPurchaseDate.value = invObj.purchaseDate || new Date().toISOString().slice(0, 10);
+
+    if (invObj.assetClass === 'indian-mutual-fund') {
+      rowSip.style.display = 'flex';
+      inputSip.value = invObj.sipAmount || '';
+    } else {
+      rowSip.style.display = 'none';
+      inputSip.value = '';
+    }
   } else {
     titleText.textContent = 'Add Investment';
     inputId.value = '';
@@ -2610,6 +2731,8 @@ function openModal(invObj = null) {
     inputInvested.value = '';
     inputCurrent.value = '';
     inputPurchaseDate.value = new Date().toISOString().slice(0, 10);
+    rowSip.style.display = 'none';
+    inputSip.value = '';
   }
 
   overlay.classList.add('active-modal');
@@ -2819,6 +2942,13 @@ function initModalHandlers() {
 
   selectClass.addEventListener('change', (e) => {
     updateSubtypeOptions(e.target.value);
+    const rowSip = document.getElementById('row-sip');
+    if (e.target.value === 'indian-mutual-fund') {
+      rowSip.style.display = 'flex';
+    } else {
+      rowSip.style.display = 'none';
+      document.getElementById('input-sip-amount').value = '';
+    }
   });
 
   form.addEventListener('submit', (e) => {
@@ -2992,6 +3122,7 @@ function saveInvestmentForm() {
   const investedAmount = Number(document.getElementById('input-invested-amount').value);
   const currentAmount = Number(document.getElementById('input-current-amount').value);
   const purchaseDate = document.getElementById('input-purchase-date').value || new Date().toISOString().slice(0, 10);
+  const sipAmount = assetClass === 'indian-mutual-fund' ? Number(document.getElementById('input-sip-amount').value) || 0 : 0;
 
   if (id) {
     // Edit mode
@@ -3005,6 +3136,7 @@ function saveInvestmentForm() {
         investedAmount,
         currentAmount,
         purchaseDate,
+        sipAmount,
         lastUpdated: new Date().toISOString()
       };
     }
@@ -3019,6 +3151,7 @@ function saveInvestmentForm() {
       investedAmount,
       currentAmount,
       purchaseDate,
+      sipAmount,
       lastUpdated: new Date().toISOString()
     });
   }

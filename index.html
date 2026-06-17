@@ -421,20 +421,41 @@
 
           <!-- Charts Grid -->
           <div class="charts-grid">
-            <!-- Asset Allocation Pie Chart -->
-            <div class="chart-card">
-              <div class="chart-card-header">
-                <div>
-                  <h3 class="chart-card-title">Asset Allocation</h3>
-                  <p class="chart-card-subtitle">Portfolio spread across categories</p>
+            <!-- Column 1: Asset Allocation & SIP Charts -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+              <!-- Asset Allocation Pie Chart -->
+              <div class="chart-card">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="chart-card-title">Asset Allocation</h3>
+                    <p class="chart-card-subtitle">Portfolio spread across categories</p>
+                  </div>
+                </div>
+                <div class="chart-wrapper" style="flex-direction: column;">
+                  <div id="allocation-chart-container" class="chart-svg-container">
+                    <!-- SVG pie chart generated dynamically -->
+                  </div>
+                  <div id="allocation-legend" class="legend-wrapper">
+                    <!-- Legend items generated dynamically -->
+                  </div>
                 </div>
               </div>
-              <div class="chart-wrapper" style="flex-direction: column;">
-                <div id="allocation-chart-container" class="chart-svg-container">
-                  <!-- SVG pie chart generated dynamically -->
+
+              <!-- SIP Contribution per Fund Pie Chart -->
+              <div class="chart-card">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="chart-card-title">SIP Contributions</h3>
+                    <p class="chart-card-subtitle">Monthly SIP breakdown per mutual fund</p>
+                  </div>
                 </div>
-                <div id="allocation-legend" class="legend-wrapper">
-                  <!-- Legend items generated dynamically -->
+                <div class="chart-wrapper" style="flex-direction: column;">
+                  <div id="sip-chart-container" class="chart-svg-container">
+                    <!-- SVG generated dynamically -->
+                  </div>
+                  <div id="sip-legend" class="legend-wrapper">
+                    <!-- Legend generated dynamically -->
+                  </div>
                 </div>
               </div>
             </div>
@@ -1315,6 +1336,12 @@
         <div class="form-group">
           <label class="form-label" for="input-purchase-date">Purchase / Investment Date</label>
           <input type="date" class="form-input" id="input-purchase-date" required>
+        </div>
+
+        <!-- SIP Amount Row (shown conditionally for Mutual Funds) -->
+        <div class="form-group" id="row-sip" style="display: none;">
+          <label class="form-label" for="input-sip-amount">SIP Amount (₹ / month)</label>
+          <input type="number" class="form-input" id="input-sip-amount" min="0" placeholder="e.g., 5000">
         </div>
 
         <div class="form-actions">
