@@ -419,60 +419,90 @@
             </div>
           </div>
 
-          <!-- Charts Grid -->
-          <div class="charts-grid">
-            <!-- Asset Allocation Pie Chart -->
-            <div class="chart-card">
-              <div class="chart-card-header">
-                <div>
-                  <h3 class="chart-card-title">Asset Allocation</h3>
-                  <p class="chart-card-subtitle">Portfolio spread across categories</p>
-                </div>
-              </div>
-              <div class="chart-wrapper" style="flex-direction: column;">
-                <div id="allocation-chart-container" class="chart-svg-container">
-                  <!-- SVG pie chart generated dynamically -->
-                </div>
-                <div id="allocation-legend" class="legend-wrapper">
-                  <!-- Legend items generated dynamically -->
-                </div>
-              </div>
+          <!-- Portfolio Allocations & Distributions Section -->
+          <div class="dashboard-section" id="section-allocations">
+            <div class="section-header">
+              <h2 class="section-title">Portfolio Allocations &amp; Distributions</h2>
+              <span class="section-toggle-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
             </div>
 
-            <!-- Mutual Fund Allocation & Savings Account Balance Pie Charts -->
-            <div style="display: flex; flex-direction: column; gap: 24px;">
-              <!-- Mutual Fund Types Pie Chart -->
-              <div class="chart-card">
+            <div class="section-content">
+              <!-- Asset Allocation Pie Chart -->
+              <div class="chart-card" style="margin-bottom: 24px;">
                 <div class="chart-card-header">
                   <div>
-                    <h3 class="chart-card-title">Mutual Fund Allocation</h3>
-                    <p class="chart-card-subtitle">Breakdown by mutual fund subtype</p>
+                    <h3 class="chart-card-title">Asset Allocation</h3>
+                    <p class="chart-card-subtitle">Portfolio spread across categories</p>
                   </div>
                 </div>
                 <div class="chart-wrapper" style="flex-direction: column;">
-                  <div id="mf-chart-container" class="chart-svg-container">
-                    <!-- SVG generated dynamically -->
+                  <div id="allocation-chart-container" class="chart-svg-container">
+                    <!-- SVG pie chart generated dynamically -->
                   </div>
-                  <div id="mf-legend" class="legend-wrapper">
-                    <!-- Legend generated dynamically -->
+                  <div id="allocation-legend" class="legend-wrapper">
+                    <!-- Legend items generated dynamically -->
                   </div>
                 </div>
               </div>
 
-              <!-- Bank Wise Savings Pie Chart -->
-              <div class="chart-card">
-                <div class="chart-card-header">
-                  <div>
-                    <h3 class="chart-card-title">Savings Account Balance</h3>
-                    <p class="chart-card-subtitle">Distribution across savings bank accounts</p>
+              <!-- Sub-Portfolio Allocations (3 columns on desktop, 1 column on mobile) -->
+              <div class="sub-charts-grid">
+                <!-- Mutual Fund Types Pie Chart -->
+                <div class="chart-card">
+                  <div class="chart-card-header">
+                    <div>
+                      <h3 class="chart-card-title">Mutual Fund Allocation</h3>
+                      <p class="chart-card-subtitle">Breakdown by mutual fund subtype</p>
+                    </div>
+                  </div>
+                  <div class="chart-wrapper" style="flex-direction: column;">
+                    <div id="mf-chart-container" class="chart-svg-container">
+                      <!-- SVG generated dynamically -->
+                    </div>
+                    <div id="mf-legend" class="legend-wrapper">
+                      <!-- Legend generated dynamically -->
+                    </div>
                   </div>
                 </div>
-                <div class="chart-wrapper" style="flex-direction: column;">
-                  <div id="savings-chart-container" class="chart-svg-container">
-                    <!-- SVG generated dynamically -->
+
+                <!-- SIP Contribution per Fund Pie Chart -->
+                <div class="chart-card">
+                  <div class="chart-card-header">
+                    <div>
+                      <h3 class="chart-card-title">SIP Contributions</h3>
+                      <p class="chart-card-subtitle">Monthly SIP breakdown per mutual fund</p>
+                    </div>
                   </div>
-                  <div id="savings-legend" class="legend-wrapper">
-                    <!-- Legend generated dynamically -->
+                  <div class="chart-wrapper" style="flex-direction: column;">
+                    <div id="sip-chart-container" class="chart-svg-container">
+                      <!-- SVG generated dynamically -->
+                    </div>
+                    <div id="sip-legend" class="legend-wrapper">
+                      <!-- Legend generated dynamically -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bank Wise Savings Pie Chart -->
+                <div class="chart-card">
+                  <div class="chart-card-header">
+                    <div>
+                      <h3 class="chart-card-title">Savings Account Balance</h3>
+                      <p class="chart-card-subtitle">Distribution across savings bank accounts</p>
+                    </div>
+                  </div>
+                  <div class="chart-wrapper" style="flex-direction: column;">
+                    <div id="savings-chart-container" class="chart-svg-container">
+                      <!-- SVG generated dynamically -->
+                    </div>
+                    <div id="savings-legend" class="legend-wrapper">
+                      <!-- Legend generated dynamically -->
+                    </div>
                   </div>
                 </div>
               </div>
@@ -480,146 +510,199 @@
           </div>
 
           <!-- Monthly Wealth vs. Debt Trend Chart -->
-          <div class="chart-card" style="margin-top: 24px; width: 100%;">
-            <div class="chart-card-header">
-              <div>
-                <h3 class="chart-card-title">Wealth vs. Debt Trend</h3>
-                <p class="chart-card-subtitle">Total Investments vs. Outstanding Liabilities (last 6 months)</p>
-              </div>
-              <div class="legend-row" style="display: flex; gap: 16px; font-size: 0.8rem; font-weight: 500;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span
-                    style="display: inline-block; width: 12px; height: 3px; background-color: var(--color-primary); border-radius: 1px;"></span>
-                  <span>Total Investments</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span
-                    style="display: inline-block; width: 12px; height: 3px; background-color: var(--color-danger); border-radius: 1px;"></span>
-                  <span>Liabilities</span>
-                </div>
-              </div>
+          <div class="dashboard-section" id="section-wealth-debt-trend" style="margin-top: 24px;">
+            <div class="section-header">
+              <h2 class="section-title">Wealth vs. Debt Trend</h2>
+              <span class="section-toggle-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
             </div>
-            <div class="chart-wrapper" style="min-height: 300px;">
-              <div id="history-chart-container" class="chart-svg-container" style="width: 100%;">
-                <!-- SVG line chart generated dynamically -->
+            <div class="section-content">
+              <div class="chart-card" style="width: 100%;">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="chart-card-title">Wealth vs. Debt Trend</h3>
+                    <p class="chart-card-subtitle">Total Investments vs. Outstanding Liabilities (last 6 months)</p>
+                  </div>
+                  <div class="legend-row" style="display: flex; gap: 16px; font-size: 0.8rem; font-weight: 500;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span
+                        style="display: inline-block; width: 12px; height: 3px; background-color: var(--color-primary); border-radius: 1px;"></span>
+                      <span>Total Investments</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span
+                        style="display: inline-block; width: 12px; height: 3px; background-color: var(--color-danger); border-radius: 1px;"></span>
+                      <span>Liabilities</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="chart-wrapper" style="min-height: 300px;">
+                  <div id="history-chart-container" class="chart-svg-container" style="width: 100%;">
+                    <!-- SVG line chart generated dynamically -->
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Net Worth Timeline Chart -->
-          <div class="chart-card" style="margin-top: 24px; width: 100%;">
-            <div class="chart-card-header">
-              <div>
-                <h3 class="chart-card-title">Net Worth Timeline</h3>
-                <p class="chart-card-subtitle">Your actual net worth (Assets - Liabilities) over the last 12 months</p>
-              </div>
-              <div class="legend-row" style="display: flex; gap: 16px; font-size: 0.8rem; font-weight: 500;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span
-                    style="display: inline-block; width: 12px; height: 3px; background-color: #8b5cf6; border-radius: 1px;"></span>
-                  <span>Net Worth</span>
-                </div>
-              </div>
+          <div class="dashboard-section" id="section-networth-timeline" style="margin-top: 24px;">
+            <div class="section-header">
+              <h2 class="section-title">Net Worth Timeline</h2>
+              <span class="section-toggle-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
             </div>
-            <div class="chart-wrapper" style="min-height: 300px;">
-              <div id="networth-chart-container" class="chart-svg-container" style="width: 100%;">
-                <!-- SVG line chart generated dynamically -->
-              </div>
-            </div>
-          </div>
-
-          <!-- Wider Performance Chart at the bottom -->
-          <div class="chart-card" style="margin-top: 24px; width: 100%;">
-            <div class="chart-card-header">
-              <div>
-                <h3 class="chart-card-title">Asset Performance</h3>
-                <p class="chart-card-subtitle">Invested vs Current value comparison by category</p>
-              </div>
-            </div>
-            <div class="chart-wrapper" style="min-height: 300px;">
-              <div id="performance-chart-container" class="chart-svg-container" style="width: 100%;">
-                <!-- SVG bar chart generated dynamically -->
-              </div>
-            </div>
-          </div>
-
-          <!-- Heatmaps Grid -->
-          <div class="charts-grid" style="margin-top: 24px;">
-            <!-- Profit Heatmap -->
-            <div class="chart-card">
-              <div class="chart-card-header">
-                <div>
-                  <h3 class="chart-card-title">Profit Heatmap</h3>
-                  <p class="chart-card-subtitle">Holdings currently in profit (intensity matches returns)</p>
-                </div>
-              </div>
-              <div class="chart-wrapper"
-                style="min-height: 180px; align-items: stretch; justify-content: flex-start; flex-direction: column;">
-                <div id="profit-heatmap-container"
-                  style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%;">
-                  <!-- Dynamic cards -->
-                </div>
-              </div>
-            </div>
-
-            <!-- Loss Heatmap -->
-            <div class="chart-card">
-              <div class="chart-card-header">
-                <div>
-                  <h3 class="chart-card-title">Loss Heatmap</h3>
-                  <p class="chart-card-subtitle">Holdings currently in loss (intensity matches drop rate)</p>
-                </div>
-              </div>
-              <div class="chart-wrapper"
-                style="min-height: 180px; align-items: stretch; justify-content: flex-start; flex-direction: column;">
-                <div id="loss-heatmap-container"
-                  style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%;">
-                  <!-- Dynamic cards -->
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Portfolio Insights & Diversification Rating Stack (Moved to bottom) -->
-          <div class="charts-grid" style="margin-top: 24px;">
-            <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column;">
-              <div class="insights-header"
-                style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;">
-                <h3 class="chart-card-title" style="margin: 0;">Portfolio Insights</h3>
-                <span class="insights-toggle-icon"
-                  style="display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </span>
-              </div>
-              <div class="insights-content" style="margin-top: 12px; flex-grow: 1;">
-                <div class="insights-list" id="insights-list-container">
-                  <!-- Insights generated dynamically -->
-                </div>
-              </div>
-            </div>
-
-            <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column; justify-content: center;">
-              <h3 class="chart-card-title" style="margin-bottom: 16px; text-align: center;">Diversification Rating</h3>
-              <div class="health-score-container"
-                style="flex-direction: row; justify-content: center; gap: 32px; align-items: center; padding: 0; flex-grow: 1;">
-                <div class="gauge-svg" style="flex-shrink: 0; width: 140px; height: 140px; position: relative;">
-                  <svg width="140" height="140" viewBox="0 0 140 140"
-                    style="transform: rotate(-90deg); display: block;">
-                    <circle cx="70" cy="70" r="55" class="gauge-bg" />
-                    <circle cx="70" cy="70" r="55" class="gauge-fill" id="health-gauge-fill" stroke-dasharray="345.5"
-                      stroke-dashoffset="345.5" />
-                  </svg>
-                  <div class="gauge-score">
-                    <div class="gauge-score-value" id="health-score-text">0</div>
-                    <div class="gauge-score-label">Score</div>
+            <div class="section-content">
+              <div class="chart-card" style="width: 100%;">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="chart-card-title">Net Worth Timeline</h3>
+                    <p class="chart-card-subtitle">Your actual net worth (Assets - Liabilities) over the last 12 months</p>
+                  </div>
+                  <div class="legend-row" style="display: flex; gap: 16px; font-size: 0.8rem; font-weight: 500;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span
+                        style="display: inline-block; width: 12px; height: 3px; background-color: #8b5cf6; border-radius: 1px;"></span>
+                      <span>Net Worth</span>
+                    </div>
                   </div>
                 </div>
-                <div class="health-score-desc-container" style="flex-grow: 1; min-width: 150px;">
-                  <div class="health-status-desc" id="health-score-desc" style="text-align: left; font-size: 0.9rem; line-height: 1.4; color: var(--text-secondary);">
-                    Analyzing...
+                <div class="chart-wrapper" style="min-height: 300px;">
+                  <div id="networth-chart-container" class="chart-svg-container" style="width: 100%;">
+                    <!-- SVG line chart generated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Asset Performance Chart -->
+          <div class="dashboard-section" id="section-asset-performance" style="margin-top: 24px;">
+            <div class="section-header">
+              <h2 class="section-title">Asset Performance</h2>
+              <span class="section-toggle-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="section-content">
+              <div class="chart-card" style="width: 100%;">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="chart-card-title">Asset Performance</h3>
+                    <p class="chart-card-subtitle">Invested vs Current value comparison by category</p>
+                  </div>
+                </div>
+                <div class="chart-wrapper" style="min-height: 300px;">
+                  <div id="performance-chart-container" class="chart-svg-container" style="width: 100%;">
+                    <!-- SVG bar chart generated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profit & Loss Heatmaps -->
+          <div class="dashboard-section" id="section-profit-loss-heatmaps" style="margin-top: 24px;">
+            <div class="section-header">
+              <h2 class="section-title">Profit &amp; Loss Heatmaps</h2>
+              <span class="section-toggle-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="section-content">
+              <div class="charts-grid" style="margin-bottom: 0;">
+                <!-- Profit Heatmap -->
+                <div class="chart-card" style="margin-bottom: 0;">
+                  <div class="chart-card-header">
+                    <div>
+                      <h3 class="chart-card-title">Profit Heatmap</h3>
+                      <p class="chart-card-subtitle">Holdings currently in profit (intensity matches returns)</p>
+                    </div>
+                  </div>
+                  <div class="chart-wrapper"
+                    style="min-height: 180px; align-items: stretch; justify-content: flex-start; flex-direction: column;">
+                    <div id="profit-heatmap-container"
+                      style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%;">
+                      <!-- Dynamic cards -->
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Loss Heatmap -->
+                <div class="chart-card" style="margin-bottom: 0;">
+                  <div class="chart-card-header">
+                    <div>
+                      <h3 class="chart-card-title">Loss Heatmap</h3>
+                      <p class="chart-card-subtitle">Holdings currently in loss (intensity matches drop rate)</p>
+                    </div>
+                  </div>
+                  <div class="chart-wrapper"
+                    style="min-height: 180px; align-items: stretch; justify-content: flex-start; flex-direction: column;">
+                    <div id="loss-heatmap-container"
+                      style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%;">
+                      <!-- Dynamic cards -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Portfolio Insights & Diversification Rating Stack -->
+          <div class="dashboard-section" id="section-insights-diversification" style="margin-top: 24px;">
+            <div class="section-header">
+              <h2 class="section-title">Portfolio Insights &amp; Diversification</h2>
+              <span class="section-toggle-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </div>
+            <div class="section-content">
+              <div class="charts-grid" style="margin-bottom: 0;">
+                <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column; margin-bottom: 0;">
+                  <h3 class="chart-card-title" style="margin: 0 0 16px 0;">Portfolio Insights</h3>
+                  <div class="insights-list" id="insights-list-container">
+                    <!-- Insights generated dynamically -->
+                  </div>
+                </div>
+
+                <div class="insights-card" style="padding: 24px; display: flex; flex-direction: column; justify-content: center; margin-bottom: 0;">
+                  <h3 class="chart-card-title" style="margin-bottom: 16px; text-align: center;">Diversification Rating</h3>
+                  <div class="health-score-container"
+                    style="flex-direction: row; justify-content: center; gap: 32px; align-items: center; padding: 0; flex-grow: 1;">
+                    <div class="gauge-svg" style="flex-shrink: 0; width: 140px; height: 140px; position: relative;">
+                      <svg width="140" height="140" viewBox="0 0 140 140"
+                        style="transform: rotate(-90deg); display: block;">
+                        <circle cx="70" cy="70" r="55" class="gauge-bg" />
+                        <circle cx="70" cy="70" r="55" class="gauge-fill" id="health-gauge-fill" stroke-dasharray="345.5"
+                          stroke-dashoffset="345.5" />
+                      </svg>
+                      <div class="gauge-score">
+                        <div class="gauge-score-value" id="health-score-text">0</div>
+                        <div class="gauge-score-label">Score</div>
+                      </div>
+                    </div>
+                    <div class="health-score-desc-container" style="flex-grow: 1; min-width: 150px;">
+                      <div class="health-status-desc" id="health-score-desc" style="text-align: left; font-size: 0.9rem; line-height: 1.4; color: var(--text-secondary);">
+                        Analyzing...
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1315,6 +1398,12 @@
         <div class="form-group">
           <label class="form-label" for="input-purchase-date">Purchase / Investment Date</label>
           <input type="date" class="form-input" id="input-purchase-date" required>
+        </div>
+
+        <!-- SIP Amount Row (shown conditionally for Mutual Funds) -->
+        <div class="form-group" id="row-sip" style="display: none;">
+          <label class="form-label" for="input-sip-amount">SIP Amount (₹ / month)</label>
+          <input type="number" class="form-input" id="input-sip-amount" min="0" placeholder="e.g., 5000">
         </div>
 
         <div class="form-actions">
