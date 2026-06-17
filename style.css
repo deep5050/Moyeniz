@@ -622,6 +622,8 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: -15px;
+  margin-bottom: -5px;
 }
 
 svg.svg-chart {
@@ -713,10 +715,11 @@ svg.svg-chart {
 .legend-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 250px;
-  overflow-y: auto;
-  padding-left: 16px;
+  gap: 8px;
+  max-height: none;
+  overflow-y: visible;
+  padding-left: 8px;
+  padding-right: 8px;
   width: 100%;
 }
 

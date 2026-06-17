@@ -569,11 +569,28 @@ function renderAllocationChart(totalPortfolioVal) {
   const slicesGroup = createSVGElement('g');
   svg.appendChild(slicesGroup);
 
+  const resetAllSlices = () => {
+    slicesGroup.querySelectorAll('.chart-slice').forEach(p => {
+      p.style.transform = '';
+      p.style.filter = '';
+    });
+    legend.querySelectorAll('.legend-item').forEach(li => {
+      li.style.transform = '';
+      li.style.backgroundColor = '';
+    });
+  };
+
+  svg.addEventListener('mouseleave', resetAllSlices);
+  legend.addEventListener('mouseleave', resetAllSlices);
+
   let currentAngle = -Math.PI / 2; // start from top
 
   sortedClasses.forEach((catData) => {
     const category = ASSET_CATEGORIES[catData.key];
-    const angleRange = (catData.pct / 100) * 2 * Math.PI;
+    let angleRange = (catData.pct / 100) * 2 * Math.PI;
+    if (catData.pct >= 99.99) {
+      angleRange = 2 * Math.PI - 0.0001;
+    }
     const endAngle = currentAngle + angleRange;
 
     // Draw doughnut slice
@@ -622,6 +639,7 @@ function renderAllocationChart(totalPortfolioVal) {
 
     // Hover listeners for the slice
     path.addEventListener('mouseenter', () => {
+      resetAllSlices();
       slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
@@ -680,6 +698,7 @@ function renderAllocationChart(totalPortfolioVal) {
     legItem.style.padding = '4px 6px';
 
     legItem.addEventListener('mouseenter', () => {
+      resetAllSlices();
       slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
@@ -749,10 +768,27 @@ function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, ti
   const slicesGroup = createSVGElement('g');
   svg.appendChild(slicesGroup);
 
+  const resetAllSlices = () => {
+    slicesGroup.querySelectorAll('.chart-slice').forEach(p => {
+      p.style.transform = '';
+      p.style.filter = '';
+    });
+    legend.querySelectorAll('.legend-item').forEach(li => {
+      li.style.transform = '';
+      li.style.backgroundColor = '';
+    });
+  };
+
+  svg.addEventListener('mouseleave', resetAllSlices);
+  legend.addEventListener('mouseleave', resetAllSlices);
+
   let currentAngle = -Math.PI / 2; // start from top
 
   items.forEach((item) => {
-    const angleRange = (item.pct / 100) * 2 * Math.PI;
+    let angleRange = (item.pct / 100) * 2 * Math.PI;
+    if (item.pct >= 99.99) {
+      angleRange = 2 * Math.PI - 0.0001;
+    }
     const endAngle = currentAngle + angleRange;
 
     // Draw doughnut slice
@@ -805,6 +841,7 @@ function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, ti
 
     // Hover listeners for the slice
     path.addEventListener('mouseenter', () => {
+      resetAllSlices();
       slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
@@ -861,6 +898,7 @@ function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, ti
     legItem.style.padding = '4px 6px';
 
     legItem.addEventListener('mouseenter', () => {
+      resetAllSlices();
       slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
