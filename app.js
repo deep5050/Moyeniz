@@ -1,4 +1,10 @@
 // State and Constants
+const GOOGLE_CLIENT_ID = '461450879911-5c3efm2cm8hkk04dgihamf8osds5k9mn.apps.googleusercontent.com';
+let googleTokenClient = null;
+let googleAccessToken = null;
+let googleUserEmail = '';
+let pendingGDriveAction = null;
+
 let investments = [];
 let liabilities = [];
 let borrowLent = [];
@@ -1959,7 +1965,7 @@ function showNetWorthTooltip(event, title, netWorth, assets, liabilities, salary
 // Interactive Tooltip Helpers
 function showTooltip(event, title, invested, current, pl, pct, customLabels = null) {
   const tooltip = document.getElementById('chart-tooltip');
-  
+
   // Clear any existing children to build a fresh, secure DOM structure
   tooltip.replaceChildren();
 
@@ -6003,6 +6009,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initFilterHandlers();
   initModalHandlers();
   initCalculatorSliders();
+  initGoogleDriveSync();
 
   // Render active view
   const activeTabLink = document.querySelector('.nav-link.active');
@@ -6015,3 +6022,272 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   updateTopActions(activeTabName);
 });
+
+
+// Google Drive Sync Helper Functions
+let gdriveRestoreConfirmTimeout = null;
+
+// Helper to mask PII email addresses
+function maskEmail(email) {
+  if (!email || !email.includes('@')) return '';
+  const [local, domain] = email.split('@');
+  if (local.length <= 2) {
+    return `${local[0]}***@${domain}`;
+  }
+  return `${local[0]}${local[1]}***${local[local.length - 1]}@${domain}`;
+}
+
+// Update UI status safely
+function updateGDriveStatus(message, isError = false) {
+  const statusEl = document.getElementById('gdrive-status');
+  if (statusEl) {
+    statusEl.textContent = message;
+    if (isError) {
+      statusEl.style.color = 'var(--color-danger)';
+    } else {
+      statusEl.style.color = 'var(--text-secondary)';
+    }
+  }
+}
+
+// Update standard connected state
+function updateSyncStatusUI() {
+  if (googleAccessToken && googleUserEmail) {
+    updateGDriveStatus(`Sync: Connected (${maskEmail(googleUserEmail)})`);
+  } else {
+    updateGDriveStatus('Sync: Not Connected');
+  }
+}
+
+// Initializer for Google Identity Services & button events
+function initGoogleDriveSync() {
+  const btnBackup = document.getElementById('btn-gdrive-backup');
+  const btnRestore = document.getElementById('btn-gdrive-restore');
+
+  if (!btnBackup || !btnRestore) return;
+
+  // Add click listeners
+  btnBackup.addEventListener('click', async () => {
+    if (!googleAccessToken) {
+      pendingGDriveAction = 'backup';
+      googleTokenClient.requestAccessToken();
+    } else {
+      await performGDriveBackup();
+    }
+  });
+
+  btnRestore.addEventListener('click', async () => {
+    if (gdriveRestoreConfirmTimeout) {
+      clearTimeout(gdriveRestoreConfirmTimeout);
+      gdriveRestoreConfirmTimeout = null;
+      if (!googleAccessToken) {
+        pendingGDriveAction = 'restore';
+        googleTokenClient.requestAccessToken();
+      } else {
+        await performGDriveRestore();
+      }
+    } else {
+      updateGDriveStatus('Click RESTORE again to confirm!');
+      gdriveRestoreConfirmTimeout = setTimeout(() => {
+        gdriveRestoreConfirmTimeout = null;
+        updateSyncStatusUI();
+      }, 4000);
+    }
+  });
+
+  // Load GIS token client
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+    googleTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'email https://www.googleapis.com/auth/drive.appdata',
+      callback: async (tokenResponse) => {
+        if (tokenResponse.error !== undefined) {
+          console.error('OAuth token client error:', tokenResponse.error);
+          updateGDriveStatus('Error: Auth failed', true);
+          return;
+        }
+        googleAccessToken = tokenResponse.access_token;
+        await fetchGoogleUserEmail();
+
+        if (pendingGDriveAction) {
+          const action = pendingGDriveAction;
+          pendingGDriveAction = null;
+          if (action === 'backup') {
+            await performGDriveBackup();
+          } else if (action === 'restore') {
+            await performGDriveRestore();
+          }
+        }
+      }
+    });
+  } else {
+    // If the library script is not loaded or blocked
+    updateGDriveStatus('Sync: Google API Blocked');
+    btnBackup.disabled = true;
+    btnRestore.disabled = true;
+  }
+}
+
+// Fetch Google User Email to display in settings status
+async function fetchGoogleUserEmail() {
+  try {
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { 'Authorization': `Bearer ${googleAccessToken}` }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      googleUserEmail = data.email || '';
+      updateSyncStatusUI();
+    }
+  } catch (err) {
+    console.error('Error fetching user email:', err);
+  }
+}
+
+// Perform Google Drive Backup (Upload)
+async function performGDriveBackup() {
+  updateGDriveStatus('Sync: Backing up...');
+  try {
+    // 1. Search for existing file in appDataFolder
+    const searchUrl = 'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name=%27moyeniz_backup.json%27';
+    const searchResponse = await fetch(searchUrl, {
+      headers: { 'Authorization': `Bearer ${googleAccessToken}` }
+    });
+
+    if (searchResponse.status === 401) {
+      // Re-authenticate
+      pendingGDriveAction = 'backup';
+      googleTokenClient.requestAccessToken();
+      return;
+    }
+
+    if (!searchResponse.ok) {
+      throw new Error(`Search failed: ${searchResponse.status}`);
+    }
+
+    const searchData = await searchResponse.json();
+    const fileId = searchData.files && searchData.files.length > 0 ? searchData.files[0].id : null;
+
+    // 2. Prepare payload
+    const payload = {
+      investments,
+      liabilities,
+      borrowLent,
+      salaries,
+      backupDate: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+
+    if (fileId) {
+      // File exists - overwrite it (PATCH)
+      const updateUrl = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`;
+      const updateResponse = await fetch(updateUrl, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${googleAccessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error(`Update failed: ${updateResponse.status}`);
+      }
+    } else {
+      // File doesn't exist - create new (POST multipart)
+      const metadata = {
+        name: 'moyeniz_backup.json',
+        parents: ['appDataFolder']
+      };
+
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', blob);
+
+      const createResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${googleAccessToken}` },
+        body: form
+      });
+
+      if (!createResponse.ok) {
+        throw new Error(`Creation failed: ${createResponse.status}`);
+      }
+    }
+
+    updateGDriveStatus('Backup Successful!');
+    setTimeout(() => updateSyncStatusUI(), 3000);
+  } catch (err) {
+    console.error('Backup error:', err);
+    updateGDriveStatus('Backup Failed', true);
+    setTimeout(() => updateSyncStatusUI(), 3000);
+  }
+}
+
+// Perform Google Drive Restore (Download)
+async function performGDriveRestore() {
+  updateGDriveStatus('Sync: Restoring...');
+  try {
+    // 1. Search for file in appDataFolder
+    const searchUrl = 'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name=%27moyeniz_backup.json%27';
+    const searchResponse = await fetch(searchUrl, {
+      headers: { 'Authorization': `Bearer ${googleAccessToken}` }
+    });
+
+    if (searchResponse.status === 401) {
+      // Re-authenticate
+      pendingGDriveAction = 'restore';
+      googleTokenClient.requestAccessToken();
+      return;
+    }
+
+    if (!searchResponse.ok) {
+      throw new Error(`Search failed: ${searchResponse.status}`);
+    }
+
+    const searchData = await searchResponse.json();
+    const fileId = searchData.files && searchData.files.length > 0 ? searchData.files[0].id : null;
+
+    if (!fileId) {
+      updateGDriveStatus('No backup found on Drive!', true);
+      setTimeout(() => updateSyncStatusUI(), 4000);
+      return;
+    }
+
+    // 2. Fetch file content
+    const restoreUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+    const restoreResponse = await fetch(restoreUrl, {
+      headers: { 'Authorization': `Bearer ${googleAccessToken}` }
+    });
+
+    if (!restoreResponse.ok) {
+      throw new Error(`Fetch failed: ${restoreResponse.status}`);
+    }
+
+    const data = await restoreResponse.json();
+
+    // 3. Load & render data
+    investments = data.investments || [];
+    liabilities = data.liabilities || [];
+    borrowLent = data.borrowLent || [];
+    salaries = data.salaries || [];
+
+    saveToStorage();
+
+    // Render currently active tab
+    const activeTabLink = document.querySelector('.nav-link.active');
+    const activeTabName = activeTabLink ? activeTabLink.getAttribute('data-tab') : 'dashboard';
+    if (activeTabName === 'dashboard') renderDashboard();
+    else if (activeTabName === 'investments') renderInvestments();
+    else if (activeTabName === 'liabilities') renderLiabilities();
+    else if (activeTabName === 'borrow-lent') renderBorrowLent();
+    else if (activeTabName === 'salary') renderSalaries();
+
+    updateGDriveStatus('Restore Successful!');
+    setTimeout(() => updateSyncStatusUI(), 3000);
+  } catch (err) {
+    console.error('Restore error:', err);
+    updateGDriveStatus('Restore Failed', true);
+    setTimeout(() => updateSyncStatusUI(), 3000);
+  }
+}
