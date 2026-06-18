@@ -18,6 +18,7 @@ let searchQuerySalaries = '';
 let searchQueryExpenses = '';
 let selectedExpenseMonth = '';
 let currentBLFilter = 'all';
+let currentCalcExpression = '';
 
 const LIABILITY_TYPES = {
   'home-loan': 'Home Loan',
@@ -3156,13 +3157,17 @@ function initModalHandlers() {
 
   // Expense Modal Handlers
   const btnCloseE = document.getElementById('btn-close-expense-modal');
-  const btnCancelE = document.getElementById('btn-cancel-expense-modal');
+  const btnCancelEStep1 = document.getElementById('btn-cancel-expense-modal-step1');
+  const btnCancelEStep2 = document.getElementById('btn-cancel-expense-modal-step2');
   const btnAddE = document.getElementById('btn-add-expense');
   const formE = document.getElementById('expense-form');
   const btnAddCatQuick = document.getElementById('btn-add-category-quick');
+  const btnCalcBack = document.getElementById('btn-calc-back-to-step1');
+  const btnCalcNext = document.getElementById('btn-calc-next');
 
   if (btnCloseE) btnCloseE.addEventListener('click', closeExpenseModal);
-  if (btnCancelE) btnCancelE.addEventListener('click', closeExpenseModal);
+  if (btnCancelEStep1) btnCancelEStep1.addEventListener('click', closeExpenseModal);
+  if (btnCancelEStep2) btnCancelEStep2.addEventListener('click', closeExpenseModal);
   if (btnAddE) btnAddE.addEventListener('click', () => openExpenseModal());
   if (formE) {
     formE.addEventListener('submit', (e) => {
@@ -3171,6 +3176,76 @@ function initModalHandlers() {
     });
   }
   if (btnAddCatQuick) btnAddCatQuick.addEventListener('click', () => openCategoryModal());
+
+  // Calculator wizard buttons
+  if (btnCalcBack) {
+    btnCalcBack.addEventListener('click', () => {
+      showExpenseWizardStep(1);
+    });
+  }
+
+  if (btnCalcNext) {
+    btnCalcNext.addEventListener('click', () => {
+      try {
+        const amount = evaluateExpression(currentCalcExpression);
+        if (amount <= 0 || isNaN(amount)) {
+          showCalculatorError('Amount must be > 0');
+          return;
+        }
+        const inputAmount = document.getElementById('input-expense-amount');
+        const finalAmtLabel = document.getElementById('calc-final-amount-label');
+        if (inputAmount) inputAmount.value = amount;
+        if (finalAmtLabel) finalAmtLabel.textContent = `₹${amount}`;
+        showExpenseWizardStep(2);
+      } catch (err) {
+        showCalculatorError('Error: ' + err.message);
+      }
+    });
+  }
+
+  // Calculator grid buttons
+  document.querySelectorAll('.calc-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.getAttribute('data-val');
+      if (val) {
+        handleCalculatorInput(val);
+      }
+    });
+  });
+
+  // Keyboard support for calculator step
+  window.addEventListener('keydown', (e) => {
+    const modal = document.getElementById('expense-modal');
+    const step1 = document.getElementById('expense-wizard-step-1');
+    if (modal && modal.classList.contains('active-modal') && step1 && step1.style.display !== 'none') {
+      const key = e.key;
+      
+      // Stop typing from propagating to inputs/selects
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      if (['Backspace', 'Enter', '/', '*'].includes(key)) {
+        e.preventDefault();
+      }
+
+      if ('0123456789'.includes(key)) {
+        handleCalculatorInput(key);
+      } else if (key === '.') {
+        handleCalculatorInput('.');
+      } else if (['+', '-', '*', '/'].includes(key)) {
+        handleCalculatorInput(key);
+      } else if (key === 'Backspace') {
+        handleCalculatorInput('back');
+      } else if (key === 'Escape') {
+        closeExpenseModal();
+      } else if (key === 'Enter') {
+        if (btnCalcNext) btnCalcNext.click();
+      } else if (key.toLowerCase() === 'c') {
+        handleCalculatorInput('C');
+      }
+    }
+  });
 
   // Category Modal Handlers
   const btnCloseC = document.getElementById('btn-close-category-modal');
@@ -5169,6 +5244,172 @@ function updateExpenseCategoryDropdown(selectedId = '') {
   });
 }
 
+function evaluateExpression(expr) {
+  // Clean up spaces and replace × and ÷ if present
+  expr = expr.replace(/×/g, '*').replace(/÷/g, '/');
+  // Remove any invalid characters (only keep numbers, ., +, -, *, /)
+  expr = expr.replace(/[^0-9.+\-*/]/g, '');
+  
+  if (!expr) return 0;
+  
+  const tokens = [];
+  let currentNum = '';
+  
+  for (let i = 0; i < expr.length; i++) {
+    const char = expr[i];
+    if ('0123456789.'.includes(char)) {
+      currentNum += char;
+    } else if ('+-*/'.includes(char)) {
+      if (currentNum !== '') {
+        tokens.push(Number(currentNum));
+        currentNum = '';
+      }
+      if (tokens.length === 0 || typeof tokens[tokens.length - 1] === 'string') {
+        if (char === '-') {
+          currentNum = '-';
+          continue;
+        } else if (char === '+') {
+          continue;
+        }
+      }
+      tokens.push(char);
+    }
+  }
+  if (currentNum !== '') {
+    tokens.push(Number(currentNum));
+  }
+  
+  if (tokens.length > 0 && typeof tokens[tokens.length - 1] === 'string') {
+    tokens.pop();
+  }
+  
+  if (tokens.length === 0) return 0;
+  
+  // Pass 1: Multiplication and Division
+  const pass1 = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    if (token === '*' || token === '/') {
+      const prev = pass1.pop();
+      const next = tokens[++i];
+      if (next === undefined) {
+        pass1.push(prev);
+        break;
+      }
+      if (token === '*') {
+        pass1.push(prev * next);
+      } else {
+        if (next === 0) throw new Error("Division by zero");
+        pass1.push(prev / next);
+      }
+    } else {
+      pass1.push(token);
+    }
+  }
+  
+  // Pass 2: Addition and Subtraction
+  let result = pass1[0];
+  for (let i = 1; i < pass1.length; i += 2) {
+    const op = pass1[i];
+    const next = pass1[i + 1];
+    if (next === undefined) break;
+    if (op === '+') {
+      result += next;
+    } else if (op === '-') {
+      result -= next;
+    }
+  }
+  
+  if (isNaN(result) || !isFinite(result)) {
+    throw new Error("Invalid result");
+  }
+  return Math.round(result * 100) / 100;
+}
+
+function showExpenseWizardStep(stepNum) {
+  const step1 = document.getElementById('expense-wizard-step-1');
+  const step2 = document.getElementById('expense-wizard-step-2');
+  if (stepNum === 1) {
+    if (step1) step1.style.display = 'block';
+    if (step2) step2.style.display = 'none';
+  } else if (stepNum === 2) {
+    if (step1) step1.style.display = 'none';
+    if (step2) step2.style.display = 'block';
+  }
+}
+
+function showCalculatorError(msg) {
+  const displayExpr = document.getElementById('calc-expression');
+  if (displayExpr) {
+    displayExpr.textContent = msg;
+    displayExpr.style.color = 'var(--color-negative)';
+  }
+}
+
+function clearCalculatorError() {
+  const displayExpr = document.getElementById('calc-expression');
+  if (displayExpr) {
+    displayExpr.style.color = 'var(--color-text-muted)';
+  }
+}
+
+function updateCalculatorUI() {
+  const displayVal = document.getElementById('calc-display-val');
+  const displayExpr = document.getElementById('calc-expression');
+  if (!displayVal || !displayExpr) return;
+
+  displayExpr.textContent = currentCalcExpression
+    .replace(/\*/g, ' × ')
+    .replace(/\//g, ' ÷ ')
+    .replace(/\+/g, ' + ')
+    .replace(/-/g, ' - ');
+
+  if (!currentCalcExpression) {
+    displayVal.textContent = '₹0';
+  } else {
+    const parts = currentCalcExpression.split(/[\+\-\*\/]/);
+    const lastPart = parts[parts.length - 1];
+    if (lastPart === '' && parts.length > 1) {
+      displayVal.textContent = currentCalcExpression[currentCalcExpression.length - 1];
+    } else {
+      displayVal.textContent = lastPart ? '₹' + lastPart : '₹0';
+    }
+  }
+}
+
+function handleCalculatorInput(val) {
+  clearCalculatorError();
+  if (val === 'C') {
+    currentCalcExpression = '';
+  } else if (val === 'back') {
+    if (currentCalcExpression.length > 0) {
+      currentCalcExpression = currentCalcExpression.slice(0, -1);
+    }
+  } else if ('+-*/'.includes(val)) {
+    if (currentCalcExpression.length > 0) {
+      const lastChar = currentCalcExpression[currentCalcExpression.length - 1];
+      if ('+-*/'.includes(lastChar)) {
+        currentCalcExpression = currentCalcExpression.slice(0, -1) + val;
+      } else {
+        currentCalcExpression += val;
+      }
+    }
+  } else if (val === '.') {
+    const parts = currentCalcExpression.split(/[\+\-\*\/]/);
+    const lastPart = parts[parts.length - 1];
+    if (!lastPart.includes('.')) {
+      if (lastPart === '') {
+        currentCalcExpression += '0.';
+      } else {
+        currentCalcExpression += '.';
+      }
+    }
+  } else {
+    currentCalcExpression += val;
+  }
+  updateCalculatorUI();
+}
+
 function openExpenseModal(eObj = null) {
   const overlay = document.getElementById('expense-modal');
   const titleText = document.getElementById('expense-modal-title-text');
@@ -5180,6 +5421,7 @@ function openExpenseModal(eObj = null) {
   const inputNotes = document.getElementById('input-expense-notes');
 
   updateExpenseCategoryDropdown(eObj ? eObj.categoryId : '');
+  clearCalculatorError();
 
   if (eObj) {
     titleText.textContent = 'Edit Expense';
@@ -5188,18 +5430,28 @@ function openExpenseModal(eObj = null) {
     inputDate.value = eObj.date;
     inputCategory.value = eObj.categoryId;
     inputNotes.value = eObj.description || '';
+    
+    const finalAmtLabel = document.getElementById('calc-final-amount-label');
+    if (finalAmtLabel) finalAmtLabel.textContent = `₹${eObj.amount}`;
+    currentCalcExpression = eObj.amount.toString();
+    updateCalculatorUI();
+    
+    showExpenseWizardStep(2);
   } else {
     titleText.textContent = 'Add Expense';
     inputId.value = '';
     inputAmount.value = '';
     
-    // Default date to today
     const todayStr = new Date().toISOString().split('T')[0];
-    inputDate.value = todayStr;
+    if (inputDate) inputDate.value = todayStr;
     
-    inputNotes.value = '';
+    if (inputNotes) inputNotes.value = '';
+    
+    currentCalcExpression = '';
+    updateCalculatorUI();
+    showExpenseWizardStep(1);
   }
-  overlay.classList.add('active-modal');
+  if (overlay) overlay.classList.add('active-modal');
 }
 
 function closeExpenseModal() {
