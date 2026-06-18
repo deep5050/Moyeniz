@@ -12,6 +12,14 @@ let salaries = [];
 let expenses = [];
 let expenseCategories = [];
 let globalBudget = 40000;
+let monthlyBudgets = {};
+
+function getBudgetForMonth(monthStr) {
+  if (monthlyBudgets && monthlyBudgets[monthStr] !== undefined) {
+    return monthlyBudgets[monthStr];
+  }
+  return globalBudget;
+}
 let searchQueryLiabilities = '';
 let searchQueryBorrowLent = '';
 let searchQuerySalaries = '';
@@ -255,6 +263,7 @@ function saveToStorage() {
   localStorage.setItem('moyeniz_expenses', JSON.stringify(expenses));
   localStorage.setItem('moyeniz_expense_categories', JSON.stringify(expenseCategories));
   localStorage.setItem('moyeniz_global_budget', globalBudget.toString());
+  localStorage.setItem('moyeniz_monthly_budgets', JSON.stringify(monthlyBudgets));
 }
 
 async function loadFromStorage() {
@@ -265,6 +274,7 @@ async function loadFromStorage() {
   const eData = localStorage.getItem('moyeniz_expenses');
   const ecData = localStorage.getItem('moyeniz_expense_categories');
   const gbData = localStorage.getItem('moyeniz_global_budget');
+  const mbData = localStorage.getItem('moyeniz_monthly_budgets');
 
   if (data !== null && lData !== null) {
     investments = JSON.parse(data);
@@ -274,6 +284,11 @@ async function loadFromStorage() {
     expenses = eData !== null ? JSON.parse(eData) : [];
     expenseCategories = ecData !== null ? JSON.parse(ecData) : [...DEFAULT_EXPENSE_CATEGORIES];
     globalBudget = gbData !== null ? Number(gbData) : 40000;
+    try {
+      monthlyBudgets = mbData !== null ? JSON.parse(mbData) : {};
+    } catch (e) {
+      monthlyBudgets = {};
+    }
     saveToStorage();
     return;
   }
@@ -292,6 +307,7 @@ async function loadFromStorage() {
         expenses = Array.isArray(backup.expenses) ? backup.expenses : [];
         expenseCategories = Array.isArray(backup.expenseCategories) ? backup.expenseCategories : [...DEFAULT_EXPENSE_CATEGORIES];
         globalBudget = typeof backup.globalBudget === 'number' ? backup.globalBudget : 40000;
+        monthlyBudgets = backup.monthlyBudgets && typeof backup.monthlyBudgets === 'object' ? backup.monthlyBudgets : {};
         saveToStorage();
       }
     }
@@ -354,6 +370,11 @@ function initNavigation() {
       views.forEach(v => v.classList.remove('active-view'));
       const activeView = document.getElementById(`view-${tabName}`);
       if (activeView) activeView.classList.add('active-view');
+
+      // Reset scroll position on tab switch
+      const mainWrap = document.querySelector('.main-wrapper');
+      if (mainWrap) mainWrap.scrollTop = 0;
+      window.scrollTo(0, 0);
 
       // Update headings
       if (tabName === 'dashboard') {
@@ -615,7 +636,8 @@ function renderDashboard() {
   }
   const dashExpensesLbl = document.getElementById('lbl-dash-expenses');
   if (dashExpensesLbl) {
-    dashExpensesLbl.textContent = `Budget: ${formatCurrency(globalBudget)}`;
+    const activeMonthStr = new Date().toISOString().slice(0, 7);
+    dashExpensesLbl.textContent = `Budget: ${formatCurrency(getBudgetForMonth(activeMonthStr))}`;
   }
   const dashExpensesCard = document.getElementById('card-dash-expenses');
   if (dashExpensesCard) {
@@ -2916,7 +2938,8 @@ function downloadPortfolioJSON() {
     salaries: salaries,
     expenses: expenses,
     expenseCategories: expenseCategories,
-    globalBudget: globalBudget
+    globalBudget: globalBudget,
+    monthlyBudgets: monthlyBudgets
   };
 
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -2943,6 +2966,7 @@ function handleUploadJSON(file) {
         expenses = Array.isArray(data.expenses) ? data.expenses : [];
         expenseCategories = Array.isArray(data.expenseCategories) ? data.expenseCategories : [...DEFAULT_EXPENSE_CATEGORIES];
         globalBudget = typeof data.globalBudget === 'number' ? data.globalBudget : 40000;
+        monthlyBudgets = data.monthlyBudgets && typeof data.monthlyBudgets === 'object' ? data.monthlyBudgets : {};
         saveToStorage();
 
         // Close welcome wizard if open
@@ -3264,6 +3288,8 @@ function initModalHandlers() {
         historyContent.style.display = 'none';
         arrowToggle.style.transform = 'rotate(0deg)';
         labelToggle.textContent = 'Show';
+        // Scroll toggle button into view to reset scroll height and fix empty bottom space
+        btnToggleHistory.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     });
   }
@@ -5518,7 +5544,7 @@ function openBudgetModal() {
   const overlay = document.getElementById('budget-modal');
   const inputBudget = document.getElementById('input-budget-amount');
   if (inputBudget) {
-    inputBudget.value = globalBudget;
+    inputBudget.value = getBudgetForMonth(selectedExpenseMonth);
   }
   if (overlay) overlay.classList.add('active-modal');
 }
@@ -5613,7 +5639,12 @@ function saveBudgetForm() {
     return;
   }
 
-  globalBudget = amount;
+  if (selectedExpenseMonth) {
+    monthlyBudgets[selectedExpenseMonth] = amount;
+  } else {
+    globalBudget = amount;
+  }
+  
   saveToStorage();
   closeBudgetModal();
   renderExpenses();
@@ -5652,7 +5683,8 @@ function renderExpenses() {
   });
 
   // Calculate remaining budget
-  const remainingBudget = globalBudget - totalSpent;
+  const currentBudget = getBudgetForMonth(selectedExpenseMonth);
+  const remainingBudget = currentBudget - totalSpent;
   const remainingBudgetCard = document.getElementById('card-remaining-budget');
 
   // Find salary entry for this month
@@ -5662,7 +5694,7 @@ function renderExpenses() {
 
   // Render stats texts
   document.getElementById('val-total-expenses').textContent = formatCurrency(totalSpent);
-  document.getElementById('val-monthly-budget').textContent = formatCurrency(globalBudget);
+  document.getElementById('val-monthly-budget').textContent = formatCurrency(currentBudget);
   document.getElementById('val-remaining-budget').textContent = formatCurrency(remainingBudget);
   
   const valSurplus = document.getElementById('val-salary-balance');
@@ -5870,6 +5902,7 @@ function renderExpenseCategoryChart(monthlyExpenses, totalSpent) {
   const legend = document.getElementById('expense-category-legend');
   clearContainer(container);
   clearContainer(legend);
+  const currentBudget = getBudgetForMonth(selectedExpenseMonth);
 
   if (totalSpent === 0) {
     const emptyMsg = document.createElement('div');
@@ -6012,7 +6045,7 @@ function renderExpenseCategoryChart(monthlyExpenses, totalSpent) {
     });
 
     path.addEventListener('mousemove', (e) => {
-      showCustomTooltip(e, `${item.icon} ${item.name}`, 'Amount Spent:', formatCurrency(item.value), 'Share of Month:', item.pct.toFixed(1) + '%', 'Monthly Budget: ' + formatCurrency(globalBudget));
+      showCustomTooltip(e, `${item.icon} ${item.name}`, 'Amount Spent:', formatCurrency(item.value), 'Share of Month:', item.pct.toFixed(1) + '%', 'Monthly Budget: ' + formatCurrency(currentBudget));
     });
     path.addEventListener('mouseleave', hideTooltip);
 
@@ -6074,11 +6107,11 @@ function renderExpenseCategoryChart(monthlyExpenses, totalSpent) {
       path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
       legItem.style.transform = 'translateX(4px)';
       legItem.style.backgroundColor = 'var(--bg-light)';
-      showCustomTooltip(e, `${item.icon} ${item.name}`, 'Amount Spent:', formatCurrency(item.value), 'Share of Month:', item.pct.toFixed(1) + '%', 'Monthly Budget: ' + formatCurrency(globalBudget));
+      showCustomTooltip(e, `${item.icon} ${item.name}`, 'Amount Spent:', formatCurrency(item.value), 'Share of Month:', item.pct.toFixed(1) + '%', 'Monthly Budget: ' + formatCurrency(currentBudget));
     });
 
     legItem.addEventListener('mousemove', (e) => {
-      showCustomTooltip(e, `${item.icon} ${item.name}`, 'Amount Spent:', formatCurrency(item.value), 'Share of Month:', item.pct.toFixed(1) + '%', 'Monthly Budget: ' + formatCurrency(globalBudget));
+      showCustomTooltip(e, `${item.icon} ${item.name}`, 'Amount Spent:', formatCurrency(item.value), 'Share of Month:', item.pct.toFixed(1) + '%', 'Monthly Budget: ' + formatCurrency(currentBudget));
     });
 
     legItem.addEventListener('mouseleave', () => {
@@ -6164,7 +6197,8 @@ function renderExpenseTrendChart() {
   trendData.forEach(d => {
     if (d.amount > maxVal) maxVal = d.amount;
   });
-  maxVal = Math.max(globalBudget, maxVal);
+  const currentBudget = getBudgetForMonth(selectedExpenseMonth);
+  maxVal = Math.max(currentBudget, maxVal);
   maxVal = Math.max(10000, maxVal * 1.15);
 
   // Draw Y grid lines & labels
@@ -6194,7 +6228,7 @@ function renderExpenseTrendChart() {
   }
 
   // Draw Budget Line
-  const budgetY = margin.top + chartHeight - ((globalBudget / maxVal) * chartHeight);
+  const budgetY = margin.top + chartHeight - ((currentBudget / maxVal) * chartHeight);
   if (budgetY >= margin.top && budgetY <= margin.top + chartHeight) {
     const bLine = createSVGElement('line');
     bLine.setAttribute('x1', margin.left.toString());
@@ -6213,7 +6247,7 @@ function renderExpenseTrendChart() {
     bText.setAttribute('fill', '#a855f7');
     bText.style.fontSize = '9px';
     bText.style.fontWeight = 'bold';
-    bText.textContent = `Budget: ${formatCurrency(globalBudget)}`;
+    bText.textContent = `Budget: ${formatCurrency(currentBudget)}`;
     svg.appendChild(bText);
   }
 
@@ -6245,8 +6279,9 @@ function renderExpenseTrendChart() {
 
     rect.addEventListener('mousemove', (e) => {
       const title = formatMonthLabel(d.month);
-      const percentOfBudget = globalBudget > 0 ? ((d.amount / globalBudget) * 100).toFixed(0) + '%' : 'N/A';
-      showCustomTooltip(e, title, 'Total Spent:', formatCurrency(d.amount), 'Budget Usage:', percentOfBudget, 'Monthly Limit: ' + formatCurrency(globalBudget));
+      const mBudget = getBudgetForMonth(d.month);
+      const percentOfBudget = mBudget > 0 ? ((d.amount / mBudget) * 100).toFixed(0) + '%' : 'N/A';
+      showCustomTooltip(e, title, 'Total Spent:', formatCurrency(d.amount), 'Budget Usage:', percentOfBudget, 'Monthly Limit: ' + formatCurrency(mBudget));
     });
 
     svg.appendChild(rect);
@@ -7635,6 +7670,7 @@ function initSettingsHandlers() {
         expenses = [...SAMPLE_EXPENSES];
         expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
         globalBudget = 40000;
+        monthlyBudgets = {};
         saveToStorage();
         renderSettings();
         
@@ -7656,6 +7692,7 @@ function initSettingsHandlers() {
         localStorage.removeItem('moyeniz_expenses');
         localStorage.removeItem('moyeniz_expense_categories');
         localStorage.removeItem('moyeniz_global_budget');
+        localStorage.removeItem('moyeniz_monthly_budgets');
         investments = [];
         liabilities = [];
         borrowLent = [];
@@ -7663,6 +7700,7 @@ function initSettingsHandlers() {
         expenses = [];
         expenseCategories = [];
         globalBudget = 40000;
+        monthlyBudgets = {};
         
         renderSettings();
 
@@ -7769,6 +7807,7 @@ async function performGDriveBackup() {
       expenses,
       expenseCategories,
       globalBudget,
+      monthlyBudgets,
       backupDate: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
@@ -7869,6 +7908,7 @@ async function performGDriveRestore() {
     expenses = data.expenses || [];
     expenseCategories = data.expenseCategories || [...DEFAULT_EXPENSE_CATEGORIES];
     globalBudget = typeof data.globalBudget === 'number' ? data.globalBudget : 40000;
+    monthlyBudgets = data.monthlyBudgets && typeof data.monthlyBudgets === 'object' ? data.monthlyBudgets : {};
 
     saveToStorage();
 

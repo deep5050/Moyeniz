@@ -2007,7 +2007,10 @@ input[type="range"].slider::-webkit-slider-thumb:hover {
    RESPONSIVE — 900px  (tablet, sidebar slides off-canvas)
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 900px) {
-  .app-container { flex-direction: row; }
+  .app-container {
+    display: block;
+    min-height: auto;
+  }
 
   .sidebar {
     position: fixed;
@@ -2063,6 +2066,7 @@ input[type="range"].slider::-webkit-slider-thumb:hover {
   }
 
   .main-wrapper {
+    display: block;
     height: auto;
     overflow-y: visible;
     width: 100%;
@@ -2216,6 +2220,7 @@ input[type="range"].slider::-webkit-slider-thumb:hover {
   }
 
   .top-actions .btn .btn-text { display: none; }
+  .top-actions .btn svg { margin-right: 0 !important; }
 
   .page-view { padding: 10px 8px; }
 
