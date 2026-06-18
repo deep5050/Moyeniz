@@ -1330,7 +1330,7 @@
         </div>
 
         <!-- Charts Grid -->
-        <div class="charts-grid">
+        <div class="charts-grid expense-charts-grid">
           <!-- Pie/Doughnut Card -->
           <div class="chart-card">
             <div class="chart-card-header">
@@ -1349,16 +1349,16 @@
             </div>
           </div>
 
-          <!-- Trend Card -->
+          <!-- Daily Trend Card -->
           <div class="chart-card">
             <div class="chart-card-header">
               <div>
-                <h3 class="chart-card-title">Monthly Expense Trend</h3>
-                <p class="chart-card-subtitle">Monthly expense outflow (last 6 months)</p>
+                <h3 class="chart-card-title">Daily Expense Trend</h3>
+                <p class="chart-card-subtitle">Daily spend breakdown for the selected month</p>
               </div>
             </div>
             <div class="chart-wrapper" style="min-height: 300px;">
-              <div id="expense-trend-chart-container" class="chart-svg-container" style="width: 100%;">
+              <div id="expense-daily-trend-chart-container" class="chart-svg-container" style="width: 100%;">
                 <!-- SVG dynamically generated -->
               </div>
             </div>
@@ -1397,9 +1397,41 @@
           </div>
         </div>
 
-        <!-- Expense List Container -->
-        <div class="investments-container" id="expense-list-container">
-          <!-- Expense items generated dynamically -->
+        <!-- Collapsible Expense History Panel -->
+        <div class="dashboard-section" style="margin-top: 24px;">
+          <div class="section-header" id="btn-toggle-expense-history" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3 class="section-title" style="margin-bottom: 0;">Expense History</h3>
+              <span id="expense-history-count" class="badge" style="font-size: 0.72rem; padding: 2px 8px; background: var(--color-surface-3); border: 1px solid var(--color-border); border-radius: 20px;">0 items</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 0.78rem; color: var(--color-text-muted);" id="toggle-history-label">Show</span>
+              <svg id="arrow-toggle-expense-history" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="transition: transform var(--duration-base) var(--ease-standard); transform: rotate(0deg);">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+          
+          <div id="expense-history-collapse-content" style="display: none; margin-top: 14px;">
+            <div class="investments-container" id="expense-list-container">
+              <!-- Expense items generated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Expense Trend Card at bottom -->
+        <div class="chart-card" style="margin-top: 24px; margin-bottom: 20px;">
+          <div class="chart-card-header">
+            <div>
+              <h3 class="chart-card-title">Monthly Expense Trend</h3>
+              <p class="chart-card-subtitle">Monthly expense outflow (last 6 months)</p>
+            </div>
+          </div>
+          <div class="chart-wrapper" style="min-height: 300px;">
+            <div id="expense-trend-chart-container" class="chart-svg-container" style="width: 100%;">
+              <!-- SVG dynamically generated -->
+            </div>
+          </div>
         </div>
 
         <!-- Floating Add Button for Expense Entry -->

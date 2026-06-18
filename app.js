@@ -3247,6 +3247,27 @@ function initModalHandlers() {
     }
   });
 
+  // Expense History Collapse Toggle
+  const btnToggleHistory = document.getElementById('btn-toggle-expense-history');
+  const historyContent = document.getElementById('expense-history-collapse-content');
+  const arrowToggle = document.getElementById('arrow-toggle-expense-history');
+  const labelToggle = document.getElementById('toggle-history-label');
+
+  if (btnToggleHistory && historyContent && arrowToggle && labelToggle) {
+    btnToggleHistory.addEventListener('click', () => {
+      const isCollapsed = historyContent.style.display === 'none';
+      if (isCollapsed) {
+        historyContent.style.display = 'block';
+        arrowToggle.style.transform = 'rotate(180deg)';
+        labelToggle.textContent = 'Hide';
+      } else {
+        historyContent.style.display = 'none';
+        arrowToggle.style.transform = 'rotate(0deg)';
+        labelToggle.textContent = 'Show';
+      }
+    });
+  }
+
   // Category Modal Handlers
   const btnCloseC = document.getElementById('btn-close-category-modal');
   const btnCancelC = document.getElementById('btn-cancel-category-modal');
@@ -4675,14 +4696,24 @@ function showCustomTooltip(event, title, label1, val1, label2, val2, label3, val
   const l1 = document.getElementById('chart-tooltip-label-1');
   const l2 = document.getElementById('chart-tooltip-label-2');
   const l3 = document.getElementById('chart-tooltip-label-3');
-  if (l1) l1.textContent = label1;
-  if (l2) l2.textContent = label2;
-  if (l3) l3.textContent = label3;
+  
+  if (l1) {
+    l1.textContent = label1 || '';
+    l1.parentElement.style.display = label1 ? 'flex' : 'none';
+  }
+  if (l2) {
+    l2.textContent = label2 || '';
+    l2.parentElement.style.display = label2 ? 'flex' : 'none';
+  }
+  if (l3) {
+    l3.textContent = label3 || '';
+    l3.parentElement.style.display = label3 ? 'flex' : 'none';
+  }
 
   tTitle.textContent = title;
-  tInvested.textContent = val1;
-  tCurrent.textContent = val2;
-  tPl.textContent = val3;
+  tInvested.textContent = val1 || '';
+  tCurrent.textContent = val2 || '';
+  tPl.textContent = val3 || '';
   tPl.className = 'chart-tooltip-value';
 
   const container = document.querySelector('.main-wrapper');
@@ -5670,6 +5701,12 @@ function renderExpenses() {
   // Sort newest first
   filteredExpenses.sort((a, b) => b.date.localeCompare(a.date));
 
+  // Update count badge
+  const historyCount = document.getElementById('expense-history-count');
+  if (historyCount) {
+    historyCount.textContent = `${filteredExpenses.length} item${filteredExpenses.length === 1 ? '' : 's'}`;
+  }
+
   // Render list cards
   if (filteredExpenses.length === 0) {
     const emptyState = document.createElement('div');
@@ -5824,6 +5861,7 @@ function renderExpenses() {
 
   // Draw Charts
   renderExpenseCategoryChart(monthlyExpenses, totalSpent);
+  renderExpenseDailyTrendChart(monthlyExpenses);
   renderExpenseTrendChart();
 }
 
@@ -6232,6 +6270,189 @@ function renderExpenseTrendChart() {
       svg.appendChild(valText);
     }
   });
+
+  container.appendChild(svg);
+}
+
+function formatChartLabel(amount) {
+  const num = Number(amount);
+  if (isNaN(num)) return '₹0';
+  const sign = num < 0 ? '-' : '';
+  const absNum = Math.abs(num);
+
+  let formatted = '';
+  if (absNum >= 10000000) {
+    formatted = (absNum / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+  } else if (absNum >= 100000) {
+    formatted = (absNum / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+  } else if (absNum >= 1000) {
+    formatted = (absNum / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  } else {
+    formatted = Math.round(absNum).toString();
+  }
+  return `${sign}₹${formatted}`;
+}
+
+function renderExpenseDailyTrendChart(monthlyExpenses) {
+  const container = document.getElementById('expense-daily-trend-chart-container');
+  if (!container) return;
+  clearContainer(container);
+
+  if (monthlyExpenses.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.textContent = 'No daily trend data available.';
+    emptyMsg.style.color = 'var(--text-muted)';
+    emptyMsg.style.fontSize = '0.82rem';
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  const [yearStr, monthStr] = selectedExpenseMonth.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const numDays = new Date(year, month, 0).getDate();
+
+  // Initialize daily totals
+  const dailyTotals = Array(numDays).fill(0);
+  monthlyExpenses.forEach(e => {
+    const d = new Date(e.date);
+    if (!isNaN(d.getTime())) {
+      const dayNum = d.getDate();
+      if (dayNum >= 1 && dayNum <= numDays) {
+        dailyTotals[dayNum - 1] += Number(e.amount);
+      }
+    }
+  });
+
+  const isMobile = window.innerWidth < 600;
+  const svgWidth = isMobile ? 420 : 640;
+  const svgHeight = 280;
+  const margin = { top: 25, right: 15, bottom: 40, left: 55 };
+  const chartWidth = svgWidth - margin.left - margin.right;
+  const chartHeight = svgHeight - margin.top - margin.bottom;
+
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+  svg.classList.add('svg-chart');
+
+  // Gradients
+  const defs = createSVGElement('defs');
+  const barGrad = createSVGElement('linearGradient');
+  barGrad.setAttribute('id', 'grad-expense-daily-bar');
+  barGrad.setAttribute('x1', '0%'); barGrad.setAttribute('y1', '0%');
+  barGrad.setAttribute('x2', '0%'); barGrad.setAttribute('y2', '100%');
+  
+  const stop1 = createSVGElement('stop'); stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', 'var(--color-accent)');
+  const stop2 = createSVGElement('stop'); stop2.setAttribute('offset', '100%'); stop2.setAttribute('stop-color', 'var(--color-accent-dark)');
+  barGrad.appendChild(stop1); barGrad.appendChild(stop2);
+  defs.appendChild(barGrad);
+  svg.appendChild(defs);
+
+  // Find max value
+  let maxVal = Math.max(...dailyTotals);
+  maxVal = Math.max(1000, maxVal * 1.15); // Add padding on top
+
+  // Y-Axis Gridlines and Labels
+  const yTicks = 4;
+  for (let i = 0; i <= yTicks; i++) {
+    const val = (maxVal / yTicks) * i;
+    const y = margin.top + chartHeight - (val / maxVal) * chartHeight;
+
+    // Gridline
+    if (i > 0) {
+      const gridline = createSVGElement('line');
+      gridline.setAttribute('x1', margin.left.toString());
+      gridline.setAttribute('y1', y.toString());
+      gridline.setAttribute('x2', (margin.left + chartWidth).toString());
+      gridline.setAttribute('y2', y.toString());
+      gridline.setAttribute('stroke', 'var(--color-border)');
+      gridline.setAttribute('stroke-dasharray', '3,3');
+      svg.appendChild(gridline);
+    }
+
+    // Label
+    const label = createSVGElement('text');
+    label.setAttribute('x', (margin.left - 8).toString());
+    label.setAttribute('y', (y + 4).toString());
+    label.setAttribute('text-anchor', 'end');
+    label.setAttribute('fill', 'var(--color-text-muted)');
+    label.style.fontSize = '0.68rem';
+    label.style.fontFamily = 'var(--font-body)';
+    label.textContent = formatChartLabel(val);
+    svg.appendChild(label);
+  }
+
+  // X-Axis Labels
+  const dayStep = isMobile ? 10 : 5;
+  for (let d = 1; d <= numDays; d++) {
+    if (d === 1 || d % dayStep === 0 || d === numDays) {
+      const x = margin.left + ((d - 0.5) / numDays) * chartWidth;
+      const label = createSVGElement('text');
+      label.setAttribute('x', x.toString());
+      label.setAttribute('y', (margin.top + chartHeight + 18).toString());
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('fill', 'var(--color-text-muted)');
+      label.style.fontSize = '0.68rem';
+      label.style.fontFamily = 'var(--font-body)';
+      label.textContent = d.toString();
+      svg.appendChild(label);
+    }
+  }
+
+  // Draw bars
+  const barGapFactor = 0.25;
+  const daySpace = chartWidth / numDays;
+  const barWidth = daySpace * (1 - barGapFactor);
+
+  for (let i = 0; i < numDays; i++) {
+    const dayVal = dailyTotals[i];
+    if (dayVal === 0) continue;
+    
+    const barHeight = (dayVal / maxVal) * chartHeight;
+    const x = margin.left + i * daySpace + (daySpace - barWidth) / 2;
+    const y = margin.top + chartHeight - barHeight;
+
+    const rect = createSVGElement('rect');
+    rect.setAttribute('x', x.toString());
+    rect.setAttribute('y', y.toString());
+    rect.setAttribute('width', barWidth.toString());
+    rect.setAttribute('height', Math.max(2, barHeight).toString());
+    rect.setAttribute('rx', Math.min(3, barWidth / 2).toString());
+    rect.setAttribute('fill', 'url(#grad-expense-daily-bar)');
+    
+    rect.style.transition = 'opacity 0.2s ease, filter 0.2s ease';
+    rect.style.cursor = 'pointer';
+
+    rect.addEventListener('mouseenter', (e) => {
+      rect.style.opacity = '0.85';
+      rect.style.filter = 'drop-shadow(0px 2px 4px var(--color-accent))';
+      const formattedDate = `${yearStr}-${monthStr}-${String(i + 1).padStart(2, '0')}`;
+      showCustomTooltip(e, `Date: ${formattedDate}`, 'Daily Expenses:', formatCurrency(dayVal));
+    });
+
+    rect.addEventListener('mousemove', (e) => {
+      const formattedDate = `${yearStr}-${monthStr}-${String(i + 1).padStart(2, '0')}`;
+      showCustomTooltip(e, `Date: ${formattedDate}`, 'Daily Expenses:', formatCurrency(dayVal));
+    });
+
+    rect.addEventListener('mouseleave', () => {
+      rect.style.opacity = '1';
+      rect.style.filter = '';
+      hideTooltip();
+    });
+
+    svg.appendChild(rect);
+  }
+
+  // X-Axis baseline
+  const baseline = createSVGElement('line');
+  baseline.setAttribute('x1', margin.left.toString());
+  baseline.setAttribute('y1', (margin.top + chartHeight).toString());
+  baseline.setAttribute('x2', (margin.left + chartWidth).toString());
+  baseline.setAttribute('y2', (margin.top + chartHeight).toString());
+  baseline.setAttribute('stroke', 'var(--color-border)');
+  baseline.setAttribute('stroke-width', '1');
+  svg.appendChild(baseline);
 
   container.appendChild(svg);
 }
