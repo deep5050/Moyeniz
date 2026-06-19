@@ -162,7 +162,11 @@ function createSVGElement(tag) {
 
 function clearContainer(container) {
   if (container) {
-    container.replaceChildren();
+    if (container.tagName === 'SELECT') {
+      container.options.length = 0;
+    } else {
+      container.replaceChildren();
+    }
   }
 }
 
