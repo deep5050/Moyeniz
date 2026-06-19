@@ -667,6 +667,18 @@ function initNavigation() {
       if (mainWrap) mainWrap.scrollTop = 0;
       window.scrollTo(0, 0);
 
+      // Reset scroll and floating button states on tab switch
+      const scrollTopBtn = document.getElementById('btn-scroll-top');
+      const sidebarToggleBtn = document.getElementById('btn-sidebar-toggle');
+      if (scrollTopBtn) {
+        scrollTopBtn.classList.remove('active');
+        scrollTopBtn.classList.remove('above-fab');
+      }
+      if (sidebarToggleBtn) {
+        sidebarToggleBtn.classList.remove('active');
+        sidebarToggleBtn.classList.remove('floating');
+      }
+
       // Update headings
       if (tabName === 'dashboard') {
         viewTitle.textContent = 'Dashboard';
@@ -7696,6 +7708,86 @@ function generatePDFReport() {
 }
 
 
+// Mobile and desktop scroll-to-top / floating menu behavior
+function initScrollHandling() {
+  const scrollTopBtn = document.getElementById('btn-scroll-top');
+  const sidebarToggleBtn = document.getElementById('btn-sidebar-toggle');
+  const mainWrapper = document.querySelector('.main-wrapper');
+
+  if (!scrollTopBtn) return;
+
+  let lastScrollTop = 0;
+  const threshold = 150;
+
+  function handleScroll(scrollTop) {
+    // Check if active view has a FAB
+    const activeView = document.querySelector('.page-view.active-view');
+    const hasFAB = activeView ? !!activeView.querySelector('.floating-add-btn') : false;
+
+    if (hasFAB) {
+      scrollTopBtn.classList.add('above-fab');
+    } else {
+      scrollTopBtn.classList.remove('above-fab');
+    }
+
+    if (scrollTop > threshold) {
+      if (scrollTop < lastScrollTop) {
+        // Scrolling UP (swipe down) -> Show buttons
+        scrollTopBtn.classList.add('active');
+        if (sidebarToggleBtn) {
+          sidebarToggleBtn.classList.add('floating');
+          // Force a reflow for transition to apply
+          sidebarToggleBtn.offsetHeight;
+          sidebarToggleBtn.classList.add('active');
+        }
+      } else {
+        // Scrolling DOWN (swipe up) -> Hide buttons
+        scrollTopBtn.classList.remove('active');
+        if (sidebarToggleBtn) {
+          sidebarToggleBtn.classList.remove('active');
+        }
+      }
+    } else {
+      // Near top -> Hide buttons
+      scrollTopBtn.classList.remove('active');
+      if (sidebarToggleBtn) {
+        sidebarToggleBtn.classList.remove('active');
+        // Only remove 'floating' once the transition has a chance to start fading
+        if (!sidebarToggleBtn.classList.contains('active')) {
+          sidebarToggleBtn.classList.remove('floating');
+        }
+      }
+    }
+    lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+  }
+
+  // Bind scroll to window for mobile layout
+  window.addEventListener('scroll', () => {
+    if (window.innerWidth <= 900) {
+      handleScroll(window.scrollY || document.documentElement.scrollTop);
+    }
+  }, { passive: true });
+
+  // Bind scroll to main-wrapper for desktop layout
+  if (mainWrapper) {
+    mainWrapper.addEventListener('scroll', () => {
+      if (window.innerWidth > 900) {
+        handleScroll(mainWrapper.scrollTop);
+      }
+    }, { passive: true });
+  }
+
+  // Scroll to Top behavior
+  scrollTopBtn.addEventListener('click', () => {
+    if (window.innerWidth <= 900) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (mainWrapper) {
+      mainWrapper.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+}
+
+
 // Initializer
 document.addEventListener('DOMContentLoaded', async () => {
   await loadFromStorage();
@@ -7707,6 +7799,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initSettingsHandlers();
   initCalculatorSliders();
   initGoogleDriveSync();
+  initScrollHandling();
 
   // Render active view
   const activeTabLink = document.querySelector('.nav-link.active');
