@@ -162,7 +162,11 @@ function createSVGElement(tag) {
 
 function clearContainer(container) {
   if (container) {
-    container.replaceChildren();
+    if (container.tagName === 'SELECT') {
+      container.options.length = 0;
+    } else {
+      container.replaceChildren();
+    }
   }
 }
 
@@ -254,6 +258,275 @@ function appendSVGDefs(svgEl) {
   svgEl.appendChild(defs);
 }
 
+// Cryptographic Verification Public Key
+const PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEZLQCrPf3rUAAIXcBFo+82T
+F/CUICY4OrcgPMmin/WXrMbvz4VH5tNXrSY2TzWmg9ENBltDOWG/UCXcVF
+3HBC+w==
+-----END PUBLIC KEY-----`;
+
+function str2ab(str) {
+  const buf = new ArrayBuffer(str.length);
+  const bufView = new Uint8Array(buf);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return buf;
+}
+
+async function importPublicKey(pem) {
+  const pemHeader = "-----BEGIN PUBLIC KEY-----";
+  const pemFooter = "-----END PUBLIC KEY-----";
+  const pemContents = pem.substring(pemHeader.length, pem.length - pemFooter.length).replace(/\s/g, '');
+  const binaryDerString = window.atob(pemContents);
+  const binaryDer = str2ab(binaryDerString);
+
+  return await window.crypto.subtle.importKey(
+    "spki",
+    binaryDer,
+    {
+      name: "ECDSA",
+      namedCurve: "P-256"
+    },
+    true,
+    ["verify"]
+  );
+}
+
+async function verifySignature(dataText, signatureBase64) {
+  try {
+    const publicKey = await importPublicKey(PUBLIC_KEY_PEM);
+    const encoder = new TextEncoder();
+    const dataBuffer = encoder.encode(dataText);
+    const signatureBuffer = Uint8Array.from(window.atob(signatureBase64), c => c.charCodeAt(0));
+
+    return await window.crypto.subtle.verify(
+      {
+        name: "ECDSA",
+        hash: { name: "SHA-256" }
+      },
+      publicKey,
+      signatureBuffer,
+      dataBuffer
+    );
+  } catch (err) {
+    console.error("Signature verification error:", err);
+    return false;
+  }
+}
+
+// Strict JSON Schema Validation
+function validateBackupSchema(data) {
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    throw new Error('Backup data must be a JSON object.');
+  }
+
+  // Core required fields
+  if (!Array.isArray(data.investments)) {
+    throw new Error('Backup must contain an "investments" array.');
+  }
+  if (!Array.isArray(data.liabilities)) {
+    throw new Error('Backup must contain a "liabilities" array.');
+  }
+
+  // Validate investments
+  const validAssetClasses = Object.keys(ASSET_CATEGORIES);
+  data.investments.forEach((inv, index) => {
+    if (typeof inv !== 'object' || inv === null) {
+      throw new Error(`Investment at index ${index} must be an object.`);
+    }
+    if (typeof inv.id !== 'string' || !inv.id) {
+      throw new Error(`Investment at index ${index} must have a valid string "id".`);
+    }
+    if (typeof inv.name !== 'string' || !inv.name) {
+      throw new Error(`Investment "${inv.id || index}" must have a valid string "name".`);
+    }
+    if (typeof inv.assetClass !== 'string' || !validAssetClasses.includes(inv.assetClass)) {
+      throw new Error(`Investment "${inv.name}" has an invalid assetClass "${inv.assetClass}".`);
+    }
+    if (typeof inv.investedAmount !== 'number' || isNaN(inv.investedAmount) || inv.investedAmount < 0) {
+      throw new Error(`Investment "${inv.name}" must have a non-negative "investedAmount".`);
+    }
+    if (typeof inv.currentAmount !== 'number' || isNaN(inv.currentAmount) || inv.currentAmount < 0) {
+      throw new Error(`Investment "${inv.name}" must have a non-negative "currentAmount".`);
+    }
+  });
+
+  // Validate liabilities
+  const validLiabilityTypes = Object.keys(LIABILITY_TYPES);
+  data.liabilities.forEach((l, index) => {
+    if (typeof l !== 'object' || l === null) {
+      throw new Error(`Liability at index ${index} must be an object.`);
+    }
+    if (typeof l.id !== 'string' || !l.id) {
+      throw new Error(`Liability at index ${index} must have a valid string "id".`);
+    }
+    if (typeof l.name !== 'string' || !l.name) {
+      throw new Error(`Liability "${l.id || index}" must have a valid string "name".`);
+    }
+    if (typeof l.type !== 'string' || !validLiabilityTypes.includes(l.type)) {
+      throw new Error(`Liability "${l.name}" has an invalid type "${l.type}".`);
+    }
+    if (typeof l.outstanding !== 'number' || isNaN(l.outstanding) || l.outstanding < 0) {
+      throw new Error(`Liability "${l.name}" must have a non-negative "outstanding" amount.`);
+    }
+    if (typeof l.emi !== 'number' || isNaN(l.emi) || l.emi < 0) {
+      throw new Error(`Liability "${l.name}" must have a non-negative "emi".`);
+    }
+    if (typeof l.rate !== 'number' || isNaN(l.rate) || l.rate < 0) {
+      throw new Error(`Liability "${l.name}" must have a non-negative interest "rate".`);
+    }
+    if (typeof l.totalTenure !== 'number' || isNaN(l.totalTenure) || l.totalTenure < 0) {
+      throw new Error(`Liability "${l.name}" must have a non-negative "totalTenure".`);
+    }
+    if (typeof l.tenure !== 'number' || isNaN(l.tenure) || l.tenure < 0) {
+      throw new Error(`Liability "${l.name}" must have a non-negative "tenure".`);
+    }
+  });
+
+  // Validate borrowLent if present
+  if (data.borrowLent !== undefined) {
+    if (!Array.isArray(data.borrowLent)) {
+      throw new Error('"borrowLent" must be an array.');
+    }
+    data.borrowLent.forEach((bl, index) => {
+      if (typeof bl !== 'object' || bl === null) {
+        throw new Error(`Borrow/Lent entry at index ${index} must be an object.`);
+      }
+      if (typeof bl.id !== 'string' || !bl.id) {
+        throw new Error(`Borrow/Lent entry at index ${index} must have a valid string "id".`);
+      }
+      if (bl.type !== 'lent' && bl.type !== 'borrowed') {
+        throw new Error(`Borrow/Lent entry "${bl.id || index}" must have type "lent" or "borrowed".`);
+      }
+      if (typeof bl.person !== 'string' || !bl.person) {
+        throw new Error(`Borrow/Lent entry "${bl.id || index}" must have a valid string "person".`);
+      }
+      if (typeof bl.amount !== 'number' || isNaN(bl.amount) || bl.amount < 0) {
+        throw new Error(`Borrow/Lent entry "${bl.id || index}" must have a non-negative "amount".`);
+      }
+      if (typeof bl.outstanding !== 'number' || isNaN(bl.outstanding) || bl.outstanding < 0) {
+        throw new Error(`Borrow/Lent entry "${bl.id || index}" must have a non-negative "outstanding" amount.`);
+      }
+      if (typeof bl.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(bl.date)) {
+        throw new Error(`Borrow/Lent entry "${bl.id || index}" must have a valid date in YYYY-MM-DD format.`);
+      }
+      if (bl.status !== 'active' && bl.status !== 'paid') {
+        throw new Error(`Borrow/Lent entry "${bl.id || index}" must have status "active" or "paid".`);
+      }
+      if (!Array.isArray(bl.payments)) {
+        throw new Error(`Borrow/Lent entry "${bl.id || index}" must have a "payments" array.`);
+      }
+      bl.payments.forEach((p, pIndex) => {
+        if (typeof p !== 'object' || p === null) {
+          throw new Error(`Payment at index ${pIndex} in Borrow/Lent entry "${bl.id}" must be an object.`);
+        }
+        if (typeof p.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(p.date)) {
+          throw new Error(`Payment at index ${pIndex} in Borrow/Lent entry "${bl.id}" must have a valid date in YYYY-MM-DD format.`);
+        }
+        if (typeof p.amount !== 'number' || isNaN(p.amount) || p.amount < 0) {
+          throw new Error(`Payment at index ${pIndex} in Borrow/Lent entry "${bl.id}" must have a non-negative "amount".`);
+        }
+      });
+    });
+  }
+
+  // Validate salaries if present
+  if (data.salaries !== undefined) {
+    if (!Array.isArray(data.salaries)) {
+      throw new Error('"salaries" must be an array.');
+    }
+    data.salaries.forEach((s, index) => {
+      if (typeof s !== 'object' || s === null) {
+        throw new Error(`Salary at index ${index} must be an object.`);
+      }
+      if (typeof s.id !== 'string' || !s.id) {
+        throw new Error(`Salary at index ${index} must have a valid string "id".`);
+      }
+      if (typeof s.month !== 'string' || !/^\d{4}-\d{2}$/.test(s.month)) {
+        throw new Error(`Salary "${s.id || index}" must have a valid "month" in YYYY-MM format.`);
+      }
+      if (typeof s.inhand !== 'number' || isNaN(s.inhand) || s.inhand < 0) {
+        throw new Error(`Salary "${s.id || index}" must have a non-negative "inhand" amount.`);
+      }
+      if (typeof s.deduction !== 'number' || isNaN(s.deduction) || s.deduction < 0) {
+        throw new Error(`Salary "${s.id || index}" must have a non-negative "deduction" amount.`);
+      }
+    });
+  }
+
+  // Validate expenses if present
+  if (data.expenses !== undefined) {
+    if (!Array.isArray(data.expenses)) {
+      throw new Error('"expenses" must be an array.');
+    }
+    data.expenses.forEach((e, index) => {
+      if (typeof e !== 'object' || e === null) {
+        throw new Error(`Expense at index ${index} must be an object.`);
+      }
+      if (typeof e.id !== 'string' || !e.id) {
+        throw new Error(`Expense at index ${index} must have a valid string "id".`);
+      }
+      if (typeof e.description !== 'string') {
+        throw new Error(`Expense "${e.id || index}" must have a string "description".`);
+      }
+      if (typeof e.amount !== 'number' || isNaN(e.amount) || e.amount < 0) {
+        throw new Error(`Expense "${e.id || index}" must have a non-negative "amount".`);
+      }
+      if (typeof e.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
+        throw new Error(`Expense "${e.id || index}" must have a valid "date" in YYYY-MM-DD format.`);
+      }
+      if (typeof e.categoryId !== 'string' || !e.categoryId) {
+        throw new Error(`Expense "${e.id || index}" must have a valid string "categoryId".`);
+      }
+    });
+  }
+
+  // Validate expenseCategories if present
+  if (data.expenseCategories !== undefined) {
+    if (!Array.isArray(data.expenseCategories)) {
+      throw new Error('"expenseCategories" must be an array.');
+    }
+    data.expenseCategories.forEach((ec, index) => {
+      if (typeof ec !== 'object' || ec === null) {
+        throw new Error(`Expense category at index ${index} must be an object.`);
+      }
+      if (typeof ec.id !== 'string' || !ec.id) {
+        throw new Error(`Expense category at index ${index} must have a valid string "id".`);
+      }
+      if (typeof ec.name !== 'string' || !ec.name) {
+        throw new Error(`Expense category "${ec.id || index}" must have a valid string "name".`);
+      }
+      if (typeof ec.icon !== 'string' || !ec.icon) {
+        throw new Error(`Expense category "${ec.id || index}" must have a valid string "icon".`);
+      }
+    });
+  }
+
+  // Validate budgets
+  if (data.globalBudget !== undefined) {
+    if (typeof data.globalBudget !== 'number' || isNaN(data.globalBudget) || data.globalBudget < 0) {
+      throw new Error('"globalBudget" must be a non-negative number.');
+    }
+  }
+  if (data.monthlyBudgets !== undefined) {
+    if (typeof data.monthlyBudgets !== 'object' || data.monthlyBudgets === null || Array.isArray(data.monthlyBudgets)) {
+      throw new Error('"monthlyBudgets" must be an object.');
+    }
+    Object.keys(data.monthlyBudgets).forEach(month => {
+      if (!/^\d{4}-\d{2}$/.test(month)) {
+        throw new Error(`Budget month key "${month}" must be in YYYY-MM format.`);
+      }
+      const val = data.monthlyBudgets[month];
+      if (typeof val !== 'number' || isNaN(val) || val < 0) {
+        throw new Error(`Budget value for "${month}" must be a non-negative number.`);
+      }
+    });
+  }
+
+  return true;
+}
+
 // Local Storage Handlers
 function saveToStorage() {
   localStorage.setItem('moyeniz_investments', JSON.stringify(investments));
@@ -298,18 +571,36 @@ async function loadFromStorage() {
   try {
     const response = await fetch('moyeniz.json', { method: 'GET', cache: 'no-store' });
     if (response.status === 200) {
-      const backup = await response.json();
-      if (Array.isArray(backup.investments) && Array.isArray(backup.liabilities)) {
-        investments = backup.investments;
-        liabilities = backup.liabilities;
-        borrowLent = Array.isArray(backup.borrowLent) ? backup.borrowLent : [];
-        salaries = Array.isArray(backup.salaries) ? backup.salaries : [];
-        expenses = Array.isArray(backup.expenses) ? backup.expenses : [];
-        expenseCategories = Array.isArray(backup.expenseCategories) ? backup.expenseCategories : [...DEFAULT_EXPENSE_CATEGORIES];
-        globalBudget = typeof backup.globalBudget === 'number' ? backup.globalBudget : 40000;
-        monthlyBudgets = backup.monthlyBudgets && typeof backup.monthlyBudgets === 'object' ? backup.monthlyBudgets : {};
-        saveToStorage();
+      const responseText = await response.text();
+      let signatureVerified = false;
+      try {
+        const sigResponse = await fetch('moyeniz.json.sig', { method: 'GET', cache: 'no-store' });
+        if (sigResponse.status === 200) {
+          const sigText = (await sigResponse.text()).trim();
+          signatureVerified = await verifySignature(responseText, sigText);
+        }
+      } catch (sigErr) {
+        console.error("Error reading signature file:", sigErr);
       }
+
+      if (!signatureVerified) {
+        console.error("Cryptographic signature verification failed for remote moyeniz.json! Blocking load.");
+        alert("CRITICAL SECURITY ALERT: Remote moyeniz.json failed cryptographic verification (missing or invalid signature). It was blocked from loading.");
+        return;
+      }
+
+      const backup = JSON.parse(responseText);
+      validateBackupSchema(backup);
+
+      investments = backup.investments;
+      liabilities = backup.liabilities;
+      borrowLent = Array.isArray(backup.borrowLent) ? backup.borrowLent : [];
+      salaries = Array.isArray(backup.salaries) ? backup.salaries : [];
+      expenses = Array.isArray(backup.expenses) ? backup.expenses : [];
+      expenseCategories = Array.isArray(backup.expenseCategories) ? backup.expenseCategories : [...DEFAULT_EXPENSE_CATEGORIES];
+      globalBudget = typeof backup.globalBudget === 'number' ? backup.globalBudget : 40000;
+      monthlyBudgets = backup.monthlyBudgets && typeof backup.monthlyBudgets === 'object' ? backup.monthlyBudgets : {};
+      saveToStorage();
     }
     // Any non-200 (e.g. 404) is silently ignored; file is optional.
   } catch (_err) {
@@ -638,6 +929,18 @@ function renderDashboard() {
   if (dashExpensesLbl) {
     const activeMonthStr = new Date().toISOString().slice(0, 7);
     dashExpensesLbl.textContent = `Budget: ${formatCurrency(getBudgetForMonth(activeMonthStr))}`;
+  }
+  // Calculate today's expenses
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let todayExpenses = 0;
+  expenses.forEach(e => {
+    if (e.date === todayStr) {
+      todayExpenses += Number(e.amount);
+    }
+  });
+  const dashExpensesToday = document.getElementById('lbl-dash-expenses-today');
+  if (dashExpensesToday) {
+    dashExpensesToday.textContent = `Today: ${formatCurrency(todayExpenses)}`;
   }
   const dashExpensesCard = document.getElementById('card-dash-expenses');
   if (dashExpensesCard) {
@@ -2055,29 +2358,36 @@ function renderNetWorthChart(netWorthData) {
 // Show custom detailed tooltip for Net Worth Chart
 function showNetWorthTooltip(event, title, netWorth, assets, liabilities, salary, emi) {
   const tooltip = document.getElementById('chart-tooltip');
-  tooltip.innerHTML = `
-    <div class="chart-tooltip-title">${title}</div>
-    <div class="chart-tooltip-row">
-      <span>Net Worth:</span>
-      <strong class="chart-tooltip-value" style="color: var(--color-primary); font-weight: 700;">${formatCurrency(netWorth)}</strong>
-    </div>
-    <div class="chart-tooltip-row">
-      <span>Assets:</span>
-      <span class="chart-tooltip-value" style="color: #6366f1;">${formatCurrency(assets)}</span>
-    </div>
-    <div class="chart-tooltip-row">
-      <span>Liabilities:</span>
-      <span class="chart-tooltip-value" style="color: var(--color-danger);">${formatCurrency(liabilities)}</span>
-    </div>
-    <div class="chart-tooltip-row">
-      <span>Salary Credited:</span>
-      <span class="chart-tooltip-value" style="color: var(--color-success);">${formatCurrency(salary)}</span>
-    </div>
-    <div class="chart-tooltip-row">
-      <span>EMIs Paid:</span>
-      <span class="chart-tooltip-value" style="color: var(--color-danger);">${formatCurrency(emi)}</span>
-    </div>
-  `;
+  tooltip.replaceChildren();
+
+  const tTitle = document.createElement('div');
+  tTitle.className = 'chart-tooltip-title';
+  tTitle.textContent = title;
+  tooltip.appendChild(tTitle);
+
+  const rows = [
+    { label: 'Net Worth:', value: formatCurrency(netWorth), style: 'color: var(--color-primary); font-weight: 700;' },
+    { label: 'Assets:', value: formatCurrency(assets), style: 'color: #6366f1;' },
+    { label: 'Liabilities:', value: formatCurrency(liabilities), style: 'color: var(--color-danger);' },
+    { label: 'Salary Credited:', value: formatCurrency(salary), style: 'color: var(--color-success);' },
+    { label: 'EMIs Paid:', value: formatCurrency(emi), style: 'color: var(--color-danger);' }
+  ];
+
+  rows.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'chart-tooltip-row';
+    const span = document.createElement('span');
+    span.textContent = r.label;
+    row.appendChild(span);
+
+    const val = document.createElement('span');
+    val.className = 'chart-tooltip-value';
+    val.setAttribute('style', r.style);
+    val.textContent = r.value;
+    row.appendChild(val);
+
+    tooltip.appendChild(row);
+  });
 
   const container = document.querySelector('.main-wrapper');
   const rect = container.getBoundingClientRect();
@@ -2954,44 +3264,46 @@ function downloadPortfolioJSON() {
 }
 
 function handleUploadJSON(file) {
+  if (file.size > 5 * 1024 * 1024) {
+    alert('File upload rejected. The backup file exceeds the 5MB size limit.');
+    return;
+  }
   const reader = new FileReader();
   reader.onload = function (e) {
     try {
       const data = JSON.parse(e.target.result);
-      if (Array.isArray(data.investments) && Array.isArray(data.liabilities)) {
-        investments = data.investments;
-        liabilities = data.liabilities;
-        borrowLent = Array.isArray(data.borrowLent) ? data.borrowLent : [];
-        salaries = Array.isArray(data.salaries) ? data.salaries : [];
-        expenses = Array.isArray(data.expenses) ? data.expenses : [];
-        expenseCategories = Array.isArray(data.expenseCategories) ? data.expenseCategories : [...DEFAULT_EXPENSE_CATEGORIES];
-        globalBudget = typeof data.globalBudget === 'number' ? data.globalBudget : 40000;
-        monthlyBudgets = data.monthlyBudgets && typeof data.monthlyBudgets === 'object' ? data.monthlyBudgets : {};
-        saveToStorage();
+      validateBackupSchema(data);
 
-        // Close welcome wizard if open
-        const welcome = document.getElementById('welcome-overlay');
-        if (welcome) {
-          welcome.classList.remove('active-modal');
-        }
+      investments = data.investments;
+      liabilities = data.liabilities;
+      borrowLent = Array.isArray(data.borrowLent) ? data.borrowLent : [];
+      salaries = Array.isArray(data.salaries) ? data.salaries : [];
+      expenses = Array.isArray(data.expenses) ? data.expenses : [];
+      expenseCategories = Array.isArray(data.expenseCategories) ? data.expenseCategories : [...DEFAULT_EXPENSE_CATEGORIES];
+      globalBudget = typeof data.globalBudget === 'number' ? data.globalBudget : 40000;
+      monthlyBudgets = data.monthlyBudgets && typeof data.monthlyBudgets === 'object' ? data.monthlyBudgets : {};
+      saveToStorage();
 
-        // Re-render currently active view
-        const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
-        if (activeTab === 'dashboard') renderDashboard();
-        if (activeTab === 'investments') renderInvestments();
-        if (activeTab === 'liabilities') renderLiabilities();
-        if (activeTab === 'borrow-lent') renderBorrowLent();
-        if (activeTab === 'salary') renderSalaries();
-        if (activeTab === 'expenses') renderExpenses();
-
-        updateTopActions(activeTab);
-
-        alert('Portfolio data loaded successfully!');
-      } else {
-        alert('Invalid data format. JSON must contain "investments" and "liabilities" arrays.');
+      // Close welcome wizard if open
+      const welcome = document.getElementById('welcome-overlay');
+      if (welcome) {
+        welcome.classList.remove('active-modal');
       }
+
+      // Re-render currently active view
+      const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
+      if (activeTab === 'dashboard') renderDashboard();
+      if (activeTab === 'investments') renderInvestments();
+      if (activeTab === 'liabilities') renderLiabilities();
+      if (activeTab === 'borrow-lent') renderBorrowLent();
+      if (activeTab === 'salary') renderSalaries();
+      if (activeTab === 'expenses') renderExpenses();
+
+      updateTopActions(activeTab);
+
+      alert('Portfolio data loaded successfully!');
     } catch (err) {
-      alert('Error parsing JSON file. Please ensure it is a valid JSON document.');
+      alert('Error parsing/validating JSON backup: ' + err.message);
     }
   };
   reader.readAsText(file);
@@ -4697,50 +5009,40 @@ function formatMonthShort(monthStr) {
 
 function showCustomTooltip(event, title, label1, val1, label2, val2, label3, val3) {
   const tooltip = document.getElementById('chart-tooltip');
-  if (!document.getElementById('chart-tooltip-title')) {
-    tooltip.innerHTML = `
-      <div id="chart-tooltip-title" class="chart-tooltip-title">Category</div>
-      <div class="chart-tooltip-row">
-        <span id="chart-tooltip-label-1">Invested:</span>
-        <span id="chart-tooltip-invested" class="chart-tooltip-value">₹0</span>
-      </div>
-      <div class="chart-tooltip-row">
-        <span id="chart-tooltip-label-2">Current:</span>
-        <span id="chart-tooltip-current" class="chart-tooltip-value">₹0</span>
-      </div>
-      <div class="chart-tooltip-row">
-        <span id="chart-tooltip-label-3">P&amp;L:</span>
-        <span id="chart-tooltip-pl" class="chart-tooltip-value">₹0 (+0%)</span>
-      </div>
-    `;
-  }
-  const tTitle = document.getElementById('chart-tooltip-title');
-  const tInvested = document.getElementById('chart-tooltip-invested');
-  const tCurrent = document.getElementById('chart-tooltip-current');
-  const tPl = document.getElementById('chart-tooltip-pl');
+  tooltip.replaceChildren();
 
-  const l1 = document.getElementById('chart-tooltip-label-1');
-  const l2 = document.getElementById('chart-tooltip-label-2');
-  const l3 = document.getElementById('chart-tooltip-label-3');
-  
-  if (l1) {
-    l1.textContent = label1 || '';
-    l1.parentElement.style.display = label1 ? 'flex' : 'none';
-  }
-  if (l2) {
-    l2.textContent = label2 || '';
-    l2.parentElement.style.display = label2 ? 'flex' : 'none';
-  }
-  if (l3) {
-    l3.textContent = label3 || '';
-    l3.parentElement.style.display = label3 ? 'flex' : 'none';
-  }
-
+  const tTitle = document.createElement('div');
+  tTitle.id = 'chart-tooltip-title';
+  tTitle.className = 'chart-tooltip-title';
   tTitle.textContent = title;
-  tInvested.textContent = val1 || '';
-  tCurrent.textContent = val2 || '';
-  tPl.textContent = val3 || '';
-  tPl.className = 'chart-tooltip-value';
+  tooltip.appendChild(tTitle);
+
+  const rows = [
+    { labelId: 'chart-tooltip-label-1', valId: 'chart-tooltip-invested', label: label1, value: val1 },
+    { labelId: 'chart-tooltip-label-2', valId: 'chart-tooltip-current', label: label2, value: val2 },
+    { labelId: 'chart-tooltip-label-3', valId: 'chart-tooltip-pl', label: label3, value: val3 }
+  ];
+
+  rows.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'chart-tooltip-row';
+    if (!r.label) {
+      row.style.display = 'none';
+    }
+
+    const span = document.createElement('span');
+    span.id = r.labelId;
+    span.textContent = r.label || '';
+    row.appendChild(span);
+
+    const val = document.createElement('span');
+    val.id = r.valId;
+    val.className = 'chart-tooltip-value';
+    val.textContent = r.value || '';
+    row.appendChild(val);
+
+    tooltip.appendChild(row);
+  });
 
   const container = document.querySelector('.main-wrapper');
   const rect = container.getBoundingClientRect();
@@ -5304,83 +5606,20 @@ function updateExpenseCategoryDropdown(selectedId = '') {
 function evaluateExpression(expr) {
   // Clean up spaces and replace × and ÷ if present
   expr = expr.replace(/×/g, '*').replace(/÷/g, '/');
-  // Remove any invalid characters (only keep numbers, ., +, -, *, /)
-  expr = expr.replace(/[^0-9.+\-*/]/g, '');
+  // Remove any invalid characters (only keep numbers, ., +, -, *, /, parentheses, spaces)
+  expr = expr.replace(/[^0-9.+\-*/()\s]/g, '');
   
   if (!expr) return 0;
   
-  const tokens = [];
-  let currentNum = '';
-  
-  for (let i = 0; i < expr.length; i++) {
-    const char = expr[i];
-    if ('0123456789.'.includes(char)) {
-      currentNum += char;
-    } else if ('+-*/'.includes(char)) {
-      if (currentNum !== '') {
-        tokens.push(Number(currentNum));
-        currentNum = '';
-      }
-      if (tokens.length === 0 || typeof tokens[tokens.length - 1] === 'string') {
-        if (char === '-') {
-          currentNum = '-';
-          continue;
-        } else if (char === '+') {
-          continue;
-        }
-      }
-      tokens.push(char);
+  try {
+    const result = math.evaluate(expr);
+    if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
+      throw new Error("Invalid result");
     }
+    return Math.round(result * 100) / 100;
+  } catch (err) {
+    throw new Error("Invalid expression");
   }
-  if (currentNum !== '') {
-    tokens.push(Number(currentNum));
-  }
-  
-  if (tokens.length > 0 && typeof tokens[tokens.length - 1] === 'string') {
-    tokens.pop();
-  }
-  
-  if (tokens.length === 0) return 0;
-  
-  // Pass 1: Multiplication and Division
-  const pass1 = [];
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
-    if (token === '*' || token === '/') {
-      const prev = pass1.pop();
-      const next = tokens[++i];
-      if (next === undefined) {
-        pass1.push(prev);
-        break;
-      }
-      if (token === '*') {
-        pass1.push(prev * next);
-      } else {
-        if (next === 0) throw new Error("Division by zero");
-        pass1.push(prev / next);
-      }
-    } else {
-      pass1.push(token);
-    }
-  }
-  
-  // Pass 2: Addition and Subtraction
-  let result = pass1[0];
-  for (let i = 1; i < pass1.length; i += 2) {
-    const op = pass1[i];
-    const next = pass1[i + 1];
-    if (next === undefined) break;
-    if (op === '+') {
-      result += next;
-    } else if (op === '-') {
-      result -= next;
-    }
-  }
-  
-  if (isNaN(result) || !isFinite(result)) {
-    throw new Error("Invalid result");
-  }
-  return Math.round(result * 100) / 100;
 }
 
 function showExpenseWizardStep(stepNum) {
@@ -5696,6 +5935,19 @@ function renderExpenses() {
   document.getElementById('val-total-expenses').textContent = formatCurrency(totalSpent);
   document.getElementById('val-monthly-budget').textContent = formatCurrency(currentBudget);
   document.getElementById('val-remaining-budget').textContent = formatCurrency(remainingBudget);
+
+  // Compute Today's Expenses
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let todaySpent = 0;
+  expenses.forEach(e => {
+    if (e.date === todayStr) {
+      todaySpent += Number(e.amount);
+    }
+  });
+  const todayExpensesVal = document.getElementById('val-today-expenses');
+  if (todayExpensesVal) {
+    todayExpensesVal.textContent = formatCurrency(todaySpent);
+  }
   
   const valSurplus = document.getElementById('val-salary-balance');
   const lblSurplus = document.getElementById('lbl-salary-balance');
@@ -7899,9 +8151,10 @@ async function performGDriveRestore() {
     }
 
     const data = await restoreResponse.json();
+    validateBackupSchema(data);
 
     // 3. Load & render data
-    investments = data.investments || [];
+    investments = data.investments;
     liabilities = data.liabilities || [];
     borrowLent = data.borrowLent || [];
     salaries = data.salaries || [];
