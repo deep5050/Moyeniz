@@ -88,7 +88,7 @@ const SAMPLE_EXPENSES = [
   { id: 'exp-8', description: 'Annual Health checkup', amount: 1200, date: '2026-06-15', categoryId: 'cat-medical' },
   { id: 'exp-9', description: 'Mid-month vegetables and fruits', amount: 1500, date: '2026-06-16', categoryId: 'cat-groceries' },
   { id: 'exp-10', description: 'Books and stationery', amount: 850, date: '2026-06-17', categoryId: 'cat-education' },
-  
+
   // May 2026
   { id: 'exp-101', description: 'Flat House Rent', amount: 15000, date: '2026-05-01', categoryId: 'cat-rent' },
   { id: 'exp-102', description: 'Groceries store bill', amount: 4100, date: '2026-05-03', categoryId: 'cat-groceries' },
@@ -537,6 +537,15 @@ function saveToStorage() {
   localStorage.setItem('moyeniz_expense_categories', JSON.stringify(expenseCategories));
   localStorage.setItem('moyeniz_global_budget', globalBudget.toString());
   localStorage.setItem('moyeniz_monthly_budgets', JSON.stringify(monthlyBudgets));
+}
+
+function adjustDefaultSavingsBalance(amount) {
+  const defaultSavings = investments.find(inv => inv.assetClass === 'savings' && inv.isDefaultSavings);
+  if (defaultSavings) {
+    defaultSavings.investedAmount = defaultSavings.investedAmount + amount;
+    defaultSavings.currentAmount = defaultSavings.currentAmount + amount;
+    defaultSavings.lastUpdated = new Date().toISOString();
+  }
 }
 
 async function loadFromStorage() {
@@ -2949,6 +2958,15 @@ function renderInvestments() {
     badge.textContent = (ASSET_CATEGORIES[inv.assetClass] && ASSET_CATEGORIES[inv.assetClass].label) || inv.assetClass;
     badgeRow.appendChild(badge);
 
+    if (inv.assetClass === 'savings' && inv.isDefaultSavings) {
+      const defaultBadge = document.createElement('span');
+      defaultBadge.className = 'asset-badge';
+      defaultBadge.style.backgroundColor = 'var(--color-positive-subtle)';
+      defaultBadge.style.color = 'var(--color-positive)';
+      defaultBadge.textContent = 'Default';
+      badgeRow.appendChild(defaultBadge);
+    }
+
     if (inv.subtype && inv.subtype !== 'none') {
       const subtypeMap = {
         'large': 'Large Cap', 'mid': 'Mid Cap', 'small': 'Small Cap', 'flexi': 'Flexi Cap',
@@ -3053,6 +3071,42 @@ function renderInvestments() {
         recordSipPaid(inv.id);
       });
       colActions.appendChild(btnSipPaid);
+    }
+
+    if (inv.assetClass === 'savings') {
+      const btnSetDefault = document.createElement('button');
+      btnSetDefault.className = 'icon-btn';
+      btnSetDefault.setAttribute('aria-label', inv.isDefaultSavings ? 'Default Savings Account' : 'Set as Default Savings');
+      if (inv.isDefaultSavings) {
+        btnSetDefault.style.color = '#eab308'; // Gold color for active default
+      } else {
+        btnSetDefault.style.color = 'var(--text-secondary)';
+      }
+
+      const starSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      starSvg.setAttribute('viewBox', '0 0 24 24');
+      starSvg.setAttribute('fill', inv.isDefaultSavings ? 'currentColor' : 'none');
+      starSvg.setAttribute('stroke', 'currentColor');
+      starSvg.setAttribute('stroke-width', '2');
+      starSvg.setAttribute('width', '16');
+      starSvg.setAttribute('height', '16');
+
+      const starPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      starPath.setAttribute('d', 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z');
+      starSvg.appendChild(starPath);
+      btnSetDefault.appendChild(starSvg);
+
+      btnSetDefault.addEventListener('click', (e) => {
+        e.stopPropagation();
+        investments.forEach(item => {
+          if (item.assetClass === 'savings') {
+            item.isDefaultSavings = (item.id === inv.id);
+          }
+        });
+        saveToStorage();
+        renderInvestments();
+      });
+      colActions.appendChild(btnSetDefault);
     }
 
     const btnEdit = document.createElement('button');
@@ -3167,6 +3221,9 @@ function openModal(invObj = null) {
   const inputSip = document.getElementById('input-sip-amount');
   const rowSip = document.getElementById('row-sip');
 
+  const rowDefaultSavings = document.getElementById('row-default-savings');
+  const inputDefaultSavings = document.getElementById('input-default-savings');
+
   if (invObj) {
     titleText.textContent = 'Edit Investment';
     inputId.value = invObj.id;
@@ -3190,6 +3247,16 @@ function openModal(invObj = null) {
       rowSip.style.display = 'none';
       inputSip.value = '';
     }
+
+    if (rowDefaultSavings && inputDefaultSavings) {
+      if (invObj.assetClass === 'savings') {
+        rowDefaultSavings.style.display = 'flex';
+        inputDefaultSavings.checked = !!invObj.isDefaultSavings;
+      } else {
+        rowDefaultSavings.style.display = 'none';
+        inputDefaultSavings.checked = false;
+      }
+    }
   } else {
     titleText.textContent = 'Add Investment';
     inputId.value = '';
@@ -3201,6 +3268,11 @@ function openModal(invObj = null) {
     inputPurchaseDate.value = new Date().toISOString().slice(0, 10);
     rowSip.style.display = 'none';
     inputSip.value = '';
+
+    if (rowDefaultSavings && inputDefaultSavings) {
+      rowDefaultSavings.style.display = 'none';
+      inputDefaultSavings.checked = false;
+    }
   }
 
   overlay.classList.add('active-modal');
@@ -3406,6 +3478,17 @@ function initModalHandlers() {
       rowSip.style.display = 'none';
       document.getElementById('input-sip-amount').value = '';
     }
+
+    const rowDefaultSavings = document.getElementById('row-default-savings');
+    if (rowDefaultSavings) {
+      if (e.target.value === 'savings') {
+        rowDefaultSavings.style.display = 'flex';
+      } else {
+        rowDefaultSavings.style.display = 'none';
+        const checkbox = document.getElementById('input-default-savings');
+        if (checkbox) checkbox.checked = false;
+      }
+    }
   });
 
   form.addEventListener('submit', (e) => {
@@ -3555,7 +3638,7 @@ function initModalHandlers() {
     const step1 = document.getElementById('expense-wizard-step-1');
     if (modal && modal.classList.contains('active-modal') && step1 && step1.style.display !== 'none') {
       const key = e.key;
-      
+
       // Stop typing from propagating to inputs/selects
       if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'TEXTAREA') {
         return;
@@ -3688,6 +3771,10 @@ function saveInvestmentForm() {
   const purchaseDate = document.getElementById('input-purchase-date').value || new Date().toISOString().slice(0, 10);
   const sipAmount = assetClass === 'indian-mutual-fund' ? Number(document.getElementById('input-sip-amount').value) || 0 : 0;
 
+  const checkbox = document.getElementById('input-default-savings');
+  const isDefaultSavings = (assetClass === 'savings' && checkbox) ? checkbox.checked : false;
+
+  let savedId = id;
   if (id) {
     // Edit mode
     const idx = investments.findIndex(inv => inv.id === id);
@@ -3701,12 +3788,14 @@ function saveInvestmentForm() {
         currentAmount,
         purchaseDate,
         sipAmount,
+        isDefaultSavings,
         lastUpdated: new Date().toISOString()
       };
     }
   } else {
     // Add mode
     const newId = crypto.randomUUID ? crypto.randomUUID() : 'rand-' + Math.random().toString(36).substring(2, 9);
+    savedId = newId;
     investments.push({
       id: newId,
       assetClass,
@@ -3716,7 +3805,17 @@ function saveInvestmentForm() {
       currentAmount,
       purchaseDate,
       sipAmount,
+      isDefaultSavings,
       lastUpdated: new Date().toISOString()
+    });
+  }
+
+  // Clear default status from other accounts
+  if (isDefaultSavings) {
+    investments.forEach(inv => {
+      if (inv.id !== savedId && inv.assetClass === 'savings') {
+        inv.isDefaultSavings = false;
+      }
     });
   }
 
@@ -5104,6 +5203,7 @@ function saveSalaryForm() {
   if (id) {
     const idx = salaries.findIndex(s => s.id === id);
     if (idx !== -1) {
+      const oldInhand = salaries[idx].inhand;
       salaries[idx] = {
         ...salaries[idx],
         month,
@@ -5111,16 +5211,20 @@ function saveSalaryForm() {
         deduction,
         notes
       };
+      adjustDefaultSavingsBalance(inhand - oldInhand);
     }
   } else {
     const duplicate = salaries.find(s => s.month === month);
     if (duplicate) {
+      // TODO(security): Standard browser confirm dialog is used here due to pure client-side vanilla JS architecture constraints.
       if (!confirm(`An entry for ${formatMonthLabel(month)} already exists. Do you want to update it instead?`)) {
         return;
       }
+      const oldInhand = duplicate.inhand;
       duplicate.inhand = inhand;
       duplicate.deduction = deduction;
       duplicate.notes = notes;
+      adjustDefaultSavingsBalance(inhand - oldInhand);
     } else {
       const newId = 'sal-' + Math.random().toString(36).substring(2, 9);
       salaries.push({
@@ -5130,6 +5234,7 @@ function saveSalaryForm() {
         deduction,
         notes
       });
+      adjustDefaultSavingsBalance(inhand);
     }
   }
 
@@ -5139,7 +5244,12 @@ function saveSalaryForm() {
 }
 
 function deleteSalary(id) {
+  // TODO(security): Standard browser confirm dialog is used here due to pure client-side vanilla JS architecture constraints.
   if (confirm('Are you sure you want to delete this salary entry?')) {
+    const target = salaries.find(s => s.id === id);
+    if (target) {
+      adjustDefaultSavingsBalance(-target.inhand);
+    }
     salaries = salaries.filter(s => s.id !== id);
     saveToStorage();
     renderSalaries();
@@ -5608,9 +5718,9 @@ function evaluateExpression(expr) {
   expr = expr.replace(/×/g, '*').replace(/÷/g, '/');
   // Remove any invalid characters (only keep numbers, ., +, -, *, /, parentheses, spaces)
   expr = expr.replace(/[^0-9.+\-*/()\s]/g, '');
-  
+
   if (!expr) return 0;
-  
+
   try {
     const result = math.evaluate(expr);
     if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
@@ -5726,23 +5836,23 @@ function openExpenseModal(eObj = null) {
     inputDate.value = eObj.date;
     inputCategory.value = eObj.categoryId;
     inputNotes.value = eObj.description || '';
-    
+
     const finalAmtLabel = document.getElementById('calc-final-amount-label');
     if (finalAmtLabel) finalAmtLabel.textContent = `₹${eObj.amount}`;
     currentCalcExpression = eObj.amount.toString();
     updateCalculatorUI();
-    
+
     showExpenseWizardStep(2);
   } else {
     titleText.textContent = 'Add Expense';
     inputId.value = '';
     inputAmount.value = '';
-    
+
     const todayStr = new Date().toISOString().split('T')[0];
     if (inputDate) inputDate.value = todayStr;
-    
+
     if (inputNotes) inputNotes.value = '';
-    
+
     currentCalcExpression = '';
     updateCalculatorUI();
     showExpenseWizardStep(1);
@@ -5757,11 +5867,11 @@ function closeExpenseModal() {
 
 function openCategoryModal() {
   const overlay = document.getElementById('category-modal');
-  
+
   // Clear name input
   const nameInput = document.getElementById('input-category-name');
   if (nameInput) nameInput.value = '';
-  
+
   // Reset emoji selection
   document.querySelectorAll('.emoji-item').forEach(el => el.classList.remove('active-emoji'));
   const firstEmoji = document.querySelector('.emoji-item');
@@ -5808,6 +5918,7 @@ function saveExpenseForm() {
   if (id) {
     const idx = expenses.findIndex(e => e.id === id);
     if (idx !== -1) {
+      const oldAmount = expenses[idx].amount;
       expenses[idx] = {
         ...expenses[idx],
         amount,
@@ -5815,6 +5926,7 @@ function saveExpenseForm() {
         categoryId,
         description
       };
+      adjustDefaultSavingsBalance(oldAmount - amount);
     }
   } else {
     const newId = 'exp-' + Math.random().toString(36).substring(2, 9);
@@ -5825,6 +5937,7 @@ function saveExpenseForm() {
       categoryId,
       description
     });
+    adjustDefaultSavingsBalance(-amount);
   }
 
   saveToStorage();
@@ -5833,7 +5946,12 @@ function saveExpenseForm() {
 }
 
 function deleteExpense(id) {
+  // TODO(security): Standard browser confirm dialog is used here due to pure client-side vanilla JS architecture constraints.
   if (confirm('Are you sure you want to delete this expense?')) {
+    const target = expenses.find(e => e.id === id);
+    if (target) {
+      adjustDefaultSavingsBalance(target.amount);
+    }
     expenses = expenses.filter(e => e.id !== id);
     saveToStorage();
     renderExpenses();
@@ -5866,7 +5984,7 @@ function saveCategoryForm() {
 
   saveToStorage();
   closeCategoryModal();
-  
+
   // Re-populate dropdown and auto select new category
   updateExpenseCategoryDropdown(catId);
 }
@@ -5883,7 +6001,7 @@ function saveBudgetForm() {
   } else {
     globalBudget = amount;
   }
-  
+
   saveToStorage();
   closeBudgetModal();
   renderExpenses();
@@ -5948,7 +6066,7 @@ function renderExpenses() {
   if (todayExpensesVal) {
     todayExpensesVal.textContent = formatCurrency(todaySpent);
   }
-  
+
   const valSurplus = document.getElementById('val-salary-balance');
   const lblSurplus = document.getElementById('lbl-salary-balance');
   const cardSurplus = document.getElementById('card-salary-balance');
@@ -6025,7 +6143,7 @@ function renderExpenses() {
   } else {
     filteredExpenses.forEach(e => {
       const cat = expenseCategories.find(c => c.id === e.categoryId) || { name: 'Others', icon: '🌀' };
-      
+
       const card = document.createElement('div');
       card.classList.add('investment-card');
 
@@ -6048,7 +6166,7 @@ function renderExpenses() {
       const catText = document.createElement('span');
       catText.classList.add('asset-name');
       catText.textContent = cat.name;
-      
+
       const dateText = document.createElement('span');
       dateText.style.fontSize = '0.73rem';
       dateText.style.color = 'var(--text-muted)';
@@ -6062,11 +6180,11 @@ function renderExpenses() {
       colDesc.classList.add('asset-data-col');
       colDesc.style.flexGrow = '1';
       colDesc.style.textAlign = 'left';
-      
+
       const lblDesc = document.createElement('span');
       lblDesc.classList.add('asset-data-label');
       lblDesc.textContent = 'Description';
-      
+
       const valDesc = document.createElement('span');
       valDesc.classList.add('asset-data-value');
       valDesc.style.fontWeight = 'normal';
@@ -6628,7 +6746,7 @@ function renderExpenseDailyTrendChart(monthlyExpenses) {
   barGrad.setAttribute('id', 'grad-expense-daily-bar');
   barGrad.setAttribute('x1', '0%'); barGrad.setAttribute('y1', '0%');
   barGrad.setAttribute('x2', '0%'); barGrad.setAttribute('y2', '100%');
-  
+
   const stop1 = createSVGElement('stop'); stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', 'var(--color-accent)');
   const stop2 = createSVGElement('stop'); stop2.setAttribute('offset', '100%'); stop2.setAttribute('stop-color', 'var(--color-accent-dark)');
   barGrad.appendChild(stop1); barGrad.appendChild(stop2);
@@ -6694,7 +6812,7 @@ function renderExpenseDailyTrendChart(monthlyExpenses) {
   for (let i = 0; i < numDays; i++) {
     const dayVal = dailyTotals[i];
     if (dayVal === 0) continue;
-    
+
     const barHeight = (dayVal / maxVal) * chartHeight;
     const x = margin.left + i * daySpace + (daySpace - barWidth) / 2;
     const y = margin.top + chartHeight - barHeight;
@@ -6706,7 +6824,7 @@ function renderExpenseDailyTrendChart(monthlyExpenses) {
     rect.setAttribute('height', Math.max(2, barHeight).toString());
     rect.setAttribute('rx', Math.min(3, barWidth / 2).toString());
     rect.setAttribute('fill', 'url(#grad-expense-daily-bar)');
-    
+
     rect.style.transition = 'opacity 0.2s ease, filter 0.2s ease';
     rect.style.cursor = 'pointer';
 
@@ -7664,7 +7782,7 @@ function generatePDFReport() {
 
       <footer class="report-footer">
         <p>This report was generated locally inside your web browser. Moyeniz does not store, transmit, or process your portfolio data on external servers.</p>
-        <p style="margin-top: 4px; font-weight: 500; color: var(--color-primary);">deep5050.github.io/Moyeniz/ &copy; ${now.getFullYear()}</p>
+        <p style="margin-top: 4px; font-weight: 500; color: var(--color-primary);">dpnkrpl.github.io/moyeniz/ &copy; ${now.getFullYear()}</p>
       </footer>
     </body>
     </html>
@@ -7925,7 +8043,7 @@ function initSettingsHandlers() {
         monthlyBudgets = {};
         saveToStorage();
         renderSettings();
-        
+
         const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
         if (activeTab === 'dashboard') renderDashboard();
       }
@@ -7953,7 +8071,7 @@ function initSettingsHandlers() {
         expenseCategories = [];
         globalBudget = 40000;
         monthlyBudgets = {};
-        
+
         renderSettings();
 
         // Redirect to dashboard
