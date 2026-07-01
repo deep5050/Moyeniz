@@ -13,6 +13,7 @@ let expenses = [];
 let expenseCategories = [];
 let globalBudget = 40000;
 let monthlyBudgets = {};
+let activeBreakdownClass = '';
 
 function getBudgetForMonth(monthStr) {
   if (monthlyBudgets && monthlyBudgets[monthStr] !== undefined) {
@@ -548,6 +549,294 @@ function adjustDefaultSavingsBalance(amount) {
   }
 }
 
+function getVariationColor(baseHex, index, total) {
+  let hex = baseHex.replace('#', '');
+  let r = parseInt(hex.substring(0, 2), 16);
+  let g = parseInt(hex.substring(2, 4), 16);
+  let b = parseInt(hex.substring(4, 6), 16);
+
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  // Cohesive HSL shifts
+  h = (h + (index * 0.08)) % 1.0;
+  l = Math.max(0.3, Math.min(0.7, l + (index % 2 === 0 ? 0.05 : -0.05)));
+
+  const hslToRgb = (h, s, l) => {
+    let r, g, b;
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  };
+
+  const [r2, g2, b2] = hslToRgb(h, s, l);
+  const toHex = x => {
+    const s = x.toString(16);
+    return s.length === 1 ? '0' + s : s;
+  };
+  return `#${toHex(r2)}${toHex(g2)}${toHex(b2)}`;
+}
+
+function renderBreakdownChart(assetClass) {
+  const container = document.getElementById('breakdown-chart-container');
+  const legend = document.getElementById('breakdown-legend');
+  const title = document.getElementById('breakdown-title');
+  const column = document.getElementById('breakdown-column');
+
+  if (!container || !legend || !title || !column) return;
+
+  const category = ASSET_CATEGORIES[assetClass];
+  if (!category) {
+    column.style.display = 'none';
+    return;
+  }
+
+  const filtered = investments.filter(inv => inv.assetClass === assetClass);
+  let totalVal = 0;
+  filtered.forEach(inv => {
+    totalVal += Number(inv.currentAmount) || 0;
+  });
+
+  if (totalVal === 0 || filtered.length === 0) {
+    column.style.display = 'none';
+    return;
+  }
+
+  filtered.sort((a, b) => (Number(b.currentAmount) || 0) - (Number(a.currentAmount) || 0));
+
+  column.style.display = 'flex';
+  title.textContent = `Breakdown: ${category.label} (${formatCurrency(totalVal)})`;
+
+  clearContainer(container);
+  clearContainer(legend);
+
+  const items = filtered.map((inv, index) => {
+    const val = Number(inv.currentAmount) || 0;
+    const color = getVariationColor(category.color, index, filtered.length);
+    const colorDark = getVariationColor(category.colorDark, index, filtered.length);
+    return {
+      key: inv.id,
+      label: inv.name,
+      value: val,
+      pct: (val / totalVal) * 100,
+      color: color,
+      colorDark: colorDark,
+      invested: Number(inv.investedAmount) || 0,
+      current: val
+    };
+  });
+
+  const size = 320;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r_out = 145;
+  const r_in = 85;
+
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.classList.add('svg-chart');
+  svg.style.width = '100%';
+  svg.style.height = 'auto';
+  svg.style.maxWidth = '250px';
+  svg.style.maxHeight = '250px';
+
+  const defs = createSVGElement('defs');
+  items.forEach(item => {
+    const grad = createSVGElement('linearGradient');
+    grad.setAttribute('id', `grad-breakdown-${item.key}`);
+    grad.setAttribute('x1', '0%');
+    grad.setAttribute('y1', '0%');
+    grad.setAttribute('x2', '100%');
+    grad.setAttribute('y2', '100%');
+
+    const stop1 = createSVGElement('stop');
+    stop1.setAttribute('offset', '0%');
+    stop1.setAttribute('stop-color', item.color);
+
+    const stop2 = createSVGElement('stop');
+    stop2.setAttribute('offset', '100%');
+    stop2.setAttribute('stop-color', item.colorDark);
+
+    grad.appendChild(stop1);
+    grad.appendChild(stop2);
+    defs.appendChild(grad);
+  });
+  svg.appendChild(defs);
+
+  const slicesGroup = createSVGElement('g');
+  svg.appendChild(slicesGroup);
+
+  const resetAllSlices = () => {
+    slicesGroup.querySelectorAll('.chart-slice').forEach(p => {
+      p.style.transform = '';
+      p.style.filter = '';
+    });
+    legend.querySelectorAll('.legend-item').forEach(li => {
+      li.style.transform = '';
+      li.style.backgroundColor = '';
+    });
+  };
+
+  svg.addEventListener('mouseleave', resetAllSlices);
+  legend.addEventListener('mouseleave', resetAllSlices);
+
+  let currentAngle = -Math.PI / 2;
+
+  items.forEach(item => {
+    let angleRange = (item.pct / 100) * 2 * Math.PI;
+    if (item.pct >= 99.99) {
+      angleRange = 2 * Math.PI - 0.0001;
+    }
+    const endAngle = currentAngle + angleRange;
+
+    const path = createSVGElement('path');
+    path.classList.add('chart-slice');
+
+    const x1_out = cx + r_out * Math.cos(currentAngle);
+    const y1_out = cy + r_out * Math.sin(currentAngle);
+    const x2_out = cx + r_out * Math.cos(endAngle);
+    const y2_out = cy + r_out * Math.sin(endAngle);
+
+    const x1_in = cx + r_in * Math.cos(currentAngle);
+    const y1_in = cy + r_in * Math.sin(currentAngle);
+    const x2_in = cx + r_in * Math.cos(endAngle);
+    const y2_in = cy + r_in * Math.sin(endAngle);
+
+    const largeArc = angleRange > Math.PI ? 1 : 0;
+    const d = `M ${x1_out} ${y1_out} A ${r_out} ${r_out} 0 ${largeArc} 1 ${x2_out} ${y2_out} L ${x2_in} ${y2_in} A ${r_in} ${r_in} 0 ${largeArc} 0 ${x1_in} ${y1_in} Z`;
+
+    path.setAttribute('d', d);
+    path.setAttribute('fill', `url(#grad-breakdown-${item.key})`);
+
+    const midAngle = currentAngle + angleRange / 2;
+    const popDistance = 8;
+    const dx = popDistance * Math.cos(midAngle);
+    const dy = popDistance * Math.sin(midAngle);
+
+    path.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease';
+    path.style.transformOrigin = 'center';
+
+    const gain = item.current - item.invested;
+    const returnPct = item.invested > 0 ? (gain / item.invested) * 100 : 0;
+
+    path.addEventListener('mouseenter', (e) => {
+      resetAllSlices();
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
+      showTooltip(e, item.label, item.invested, item.current, gain, returnPct);
+    });
+
+    path.addEventListener('mousemove', (e) => {
+      showTooltip(e, item.label, item.invested, item.current, gain, returnPct);
+    });
+
+    path.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+      hideTooltip();
+    });
+
+    slicesGroup.appendChild(path);
+    currentAngle = endAngle;
+
+    const legItem = document.createElement('div');
+    legItem.classList.add('legend-item');
+    legItem.style.transition = 'transform 0.2s ease, background-color 0.2s ease';
+    legItem.style.borderRadius = '6px';
+    legItem.style.padding = '4px 6px';
+
+    const infoCol = document.createElement('div');
+    infoCol.classList.add('legend-info');
+
+    const dot = document.createElement('span');
+    dot.classList.add('legend-color-box');
+    dot.style.background = `linear-gradient(135deg, ${item.color}, ${item.colorDark})`;
+
+    const textLabel = document.createElement('span');
+    textLabel.classList.add('legend-name');
+    textLabel.textContent = item.label;
+
+    infoCol.appendChild(dot);
+    infoCol.appendChild(textLabel);
+
+    const valCol = document.createElement('div');
+    valCol.classList.add('legend-val');
+
+    const numSpan = document.createElement('span');
+    numSpan.textContent = formatCurrency(item.value);
+
+    const pctSpan = document.createElement('span');
+    pctSpan.classList.add('legend-pct');
+    pctSpan.textContent = item.pct.toFixed(1) + '%';
+
+    valCol.appendChild(numSpan);
+    valCol.appendChild(pctSpan);
+
+    legItem.appendChild(infoCol);
+    legItem.appendChild(valCol);
+
+    legItem.addEventListener('mouseenter', (e) => {
+      resetAllSlices();
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
+      legItem.style.transform = 'translateX(4px)';
+      legItem.style.backgroundColor = 'var(--bg-light)';
+      showTooltip(e, item.label, item.invested, item.current, gain, returnPct);
+    });
+
+    legItem.addEventListener('mousemove', (e) => {
+      showTooltip(e, item.label, item.invested, item.current, gain, returnPct);
+    });
+
+    legItem.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+      legItem.style.transform = '';
+      legItem.style.backgroundColor = '';
+      hideTooltip();
+    });
+
+    legend.appendChild(legItem);
+  });
+
+  const innerCircle = createSVGElement('circle');
+  innerCircle.setAttribute('cx', cx.toString());
+  innerCircle.setAttribute('cy', cy.toString());
+  innerCircle.setAttribute('r', (r_in - 2).toString());
+  innerCircle.setAttribute('fill', 'var(--bg-inner-circle, #ffffff)');
+  svg.appendChild(innerCircle);
+
+  container.appendChild(svg);
+}
+
 async function loadFromStorage() {
   const data = localStorage.getItem('moyeniz_investments');
   const lData = localStorage.getItem('moyeniz_liabilities');
@@ -1078,11 +1367,11 @@ function renderAllocationChart(totalPortfolioVal) {
     path.style.transformOrigin = 'center';
 
     // Hover listeners for the slice
-    path.addEventListener('mouseenter', () => {
+    path.addEventListener('mouseenter', (e) => {
       resetAllSlices();
-      slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
+      showTooltip(e, category.label, catInvested, catCurrent, catGain, catReturnPct);
     });
     path.addEventListener('mouseleave', () => {
       path.style.transform = '';
@@ -1090,10 +1379,15 @@ function renderAllocationChart(totalPortfolioVal) {
     });
 
     // Event bindings for Tooltip
+    path.style.cursor = 'pointer';
     path.addEventListener('mousemove', (e) => {
       showTooltip(e, category.label, catInvested, catCurrent, catGain, catReturnPct);
     });
     path.addEventListener('mouseleave', hideTooltip);
+    path.addEventListener('click', () => {
+      activeBreakdownClass = catData.key;
+      renderBreakdownChart(catData.key);
+    });
 
     slicesGroup.appendChild(path);
     currentAngle = endAngle;
@@ -1101,6 +1395,7 @@ function renderAllocationChart(totalPortfolioVal) {
     // Append Legend Item
     const legItem = document.createElement('div');
     legItem.classList.add('legend-item');
+    legItem.style.cursor = 'pointer';
 
     const infoCol = document.createElement('div');
     infoCol.classList.add('legend-info');
@@ -1139,7 +1434,6 @@ function renderAllocationChart(totalPortfolioVal) {
 
     legItem.addEventListener('mouseenter', (e) => {
       resetAllSlices();
-      slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
       legItem.style.transform = 'translateX(4px)';
@@ -1156,6 +1450,10 @@ function renderAllocationChart(totalPortfolioVal) {
       legItem.style.backgroundColor = '';
       hideTooltip();
     });
+    legItem.addEventListener('click', () => {
+      activeBreakdownClass = catData.key;
+      renderBreakdownChart(catData.key);
+    });
 
     legend.appendChild(legItem);
   });
@@ -1169,6 +1467,14 @@ function renderAllocationChart(totalPortfolioVal) {
   svg.appendChild(innerCircle);
 
   container.appendChild(svg);
+
+  // Render breakdown dynamically
+  if (!activeBreakdownClass && sortedClasses.length > 0) {
+    activeBreakdownClass = sortedClasses[0].key;
+  }
+  if (activeBreakdownClass) {
+    renderBreakdownChart(activeBreakdownClass);
+  }
 }
 
 // Reusable Doughnut Chart Generator with 3D Pop-out Hover Animations
@@ -1285,11 +1591,20 @@ function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, ti
     const groupReturnPct = groupInvested > 0 ? (groupGain / groupInvested) * 100 : 0;
 
     // Hover listeners for the slice
-    path.addEventListener('mouseenter', () => {
+    path.addEventListener('mouseenter', (e) => {
       resetAllSlices();
-      slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
+      if (idPrefix === 'mf-sip') {
+        const targetInv = investments.find(inv => inv.name === item.label && inv.assetClass === 'indian-mutual-fund');
+        const sipTotalInvested = targetInv ? Number(targetInv.investedAmount) : 0;
+        const sipTotalCurrent = targetInv ? Number(targetInv.currentAmount) : 0;
+        const pl = sipTotalCurrent - sipTotalInvested;
+        const pct = sipTotalInvested > 0 ? (pl / sipTotalInvested) * 100 : 0;
+        showTooltip(e, `${titlePrefix}: ${item.label}`, item.value, sipTotalInvested, pl, pct, ['SIP Amount:', 'Total Invested:', 'P&L:']);
+      } else {
+        showTooltip(e, `${titlePrefix}: ${item.label}`, groupInvested, groupCurrent, groupGain, groupReturnPct);
+      }
     });
     path.addEventListener('mouseleave', () => {
       path.style.transform = '';
@@ -1353,7 +1668,6 @@ function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, ti
 
     legItem.addEventListener('mouseenter', (e) => {
       resetAllSlices();
-      slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
       legItem.style.transform = 'translateX(4px)';
