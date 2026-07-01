@@ -113,7 +113,7 @@ const SAMPLE_EXPENSES = [
   { id: 'exp-304', description: 'Uber taxi fare', amount: 1200, date: '2026-03-18', categoryId: 'cat-transport' }
 ];
 
-const ASSET_CATEGORIES = {
+const DEFAULT_ASSET_CATEGORIES = {
   'indian-stock': { label: 'Indian Stock', color: '#6366f1', colorDark: '#4f46e5', gradient: 'grad-primary' },
   'indian-mutual-fund': { label: 'Mutual Funds', color: '#a855f7', colorDark: '#7c3aed', gradient: 'grad-violet' },
   'us-stock': { label: 'US Stocks', color: '#0ea5e9', colorDark: '#0284c7', gradient: 'grad-blue' },
@@ -123,6 +123,8 @@ const ASSET_CATEGORIES = {
   'epfo': { label: 'EPFO', color: '#14b8a6', colorDark: '#0d9488', gradient: 'grad-teal' },
   'savings': { label: 'Savings', color: '#3b82f6', colorDark: '#2563eb', gradient: 'grad-blue-dark' }
 };
+
+let ASSET_CATEGORIES = {};
 
 const SUBTYPES = {
   'indian-mutual-fund': [
@@ -331,7 +333,13 @@ function validateBackupSchema(data) {
   }
 
   // Validate investments
-  const validAssetClasses = Object.keys(ASSET_CATEGORIES);
+  if (data.assetCategories !== undefined) {
+    if (typeof data.assetCategories !== 'object' || data.assetCategories === null || Array.isArray(data.assetCategories)) {
+      throw new Error('Backup "assetCategories" must be an object.');
+    }
+  }
+  const schemaAssetCategories = data.assetCategories || ASSET_CATEGORIES;
+  const validAssetClasses = Object.keys(schemaAssetCategories);
   data.investments.forEach((inv, index) => {
     if (typeof inv !== 'object' || inv === null) {
       throw new Error(`Investment at index ${index} must be an object.`);
@@ -538,6 +546,7 @@ function saveToStorage() {
   localStorage.setItem('moyeniz_expense_categories', JSON.stringify(expenseCategories));
   localStorage.setItem('moyeniz_global_budget', globalBudget.toString());
   localStorage.setItem('moyeniz_monthly_budgets', JSON.stringify(monthlyBudgets));
+  localStorage.setItem('moyeniz_asset_categories', JSON.stringify(ASSET_CATEGORIES));
 }
 
 function adjustDefaultSavingsBalance(amount) {
@@ -547,6 +556,80 @@ function adjustDefaultSavingsBalance(amount) {
     defaultSavings.currentAmount = defaultSavings.currentAmount + amount;
     defaultSavings.lastUpdated = new Date().toISOString();
   }
+}
+
+function darkenColor(hex) {
+  let color = hex.replace('#', '');
+  let r = parseInt(color.substring(0, 2), 16);
+  let g = parseInt(color.substring(2, 4), 16);
+  let b = parseInt(color.substring(4, 6), 16);
+
+  r = Math.max(0, Math.round(r * 0.8));
+  g = Math.max(0, Math.round(g * 0.8));
+  b = Math.max(0, Math.round(b * 0.8));
+
+  const toHex = x => {
+    const s = x.toString(16);
+    return s.length === 1 ? '0' + s : s;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function updateAssetClassDropdown(selectedId = '') {
+  const select = document.getElementById('input-asset-class');
+  if (!select) return;
+  clearContainer(select);
+
+  const defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  defaultOpt.disabled = true;
+  defaultOpt.selected = !selectedId;
+  defaultOpt.textContent = 'Select Class';
+  select.appendChild(defaultOpt);
+
+  Object.keys(ASSET_CATEGORIES).forEach(key => {
+    const cat = ASSET_CATEGORIES[key];
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = cat.label;
+    if (key === selectedId) {
+      opt.selected = true;
+    }
+    select.appendChild(opt);
+  });
+}
+
+function renderAssetFilterChips() {
+  const container = document.getElementById('asset-filters-container');
+  if (!container) return;
+  clearContainer(container);
+
+  const allChip = document.createElement('button');
+  allChip.className = `filter-chip${currentFilter === 'all' ? ' active' : ''}`;
+  allChip.setAttribute('data-filter', 'all');
+  allChip.textContent = 'All Assets';
+  allChip.addEventListener('click', () => {
+    container.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    allChip.classList.add('active');
+    currentFilter = 'all';
+    renderInvestments();
+  });
+  container.appendChild(allChip);
+
+  Object.keys(ASSET_CATEGORIES).forEach(key => {
+    const cat = ASSET_CATEGORIES[key];
+    const chip = document.createElement('button');
+    chip.className = `filter-chip${currentFilter === key ? ' active' : ''}`;
+    chip.setAttribute('data-filter', key);
+    chip.textContent = cat.label;
+    chip.addEventListener('click', () => {
+      container.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentFilter = key;
+      renderInvestments();
+    });
+    container.appendChild(chip);
+  });
 }
 
 function getVariationColor(baseHex, index, total) {
@@ -838,6 +921,9 @@ function renderBreakdownChart(assetClass) {
 }
 
 async function loadFromStorage() {
+  const acData = localStorage.getItem('moyeniz_asset_categories');
+  ASSET_CATEGORIES = acData !== null ? JSON.parse(acData) : {...DEFAULT_ASSET_CATEGORIES};
+
   const data = localStorage.getItem('moyeniz_investments');
   const lData = localStorage.getItem('moyeniz_liabilities');
   const blData = localStorage.getItem('moyeniz_borrow_lent');
@@ -898,6 +984,7 @@ async function loadFromStorage() {
       expenseCategories = Array.isArray(backup.expenseCategories) ? backup.expenseCategories : [...DEFAULT_EXPENSE_CATEGORIES];
       globalBudget = typeof backup.globalBudget === 'number' ? backup.globalBudget : 40000;
       monthlyBudgets = backup.monthlyBudgets && typeof backup.monthlyBudgets === 'object' ? backup.monthlyBudgets : {};
+      ASSET_CATEGORIES = backup.assetCategories && typeof backup.assetCategories === 'object' ? backup.assetCategories : {...DEFAULT_ASSET_CATEGORIES};
       saveToStorage();
     }
     // Any non-200 (e.g. 404) is silently ignored; file is optional.
@@ -3281,6 +3368,14 @@ function renderInvestments() {
     const badge = document.createElement('span');
     badge.className = `asset-badge ${inv.assetClass}`;
     badge.textContent = (ASSET_CATEGORIES[inv.assetClass] && ASSET_CATEGORIES[inv.assetClass].label) || inv.assetClass;
+    
+    // Apply dynamic style if custom asset class
+    const catObj = ASSET_CATEGORIES[inv.assetClass];
+    if (catObj && !['indian-stock', 'indian-mutual-fund', 'us-stock', 'fd', 'gold', 'bonds', 'epfo', 'savings'].includes(inv.assetClass)) {
+      badge.style.backgroundColor = `${catObj.color}22`;
+      badge.style.color = catObj.color;
+      badge.style.border = `1px solid ${catObj.color}44`;
+    }
     badgeRow.appendChild(badge);
 
     if (inv.assetClass === 'savings' && inv.isDefaultSavings) {
@@ -3489,17 +3584,7 @@ function renderInvestments() {
 }
 
 function initFilterHandlers() {
-  const container = document.getElementById('asset-filters-container');
-  const chips = container.querySelectorAll('.filter-chip');
-
-  chips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      chips.forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      currentFilter = chip.getAttribute('data-filter');
-      renderInvestments();
-    });
-  });
+  renderAssetFilterChips();
 
   const searchInput = document.getElementById('input-search');
   searchInput.addEventListener('input', (e) => {
@@ -3552,6 +3637,7 @@ function openModal(invObj = null) {
   if (invObj) {
     titleText.textContent = 'Edit Investment';
     inputId.value = invObj.id;
+    updateAssetClassDropdown(invObj.assetClass);
     inputClass.value = invObj.assetClass;
 
     // Load subtypes first
@@ -3585,6 +3671,7 @@ function openModal(invObj = null) {
   } else {
     titleText.textContent = 'Add Investment';
     inputId.value = '';
+    updateAssetClassDropdown('');
     inputClass.value = '';
     updateSubtypeOptions('');
     inputName.value = '';
@@ -3646,7 +3733,8 @@ function downloadPortfolioJSON() {
     expenses: expenses,
     expenseCategories: expenseCategories,
     globalBudget: globalBudget,
-    monthlyBudgets: monthlyBudgets
+    monthlyBudgets: monthlyBudgets,
+    assetCategories: ASSET_CATEGORIES
   };
 
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -3679,6 +3767,7 @@ function handleUploadJSON(file) {
       expenseCategories = Array.isArray(data.expenseCategories) ? data.expenseCategories : [...DEFAULT_EXPENSE_CATEGORIES];
       globalBudget = typeof data.globalBudget === 'number' ? data.globalBudget : 40000;
       monthlyBudgets = data.monthlyBudgets && typeof data.monthlyBudgets === 'object' ? data.monthlyBudgets : {};
+      ASSET_CATEGORIES = data.assetCategories && typeof data.assetCategories === 'object' ? data.assetCategories : {...DEFAULT_ASSET_CATEGORIES};
       saveToStorage();
 
       // Close welcome wizard if open
@@ -3764,8 +3853,10 @@ function initModalHandlers() {
       salaries = [...SAMPLE_SALARIES];
       expenses = [...SAMPLE_EXPENSES];
       expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+      ASSET_CATEGORIES = {...DEFAULT_ASSET_CATEGORIES};
       globalBudget = 40000;
       saveToStorage();
+      renderAssetFilterChips();
       renderDashboard();
       updateTopActions('dashboard');
     });
@@ -3781,8 +3872,10 @@ function initModalHandlers() {
       salaries = [];
       expenses = [];
       expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+      ASSET_CATEGORIES = {...DEFAULT_ASSET_CATEGORIES};
       globalBudget = 40000;
       saveToStorage();
+      renderAssetFilterChips();
       renderDashboard();
       updateTopActions('dashboard');
     });
@@ -3793,6 +3886,71 @@ function initModalHandlers() {
   if (addBtn) addBtn.addEventListener('click', () => openModal());
   const addBtnFloat = document.getElementById('btn-add-investment-float');
   if (addBtnFloat) addBtnFloat.addEventListener('click', () => openModal());
+
+  // Custom Asset Class quick-add modal triggers
+  const btnAddAssetClassQuick = document.getElementById('btn-add-asset-class-quick');
+  const modalAssetClass = document.getElementById('asset-class-modal');
+  const btnCloseAssetClass = document.getElementById('btn-close-asset-class-modal');
+  const btnCancelAssetClass = document.getElementById('btn-cancel-asset-class-modal');
+  const formAssetClass = document.getElementById('asset-class-form');
+
+  if (btnAddAssetClassQuick) {
+    btnAddAssetClassQuick.addEventListener('click', () => {
+      if (modalAssetClass) modalAssetClass.classList.add('active-modal');
+      const inputName = document.getElementById('input-asset-class-name');
+      if (inputName) {
+        inputName.value = '';
+        inputName.focus();
+      }
+    });
+  }
+
+  const closeAssetClassModal = () => {
+    if (modalAssetClass) modalAssetClass.classList.remove('active-modal');
+  };
+
+  if (btnCloseAssetClass) btnCloseAssetClass.addEventListener('click', closeAssetClassModal);
+  if (btnCancelAssetClass) btnCancelAssetClass.addEventListener('click', closeAssetClassModal);
+
+  if (formAssetClass) {
+    formAssetClass.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inputName = document.getElementById('input-asset-class-name');
+      const inputColor = document.getElementById('input-asset-class-color');
+      if (!inputName || !inputColor) return;
+
+      const name = inputName.value.trim();
+      const color = inputColor.value;
+      if (!name) return;
+
+      const key = 'custom-' + name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+      
+      // Save custom class
+      ASSET_CATEGORIES[key] = {
+        label: name,
+        color: color,
+        colorDark: darkenColor(color),
+        gradient: `grad-${key}`
+      };
+      saveToStorage();
+
+      // Populate dropdown with new class selected
+      updateAssetClassDropdown(key);
+      
+      // Update the asset filter chips in the main list view
+      renderAssetFilterChips();
+
+      // Hide subtype row since custom class doesn't have default subtypes
+      const groupSubtype = document.getElementById('group-subtype');
+      if (groupSubtype) groupSubtype.style.display = 'none';
+      const rowSip = document.getElementById('row-sip');
+      if (rowSip) rowSip.style.display = 'none';
+      const rowDefaultSavings = document.getElementById('row-default-savings');
+      if (rowDefaultSavings) rowDefaultSavings.style.display = 'none';
+
+      closeAssetClassModal();
+    });
+  }
 
   selectClass.addEventListener('change', (e) => {
     updateSubtypeOptions(e.target.value);
