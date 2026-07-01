@@ -2479,4 +2479,13 @@ input[type="range"].slider::-webkit-slider-thumb:hover {
   }
 }
 
-
+/* Responsive adjustments for Asset Allocation breakdown container */
+@media (max-width: 768px) {
+  #breakdown-column {
+    border-left: none !important;
+    padding-left: 0 !important;
+    border-top: 1px solid var(--color-border);
+    padding-top: 16px;
+    margin-top: 16px;
+  }
+}

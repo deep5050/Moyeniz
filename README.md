@@ -1,6 +1,6 @@
 # Moyeniz — Wealth Portfolio & Debt Tracker
 
-https://deep5050.github.io/Moyeniz/
+https://dpnkrpl.github.io/moyeniz/
 
 <img width="1915" height="911" alt="image" src="https://github.com/user-attachments/assets/07fdbd7b-3ee0-403e-bc95-3a604acb6bba" />
 

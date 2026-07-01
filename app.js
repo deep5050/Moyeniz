@@ -13,6 +13,7 @@ let expenses = [];
 let expenseCategories = [];
 let globalBudget = 40000;
 let monthlyBudgets = {};
+let activeBreakdownClass = '';
 
 function getBudgetForMonth(monthStr) {
   if (monthlyBudgets && monthlyBudgets[monthStr] !== undefined) {
@@ -88,7 +89,7 @@ const SAMPLE_EXPENSES = [
   { id: 'exp-8', description: 'Annual Health checkup', amount: 1200, date: '2026-06-15', categoryId: 'cat-medical' },
   { id: 'exp-9', description: 'Mid-month vegetables and fruits', amount: 1500, date: '2026-06-16', categoryId: 'cat-groceries' },
   { id: 'exp-10', description: 'Books and stationery', amount: 850, date: '2026-06-17', categoryId: 'cat-education' },
-  
+
   // May 2026
   { id: 'exp-101', description: 'Flat House Rent', amount: 15000, date: '2026-05-01', categoryId: 'cat-rent' },
   { id: 'exp-102', description: 'Groceries store bill', amount: 4100, date: '2026-05-03', categoryId: 'cat-groceries' },
@@ -112,7 +113,7 @@ const SAMPLE_EXPENSES = [
   { id: 'exp-304', description: 'Uber taxi fare', amount: 1200, date: '2026-03-18', categoryId: 'cat-transport' }
 ];
 
-const ASSET_CATEGORIES = {
+const DEFAULT_ASSET_CATEGORIES = {
   'indian-stock': { label: 'Indian Stock', color: '#6366f1', colorDark: '#4f46e5', gradient: 'grad-primary' },
   'indian-mutual-fund': { label: 'Mutual Funds', color: '#a855f7', colorDark: '#7c3aed', gradient: 'grad-violet' },
   'us-stock': { label: 'US Stocks', color: '#0ea5e9', colorDark: '#0284c7', gradient: 'grad-blue' },
@@ -122,6 +123,8 @@ const ASSET_CATEGORIES = {
   'epfo': { label: 'EPFO', color: '#14b8a6', colorDark: '#0d9488', gradient: 'grad-teal' },
   'savings': { label: 'Savings', color: '#3b82f6', colorDark: '#2563eb', gradient: 'grad-blue-dark' }
 };
+
+let ASSET_CATEGORIES = {};
 
 const SUBTYPES = {
   'indian-mutual-fund': [
@@ -330,7 +333,13 @@ function validateBackupSchema(data) {
   }
 
   // Validate investments
-  const validAssetClasses = Object.keys(ASSET_CATEGORIES);
+  if (data.assetCategories !== undefined) {
+    if (typeof data.assetCategories !== 'object' || data.assetCategories === null || Array.isArray(data.assetCategories)) {
+      throw new Error('Backup "assetCategories" must be an object.');
+    }
+  }
+  const schemaAssetCategories = data.assetCategories || ASSET_CATEGORIES;
+  const validAssetClasses = Object.keys(schemaAssetCategories);
   data.investments.forEach((inv, index) => {
     if (typeof inv !== 'object' || inv === null) {
       throw new Error(`Investment at index ${index} must be an object.`);
@@ -537,9 +546,384 @@ function saveToStorage() {
   localStorage.setItem('moyeniz_expense_categories', JSON.stringify(expenseCategories));
   localStorage.setItem('moyeniz_global_budget', globalBudget.toString());
   localStorage.setItem('moyeniz_monthly_budgets', JSON.stringify(monthlyBudgets));
+  localStorage.setItem('moyeniz_asset_categories', JSON.stringify(ASSET_CATEGORIES));
+}
+
+function adjustDefaultSavingsBalance(amount) {
+  const defaultSavings = investments.find(inv => inv.assetClass === 'savings' && inv.isDefaultSavings);
+  if (defaultSavings) {
+    defaultSavings.investedAmount = defaultSavings.investedAmount + amount;
+    defaultSavings.currentAmount = defaultSavings.currentAmount + amount;
+    defaultSavings.lastUpdated = new Date().toISOString();
+  }
+}
+
+function darkenColor(hex) {
+  let color = hex.replace('#', '');
+  let r = parseInt(color.substring(0, 2), 16);
+  let g = parseInt(color.substring(2, 4), 16);
+  let b = parseInt(color.substring(4, 6), 16);
+
+  r = Math.max(0, Math.round(r * 0.8));
+  g = Math.max(0, Math.round(g * 0.8));
+  b = Math.max(0, Math.round(b * 0.8));
+
+  const toHex = x => {
+    const s = x.toString(16);
+    return s.length === 1 ? '0' + s : s;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function updateAssetClassDropdown(selectedId = '') {
+  const select = document.getElementById('input-asset-class');
+  if (!select) return;
+  clearContainer(select);
+
+  const defaultOpt = document.createElement('option');
+  defaultOpt.value = '';
+  defaultOpt.disabled = true;
+  defaultOpt.selected = !selectedId;
+  defaultOpt.textContent = 'Select Class';
+  select.appendChild(defaultOpt);
+
+  Object.keys(ASSET_CATEGORIES).forEach(key => {
+    const cat = ASSET_CATEGORIES[key];
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = cat.label;
+    if (key === selectedId) {
+      opt.selected = true;
+    }
+    select.appendChild(opt);
+  });
+}
+
+function renderAssetFilterChips() {
+  const container = document.getElementById('asset-filters-container');
+  if (!container) return;
+  clearContainer(container);
+
+  const allChip = document.createElement('button');
+  allChip.className = `filter-chip${currentFilter === 'all' ? ' active' : ''}`;
+  allChip.setAttribute('data-filter', 'all');
+  allChip.textContent = 'All Assets';
+  allChip.addEventListener('click', () => {
+    container.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    allChip.classList.add('active');
+    currentFilter = 'all';
+    renderInvestments();
+  });
+  container.appendChild(allChip);
+
+  Object.keys(ASSET_CATEGORIES).forEach(key => {
+    const cat = ASSET_CATEGORIES[key];
+    const chip = document.createElement('button');
+    chip.className = `filter-chip${currentFilter === key ? ' active' : ''}`;
+    chip.setAttribute('data-filter', key);
+    chip.textContent = cat.label;
+    chip.addEventListener('click', () => {
+      container.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentFilter = key;
+      renderInvestments();
+    });
+    container.appendChild(chip);
+  });
+}
+
+function getVariationColor(baseHex, index, total) {
+  let hex = baseHex.replace('#', '');
+  let r = parseInt(hex.substring(0, 2), 16);
+  let g = parseInt(hex.substring(2, 4), 16);
+  let b = parseInt(hex.substring(4, 6), 16);
+
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  // Cohesive HSL shifts
+  h = (h + (index * 0.08)) % 1.0;
+  l = Math.max(0.3, Math.min(0.7, l + (index % 2 === 0 ? 0.05 : -0.05)));
+
+  const hslToRgb = (h, s, l) => {
+    let r, g, b;
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  };
+
+  const [r2, g2, b2] = hslToRgb(h, s, l);
+  const toHex = x => {
+    const s = x.toString(16);
+    return s.length === 1 ? '0' + s : s;
+  };
+  return `#${toHex(r2)}${toHex(g2)}${toHex(b2)}`;
+}
+
+function renderBreakdownChart(assetClass) {
+  const container = document.getElementById('breakdown-chart-container');
+  const legend = document.getElementById('breakdown-legend');
+  const title = document.getElementById('breakdown-title');
+  const column = document.getElementById('breakdown-column');
+
+  if (!container || !legend || !title || !column) return;
+
+  const category = ASSET_CATEGORIES[assetClass];
+  if (!category) {
+    column.style.display = 'none';
+    return;
+  }
+
+  const filtered = investments.filter(inv => inv.assetClass === assetClass);
+  let totalVal = 0;
+  filtered.forEach(inv => {
+    totalVal += Number(inv.currentAmount) || 0;
+  });
+
+  if (totalVal === 0 || filtered.length === 0) {
+    column.style.display = 'none';
+    return;
+  }
+
+  filtered.sort((a, b) => (Number(b.currentAmount) || 0) - (Number(a.currentAmount) || 0));
+
+  column.style.display = 'flex';
+  title.textContent = `Breakdown: ${category.label} (${formatCurrency(totalVal)})`;
+
+  clearContainer(container);
+  clearContainer(legend);
+
+  const items = filtered.map((inv, index) => {
+    const val = Number(inv.currentAmount) || 0;
+    const color = getVariationColor(category.color, index, filtered.length);
+    const colorDark = getVariationColor(category.colorDark, index, filtered.length);
+    return {
+      key: inv.id,
+      label: inv.name,
+      value: val,
+      pct: (val / totalVal) * 100,
+      color: color,
+      colorDark: colorDark,
+      invested: Number(inv.investedAmount) || 0,
+      current: val
+    };
+  });
+
+  const size = 320;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r_out = 145;
+  const r_in = 85;
+
+  const svg = createSVGElement('svg');
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.classList.add('svg-chart');
+  svg.style.width = '100%';
+  svg.style.height = 'auto';
+  svg.style.maxWidth = '250px';
+  svg.style.maxHeight = '250px';
+
+  const defs = createSVGElement('defs');
+  items.forEach(item => {
+    const grad = createSVGElement('linearGradient');
+    grad.setAttribute('id', `grad-breakdown-${item.key}`);
+    grad.setAttribute('x1', '0%');
+    grad.setAttribute('y1', '0%');
+    grad.setAttribute('x2', '100%');
+    grad.setAttribute('y2', '100%');
+
+    const stop1 = createSVGElement('stop');
+    stop1.setAttribute('offset', '0%');
+    stop1.setAttribute('stop-color', item.color);
+
+    const stop2 = createSVGElement('stop');
+    stop2.setAttribute('offset', '100%');
+    stop2.setAttribute('stop-color', item.colorDark);
+
+    grad.appendChild(stop1);
+    grad.appendChild(stop2);
+    defs.appendChild(grad);
+  });
+  svg.appendChild(defs);
+
+  const slicesGroup = createSVGElement('g');
+  svg.appendChild(slicesGroup);
+
+  const resetAllSlices = () => {
+    slicesGroup.querySelectorAll('.chart-slice').forEach(p => {
+      p.style.transform = '';
+      p.style.filter = '';
+    });
+    legend.querySelectorAll('.legend-item').forEach(li => {
+      li.style.transform = '';
+      li.style.backgroundColor = '';
+    });
+  };
+
+  svg.addEventListener('mouseleave', resetAllSlices);
+  legend.addEventListener('mouseleave', resetAllSlices);
+
+  let currentAngle = -Math.PI / 2;
+
+  items.forEach(item => {
+    let angleRange = (item.pct / 100) * 2 * Math.PI;
+    if (item.pct >= 99.99) {
+      angleRange = 2 * Math.PI - 0.0001;
+    }
+    const endAngle = currentAngle + angleRange;
+
+    const path = createSVGElement('path');
+    path.classList.add('chart-slice');
+
+    const x1_out = cx + r_out * Math.cos(currentAngle);
+    const y1_out = cy + r_out * Math.sin(currentAngle);
+    const x2_out = cx + r_out * Math.cos(endAngle);
+    const y2_out = cy + r_out * Math.sin(endAngle);
+
+    const x1_in = cx + r_in * Math.cos(currentAngle);
+    const y1_in = cy + r_in * Math.sin(currentAngle);
+    const x2_in = cx + r_in * Math.cos(endAngle);
+    const y2_in = cy + r_in * Math.sin(endAngle);
+
+    const largeArc = angleRange > Math.PI ? 1 : 0;
+    const d = `M ${x1_out} ${y1_out} A ${r_out} ${r_out} 0 ${largeArc} 1 ${x2_out} ${y2_out} L ${x2_in} ${y2_in} A ${r_in} ${r_in} 0 ${largeArc} 0 ${x1_in} ${y1_in} Z`;
+
+    path.setAttribute('d', d);
+    path.setAttribute('fill', `url(#grad-breakdown-${item.key})`);
+
+    const midAngle = currentAngle + angleRange / 2;
+    const popDistance = 8;
+    const dx = popDistance * Math.cos(midAngle);
+    const dy = popDistance * Math.sin(midAngle);
+
+    path.style.transition = 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease';
+    path.style.transformOrigin = 'center';
+
+    const gain = item.current - item.invested;
+    const returnPct = item.invested > 0 ? (gain / item.invested) * 100 : 0;
+
+    path.addEventListener('mouseenter', (e) => {
+      resetAllSlices();
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
+      showTooltip(e, item.label, item.invested, item.current, gain, returnPct);
+    });
+
+    path.addEventListener('mousemove', (e) => {
+      showTooltip(e, item.label, item.invested, item.current, gain, returnPct);
+    });
+
+    path.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+      hideTooltip();
+    });
+
+    slicesGroup.appendChild(path);
+    currentAngle = endAngle;
+
+    const legItem = document.createElement('div');
+    legItem.classList.add('legend-item');
+    legItem.style.transition = 'transform 0.2s ease, background-color 0.2s ease';
+    legItem.style.borderRadius = '6px';
+    legItem.style.padding = '4px 6px';
+
+    const infoCol = document.createElement('div');
+    infoCol.classList.add('legend-info');
+
+    const dot = document.createElement('span');
+    dot.classList.add('legend-color-box');
+    dot.style.background = `linear-gradient(135deg, ${item.color}, ${item.colorDark})`;
+
+    const textLabel = document.createElement('span');
+    textLabel.classList.add('legend-name');
+    textLabel.textContent = item.label;
+
+    infoCol.appendChild(dot);
+    infoCol.appendChild(textLabel);
+
+    const valCol = document.createElement('div');
+    valCol.classList.add('legend-val');
+
+    const numSpan = document.createElement('span');
+    numSpan.textContent = formatCurrency(item.value);
+
+    const pctSpan = document.createElement('span');
+    pctSpan.classList.add('legend-pct');
+    pctSpan.textContent = item.pct.toFixed(1) + '%';
+
+    valCol.appendChild(numSpan);
+    valCol.appendChild(pctSpan);
+
+    legItem.appendChild(infoCol);
+    legItem.appendChild(valCol);
+
+    legItem.addEventListener('mouseenter', (e) => {
+      resetAllSlices();
+      path.style.transform = `translate(${dx}px, ${dy}px)`;
+      path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
+      legItem.style.transform = 'translateX(4px)';
+      legItem.style.backgroundColor = 'var(--bg-light)';
+      showTooltip(e, item.label, item.invested, item.current, gain, returnPct);
+    });
+
+    legItem.addEventListener('mousemove', (e) => {
+      showTooltip(e, item.label, item.invested, item.current, gain, returnPct);
+    });
+
+    legItem.addEventListener('mouseleave', () => {
+      path.style.transform = '';
+      path.style.filter = '';
+      legItem.style.transform = '';
+      legItem.style.backgroundColor = '';
+      hideTooltip();
+    });
+
+    legend.appendChild(legItem);
+  });
+
+  const innerCircle = createSVGElement('circle');
+  innerCircle.setAttribute('cx', cx.toString());
+  innerCircle.setAttribute('cy', cy.toString());
+  innerCircle.setAttribute('r', (r_in - 2).toString());
+  innerCircle.setAttribute('fill', 'var(--bg-inner-circle, #ffffff)');
+  svg.appendChild(innerCircle);
+
+  container.appendChild(svg);
 }
 
 async function loadFromStorage() {
+  const acData = localStorage.getItem('moyeniz_asset_categories');
+  ASSET_CATEGORIES = acData !== null ? JSON.parse(acData) : {...DEFAULT_ASSET_CATEGORIES};
+
   const data = localStorage.getItem('moyeniz_investments');
   const lData = localStorage.getItem('moyeniz_liabilities');
   const blData = localStorage.getItem('moyeniz_borrow_lent');
@@ -600,6 +984,7 @@ async function loadFromStorage() {
       expenseCategories = Array.isArray(backup.expenseCategories) ? backup.expenseCategories : [...DEFAULT_EXPENSE_CATEGORIES];
       globalBudget = typeof backup.globalBudget === 'number' ? backup.globalBudget : 40000;
       monthlyBudgets = backup.monthlyBudgets && typeof backup.monthlyBudgets === 'object' ? backup.monthlyBudgets : {};
+      ASSET_CATEGORIES = backup.assetCategories && typeof backup.assetCategories === 'object' ? backup.assetCategories : {...DEFAULT_ASSET_CATEGORIES};
       saveToStorage();
     }
     // Any non-200 (e.g. 404) is silently ignored; file is optional.
@@ -1069,11 +1454,11 @@ function renderAllocationChart(totalPortfolioVal) {
     path.style.transformOrigin = 'center';
 
     // Hover listeners for the slice
-    path.addEventListener('mouseenter', () => {
+    path.addEventListener('mouseenter', (e) => {
       resetAllSlices();
-      slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
+      showTooltip(e, category.label, catInvested, catCurrent, catGain, catReturnPct);
     });
     path.addEventListener('mouseleave', () => {
       path.style.transform = '';
@@ -1081,10 +1466,15 @@ function renderAllocationChart(totalPortfolioVal) {
     });
 
     // Event bindings for Tooltip
+    path.style.cursor = 'pointer';
     path.addEventListener('mousemove', (e) => {
       showTooltip(e, category.label, catInvested, catCurrent, catGain, catReturnPct);
     });
     path.addEventListener('mouseleave', hideTooltip);
+    path.addEventListener('click', () => {
+      activeBreakdownClass = catData.key;
+      renderBreakdownChart(catData.key);
+    });
 
     slicesGroup.appendChild(path);
     currentAngle = endAngle;
@@ -1092,6 +1482,7 @@ function renderAllocationChart(totalPortfolioVal) {
     // Append Legend Item
     const legItem = document.createElement('div');
     legItem.classList.add('legend-item');
+    legItem.style.cursor = 'pointer';
 
     const infoCol = document.createElement('div');
     infoCol.classList.add('legend-info');
@@ -1130,7 +1521,6 @@ function renderAllocationChart(totalPortfolioVal) {
 
     legItem.addEventListener('mouseenter', (e) => {
       resetAllSlices();
-      slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 8px 16px ${category.color}66)`;
       legItem.style.transform = 'translateX(4px)';
@@ -1147,6 +1537,10 @@ function renderAllocationChart(totalPortfolioVal) {
       legItem.style.backgroundColor = '';
       hideTooltip();
     });
+    legItem.addEventListener('click', () => {
+      activeBreakdownClass = catData.key;
+      renderBreakdownChart(catData.key);
+    });
 
     legend.appendChild(legItem);
   });
@@ -1160,6 +1554,14 @@ function renderAllocationChart(totalPortfolioVal) {
   svg.appendChild(innerCircle);
 
   container.appendChild(svg);
+
+  // Render breakdown dynamically
+  if (!activeBreakdownClass && sortedClasses.length > 0) {
+    activeBreakdownClass = sortedClasses[0].key;
+  }
+  if (activeBreakdownClass) {
+    renderBreakdownChart(activeBreakdownClass);
+  }
 }
 
 // Reusable Doughnut Chart Generator with 3D Pop-out Hover Animations
@@ -1276,11 +1678,20 @@ function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, ti
     const groupReturnPct = groupInvested > 0 ? (groupGain / groupInvested) * 100 : 0;
 
     // Hover listeners for the slice
-    path.addEventListener('mouseenter', () => {
+    path.addEventListener('mouseenter', (e) => {
       resetAllSlices();
-      slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
+      if (idPrefix === 'mf-sip') {
+        const targetInv = investments.find(inv => inv.name === item.label && inv.assetClass === 'indian-mutual-fund');
+        const sipTotalInvested = targetInv ? Number(targetInv.investedAmount) : 0;
+        const sipTotalCurrent = targetInv ? Number(targetInv.currentAmount) : 0;
+        const pl = sipTotalCurrent - sipTotalInvested;
+        const pct = sipTotalInvested > 0 ? (pl / sipTotalInvested) * 100 : 0;
+        showTooltip(e, `${titlePrefix}: ${item.label}`, item.value, sipTotalInvested, pl, pct, ['SIP Amount:', 'Total Invested:', 'P&L:']);
+      } else {
+        showTooltip(e, `${titlePrefix}: ${item.label}`, groupInvested, groupCurrent, groupGain, groupReturnPct);
+      }
     });
     path.addEventListener('mouseleave', () => {
       path.style.transform = '';
@@ -1344,7 +1755,6 @@ function renderReusableDoughnut(container, legend, items, totalVal, idPrefix, ti
 
     legItem.addEventListener('mouseenter', (e) => {
       resetAllSlices();
-      slicesGroup.appendChild(path); // bring to front
       path.style.transform = `translate(${dx}px, ${dy}px)`;
       path.style.filter = `drop-shadow(0px 6px 12px ${item.color}66)`;
       legItem.style.transform = 'translateX(4px)';
@@ -2389,13 +2799,32 @@ function showNetWorthTooltip(event, title, netWorth, assets, liabilities, salary
     tooltip.appendChild(row);
   });
 
+  positionTooltip(tooltip, event);
+}
+
+function positionTooltip(tooltip, event) {
   const container = document.querySelector('.main-wrapper');
+  if (!container) return;
   const rect = container.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
+
+  let x = event.clientX - rect.left + container.scrollLeft;
+  let y = event.clientY - rect.top + container.scrollTop;
+
+  const tooltipWidth = tooltip.offsetWidth || 180;
+  const tooltipHeight = tooltip.offsetHeight || 100;
+
+  const minX = tooltipWidth / 2 + 10;
+  const maxX = container.scrollWidth - (tooltipWidth / 2) - 10;
+  x = Math.max(minX, Math.min(maxX, x));
+
+  if (y - tooltipHeight - 12 < container.scrollTop) {
+    tooltip.style.transform = 'translate(-50%, 12px) scale(0.97)';
+  } else {
+    tooltip.style.transform = 'translate(-50%, -100%) scale(0.97)';
+  }
 
   tooltip.style.left = x + 'px';
-  tooltip.style.top = (y - 12) + 'px';
+  tooltip.style.top = y + 'px';
   tooltip.style.opacity = '1';
 }
 
@@ -2450,20 +2879,12 @@ function showTooltip(event, title, invested, current, pl, pct, customLabels = nu
   r3.appendChild(r3_val);
   tooltip.appendChild(r3);
 
-  // Position tooltip relative to container boundaries
-  const container = document.querySelector('.main-wrapper');
-  const rect = container.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-
-  tooltip.style.left = x + 'px';
-  tooltip.style.top = (y - 12) + 'px';
-  tooltip.style.opacity = '1';
+  positionTooltip(tooltip, event);
 }
 
 function hideTooltip() {
   const tooltip = document.getElementById('chart-tooltip');
-  tooltip.style.opacity = '0';
+  if (tooltip) tooltip.style.opacity = '0';
 }
 
 // Generate Financial Insights & Wealth Health Rating
@@ -2947,7 +3368,24 @@ function renderInvestments() {
     const badge = document.createElement('span');
     badge.className = `asset-badge ${inv.assetClass}`;
     badge.textContent = (ASSET_CATEGORIES[inv.assetClass] && ASSET_CATEGORIES[inv.assetClass].label) || inv.assetClass;
+    
+    // Apply dynamic style if custom asset class
+    const catObj = ASSET_CATEGORIES[inv.assetClass];
+    if (catObj && !['indian-stock', 'indian-mutual-fund', 'us-stock', 'fd', 'gold', 'bonds', 'epfo', 'savings'].includes(inv.assetClass)) {
+      badge.style.backgroundColor = `${catObj.color}22`;
+      badge.style.color = catObj.color;
+      badge.style.border = `1px solid ${catObj.color}44`;
+    }
     badgeRow.appendChild(badge);
+
+    if (inv.assetClass === 'savings' && inv.isDefaultSavings) {
+      const defaultBadge = document.createElement('span');
+      defaultBadge.className = 'asset-badge';
+      defaultBadge.style.backgroundColor = 'var(--color-positive-subtle)';
+      defaultBadge.style.color = 'var(--color-positive)';
+      defaultBadge.textContent = 'Default';
+      badgeRow.appendChild(defaultBadge);
+    }
 
     if (inv.subtype && inv.subtype !== 'none') {
       const subtypeMap = {
@@ -3055,6 +3493,42 @@ function renderInvestments() {
       colActions.appendChild(btnSipPaid);
     }
 
+    if (inv.assetClass === 'savings') {
+      const btnSetDefault = document.createElement('button');
+      btnSetDefault.className = 'icon-btn';
+      btnSetDefault.setAttribute('aria-label', inv.isDefaultSavings ? 'Default Savings Account' : 'Set as Default Savings');
+      if (inv.isDefaultSavings) {
+        btnSetDefault.style.color = '#eab308'; // Gold color for active default
+      } else {
+        btnSetDefault.style.color = 'var(--text-secondary)';
+      }
+
+      const starSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      starSvg.setAttribute('viewBox', '0 0 24 24');
+      starSvg.setAttribute('fill', inv.isDefaultSavings ? 'currentColor' : 'none');
+      starSvg.setAttribute('stroke', 'currentColor');
+      starSvg.setAttribute('stroke-width', '2');
+      starSvg.setAttribute('width', '16');
+      starSvg.setAttribute('height', '16');
+
+      const starPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      starPath.setAttribute('d', 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z');
+      starSvg.appendChild(starPath);
+      btnSetDefault.appendChild(starSvg);
+
+      btnSetDefault.addEventListener('click', (e) => {
+        e.stopPropagation();
+        investments.forEach(item => {
+          if (item.assetClass === 'savings') {
+            item.isDefaultSavings = (item.id === inv.id);
+          }
+        });
+        saveToStorage();
+        renderInvestments();
+      });
+      colActions.appendChild(btnSetDefault);
+    }
+
     const btnEdit = document.createElement('button');
     btnEdit.className = 'icon-btn';
     btnEdit.setAttribute('aria-label', 'Edit Investment');
@@ -3110,17 +3584,7 @@ function renderInvestments() {
 }
 
 function initFilterHandlers() {
-  const container = document.getElementById('asset-filters-container');
-  const chips = container.querySelectorAll('.filter-chip');
-
-  chips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      chips.forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      currentFilter = chip.getAttribute('data-filter');
-      renderInvestments();
-    });
-  });
+  renderAssetFilterChips();
 
   const searchInput = document.getElementById('input-search');
   searchInput.addEventListener('input', (e) => {
@@ -3167,9 +3631,13 @@ function openModal(invObj = null) {
   const inputSip = document.getElementById('input-sip-amount');
   const rowSip = document.getElementById('row-sip');
 
+  const rowDefaultSavings = document.getElementById('row-default-savings');
+  const inputDefaultSavings = document.getElementById('input-default-savings');
+
   if (invObj) {
     titleText.textContent = 'Edit Investment';
     inputId.value = invObj.id;
+    updateAssetClassDropdown(invObj.assetClass);
     inputClass.value = invObj.assetClass;
 
     // Load subtypes first
@@ -3190,9 +3658,20 @@ function openModal(invObj = null) {
       rowSip.style.display = 'none';
       inputSip.value = '';
     }
+
+    if (rowDefaultSavings && inputDefaultSavings) {
+      if (invObj.assetClass === 'savings') {
+        rowDefaultSavings.style.display = 'flex';
+        inputDefaultSavings.checked = !!invObj.isDefaultSavings;
+      } else {
+        rowDefaultSavings.style.display = 'none';
+        inputDefaultSavings.checked = false;
+      }
+    }
   } else {
     titleText.textContent = 'Add Investment';
     inputId.value = '';
+    updateAssetClassDropdown('');
     inputClass.value = '';
     updateSubtypeOptions('');
     inputName.value = '';
@@ -3201,6 +3680,11 @@ function openModal(invObj = null) {
     inputPurchaseDate.value = new Date().toISOString().slice(0, 10);
     rowSip.style.display = 'none';
     inputSip.value = '';
+
+    if (rowDefaultSavings && inputDefaultSavings) {
+      rowDefaultSavings.style.display = 'none';
+      inputDefaultSavings.checked = false;
+    }
   }
 
   overlay.classList.add('active-modal');
@@ -3249,7 +3733,8 @@ function downloadPortfolioJSON() {
     expenses: expenses,
     expenseCategories: expenseCategories,
     globalBudget: globalBudget,
-    monthlyBudgets: monthlyBudgets
+    monthlyBudgets: monthlyBudgets,
+    assetCategories: ASSET_CATEGORIES
   };
 
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -3282,6 +3767,7 @@ function handleUploadJSON(file) {
       expenseCategories = Array.isArray(data.expenseCategories) ? data.expenseCategories : [...DEFAULT_EXPENSE_CATEGORIES];
       globalBudget = typeof data.globalBudget === 'number' ? data.globalBudget : 40000;
       monthlyBudgets = data.monthlyBudgets && typeof data.monthlyBudgets === 'object' ? data.monthlyBudgets : {};
+      ASSET_CATEGORIES = data.assetCategories && typeof data.assetCategories === 'object' ? data.assetCategories : {...DEFAULT_ASSET_CATEGORIES};
       saveToStorage();
 
       // Close welcome wizard if open
@@ -3367,8 +3853,10 @@ function initModalHandlers() {
       salaries = [...SAMPLE_SALARIES];
       expenses = [...SAMPLE_EXPENSES];
       expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+      ASSET_CATEGORIES = {...DEFAULT_ASSET_CATEGORIES};
       globalBudget = 40000;
       saveToStorage();
+      renderAssetFilterChips();
       renderDashboard();
       updateTopActions('dashboard');
     });
@@ -3384,8 +3872,10 @@ function initModalHandlers() {
       salaries = [];
       expenses = [];
       expenseCategories = [...DEFAULT_EXPENSE_CATEGORIES];
+      ASSET_CATEGORIES = {...DEFAULT_ASSET_CATEGORIES};
       globalBudget = 40000;
       saveToStorage();
+      renderAssetFilterChips();
       renderDashboard();
       updateTopActions('dashboard');
     });
@@ -3397,6 +3887,71 @@ function initModalHandlers() {
   const addBtnFloat = document.getElementById('btn-add-investment-float');
   if (addBtnFloat) addBtnFloat.addEventListener('click', () => openModal());
 
+  // Custom Asset Class quick-add modal triggers
+  const btnAddAssetClassQuick = document.getElementById('btn-add-asset-class-quick');
+  const modalAssetClass = document.getElementById('asset-class-modal');
+  const btnCloseAssetClass = document.getElementById('btn-close-asset-class-modal');
+  const btnCancelAssetClass = document.getElementById('btn-cancel-asset-class-modal');
+  const formAssetClass = document.getElementById('asset-class-form');
+
+  if (btnAddAssetClassQuick) {
+    btnAddAssetClassQuick.addEventListener('click', () => {
+      if (modalAssetClass) modalAssetClass.classList.add('active-modal');
+      const inputName = document.getElementById('input-asset-class-name');
+      if (inputName) {
+        inputName.value = '';
+        inputName.focus();
+      }
+    });
+  }
+
+  const closeAssetClassModal = () => {
+    if (modalAssetClass) modalAssetClass.classList.remove('active-modal');
+  };
+
+  if (btnCloseAssetClass) btnCloseAssetClass.addEventListener('click', closeAssetClassModal);
+  if (btnCancelAssetClass) btnCancelAssetClass.addEventListener('click', closeAssetClassModal);
+
+  if (formAssetClass) {
+    formAssetClass.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inputName = document.getElementById('input-asset-class-name');
+      const inputColor = document.getElementById('input-asset-class-color');
+      if (!inputName || !inputColor) return;
+
+      const name = inputName.value.trim();
+      const color = inputColor.value;
+      if (!name) return;
+
+      const key = 'custom-' + name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+      
+      // Save custom class
+      ASSET_CATEGORIES[key] = {
+        label: name,
+        color: color,
+        colorDark: darkenColor(color),
+        gradient: `grad-${key}`
+      };
+      saveToStorage();
+
+      // Populate dropdown with new class selected
+      updateAssetClassDropdown(key);
+      
+      // Update the asset filter chips in the main list view
+      renderAssetFilterChips();
+
+      // Hide subtype row since custom class doesn't have default subtypes
+      const groupSubtype = document.getElementById('group-subtype');
+      if (groupSubtype) groupSubtype.style.display = 'none';
+      const rowSip = document.getElementById('row-sip');
+      if (rowSip) rowSip.style.display = 'none';
+      const rowDefaultSavings = document.getElementById('row-default-savings');
+      if (rowDefaultSavings) rowDefaultSavings.style.display = 'none';
+
+      closeAssetClassModal();
+    });
+  }
+
   selectClass.addEventListener('change', (e) => {
     updateSubtypeOptions(e.target.value);
     const rowSip = document.getElementById('row-sip');
@@ -3405,6 +3960,17 @@ function initModalHandlers() {
     } else {
       rowSip.style.display = 'none';
       document.getElementById('input-sip-amount').value = '';
+    }
+
+    const rowDefaultSavings = document.getElementById('row-default-savings');
+    if (rowDefaultSavings) {
+      if (e.target.value === 'savings') {
+        rowDefaultSavings.style.display = 'flex';
+      } else {
+        rowDefaultSavings.style.display = 'none';
+        const checkbox = document.getElementById('input-default-savings');
+        if (checkbox) checkbox.checked = false;
+      }
     }
   });
 
@@ -3555,7 +4121,7 @@ function initModalHandlers() {
     const step1 = document.getElementById('expense-wizard-step-1');
     if (modal && modal.classList.contains('active-modal') && step1 && step1.style.display !== 'none') {
       const key = e.key;
-      
+
       // Stop typing from propagating to inputs/selects
       if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'TEXTAREA') {
         return;
@@ -3688,6 +4254,10 @@ function saveInvestmentForm() {
   const purchaseDate = document.getElementById('input-purchase-date').value || new Date().toISOString().slice(0, 10);
   const sipAmount = assetClass === 'indian-mutual-fund' ? Number(document.getElementById('input-sip-amount').value) || 0 : 0;
 
+  const checkbox = document.getElementById('input-default-savings');
+  const isDefaultSavings = (assetClass === 'savings' && checkbox) ? checkbox.checked : false;
+
+  let savedId = id;
   if (id) {
     // Edit mode
     const idx = investments.findIndex(inv => inv.id === id);
@@ -3701,12 +4271,14 @@ function saveInvestmentForm() {
         currentAmount,
         purchaseDate,
         sipAmount,
+        isDefaultSavings,
         lastUpdated: new Date().toISOString()
       };
     }
   } else {
     // Add mode
     const newId = crypto.randomUUID ? crypto.randomUUID() : 'rand-' + Math.random().toString(36).substring(2, 9);
+    savedId = newId;
     investments.push({
       id: newId,
       assetClass,
@@ -3716,7 +4288,17 @@ function saveInvestmentForm() {
       currentAmount,
       purchaseDate,
       sipAmount,
+      isDefaultSavings,
       lastUpdated: new Date().toISOString()
+    });
+  }
+
+  // Clear default status from other accounts
+  if (isDefaultSavings) {
+    investments.forEach(inv => {
+      if (inv.id !== savedId && inv.assetClass === 'savings') {
+        inv.isDefaultSavings = false;
+      }
     });
   }
 
@@ -5044,14 +5626,7 @@ function showCustomTooltip(event, title, label1, val1, label2, val2, label3, val
     tooltip.appendChild(row);
   });
 
-  const container = document.querySelector('.main-wrapper');
-  const rect = container.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-
-  tooltip.style.left = x + 'px';
-  tooltip.style.top = (y - 12) + 'px';
-  tooltip.style.opacity = '1';
+  positionTooltip(tooltip, event);
 }
 
 function openSalaryModal(sObj = null) {
@@ -5104,6 +5679,7 @@ function saveSalaryForm() {
   if (id) {
     const idx = salaries.findIndex(s => s.id === id);
     if (idx !== -1) {
+      const oldInhand = salaries[idx].inhand;
       salaries[idx] = {
         ...salaries[idx],
         month,
@@ -5111,16 +5687,20 @@ function saveSalaryForm() {
         deduction,
         notes
       };
+      adjustDefaultSavingsBalance(inhand - oldInhand);
     }
   } else {
     const duplicate = salaries.find(s => s.month === month);
     if (duplicate) {
+      // TODO(security): Standard browser confirm dialog is used here due to pure client-side vanilla JS architecture constraints.
       if (!confirm(`An entry for ${formatMonthLabel(month)} already exists. Do you want to update it instead?`)) {
         return;
       }
+      const oldInhand = duplicate.inhand;
       duplicate.inhand = inhand;
       duplicate.deduction = deduction;
       duplicate.notes = notes;
+      adjustDefaultSavingsBalance(inhand - oldInhand);
     } else {
       const newId = 'sal-' + Math.random().toString(36).substring(2, 9);
       salaries.push({
@@ -5130,6 +5710,7 @@ function saveSalaryForm() {
         deduction,
         notes
       });
+      adjustDefaultSavingsBalance(inhand);
     }
   }
 
@@ -5139,7 +5720,12 @@ function saveSalaryForm() {
 }
 
 function deleteSalary(id) {
+  // TODO(security): Standard browser confirm dialog is used here due to pure client-side vanilla JS architecture constraints.
   if (confirm('Are you sure you want to delete this salary entry?')) {
+    const target = salaries.find(s => s.id === id);
+    if (target) {
+      adjustDefaultSavingsBalance(-target.inhand);
+    }
     salaries = salaries.filter(s => s.id !== id);
     saveToStorage();
     renderSalaries();
@@ -5608,9 +6194,9 @@ function evaluateExpression(expr) {
   expr = expr.replace(/×/g, '*').replace(/÷/g, '/');
   // Remove any invalid characters (only keep numbers, ., +, -, *, /, parentheses, spaces)
   expr = expr.replace(/[^0-9.+\-*/()\s]/g, '');
-  
+
   if (!expr) return 0;
-  
+
   try {
     const result = math.evaluate(expr);
     if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
@@ -5726,23 +6312,23 @@ function openExpenseModal(eObj = null) {
     inputDate.value = eObj.date;
     inputCategory.value = eObj.categoryId;
     inputNotes.value = eObj.description || '';
-    
+
     const finalAmtLabel = document.getElementById('calc-final-amount-label');
     if (finalAmtLabel) finalAmtLabel.textContent = `₹${eObj.amount}`;
     currentCalcExpression = eObj.amount.toString();
     updateCalculatorUI();
-    
+
     showExpenseWizardStep(2);
   } else {
     titleText.textContent = 'Add Expense';
     inputId.value = '';
     inputAmount.value = '';
-    
+
     const todayStr = new Date().toISOString().split('T')[0];
     if (inputDate) inputDate.value = todayStr;
-    
+
     if (inputNotes) inputNotes.value = '';
-    
+
     currentCalcExpression = '';
     updateCalculatorUI();
     showExpenseWizardStep(1);
@@ -5757,11 +6343,11 @@ function closeExpenseModal() {
 
 function openCategoryModal() {
   const overlay = document.getElementById('category-modal');
-  
+
   // Clear name input
   const nameInput = document.getElementById('input-category-name');
   if (nameInput) nameInput.value = '';
-  
+
   // Reset emoji selection
   document.querySelectorAll('.emoji-item').forEach(el => el.classList.remove('active-emoji'));
   const firstEmoji = document.querySelector('.emoji-item');
@@ -5808,6 +6394,7 @@ function saveExpenseForm() {
   if (id) {
     const idx = expenses.findIndex(e => e.id === id);
     if (idx !== -1) {
+      const oldAmount = expenses[idx].amount;
       expenses[idx] = {
         ...expenses[idx],
         amount,
@@ -5815,6 +6402,7 @@ function saveExpenseForm() {
         categoryId,
         description
       };
+      adjustDefaultSavingsBalance(oldAmount - amount);
     }
   } else {
     const newId = 'exp-' + Math.random().toString(36).substring(2, 9);
@@ -5825,6 +6413,7 @@ function saveExpenseForm() {
       categoryId,
       description
     });
+    adjustDefaultSavingsBalance(-amount);
   }
 
   saveToStorage();
@@ -5833,7 +6422,12 @@ function saveExpenseForm() {
 }
 
 function deleteExpense(id) {
+  // TODO(security): Standard browser confirm dialog is used here due to pure client-side vanilla JS architecture constraints.
   if (confirm('Are you sure you want to delete this expense?')) {
+    const target = expenses.find(e => e.id === id);
+    if (target) {
+      adjustDefaultSavingsBalance(target.amount);
+    }
     expenses = expenses.filter(e => e.id !== id);
     saveToStorage();
     renderExpenses();
@@ -5866,7 +6460,7 @@ function saveCategoryForm() {
 
   saveToStorage();
   closeCategoryModal();
-  
+
   // Re-populate dropdown and auto select new category
   updateExpenseCategoryDropdown(catId);
 }
@@ -5883,7 +6477,7 @@ function saveBudgetForm() {
   } else {
     globalBudget = amount;
   }
-  
+
   saveToStorage();
   closeBudgetModal();
   renderExpenses();
@@ -5948,7 +6542,7 @@ function renderExpenses() {
   if (todayExpensesVal) {
     todayExpensesVal.textContent = formatCurrency(todaySpent);
   }
-  
+
   const valSurplus = document.getElementById('val-salary-balance');
   const lblSurplus = document.getElementById('lbl-salary-balance');
   const cardSurplus = document.getElementById('card-salary-balance');
@@ -6025,7 +6619,7 @@ function renderExpenses() {
   } else {
     filteredExpenses.forEach(e => {
       const cat = expenseCategories.find(c => c.id === e.categoryId) || { name: 'Others', icon: '🌀' };
-      
+
       const card = document.createElement('div');
       card.classList.add('investment-card');
 
@@ -6048,7 +6642,7 @@ function renderExpenses() {
       const catText = document.createElement('span');
       catText.classList.add('asset-name');
       catText.textContent = cat.name;
-      
+
       const dateText = document.createElement('span');
       dateText.style.fontSize = '0.73rem';
       dateText.style.color = 'var(--text-muted)';
@@ -6062,11 +6656,11 @@ function renderExpenses() {
       colDesc.classList.add('asset-data-col');
       colDesc.style.flexGrow = '1';
       colDesc.style.textAlign = 'left';
-      
+
       const lblDesc = document.createElement('span');
       lblDesc.classList.add('asset-data-label');
       lblDesc.textContent = 'Description';
-      
+
       const valDesc = document.createElement('span');
       valDesc.classList.add('asset-data-value');
       valDesc.style.fontWeight = 'normal';
@@ -6628,7 +7222,7 @@ function renderExpenseDailyTrendChart(monthlyExpenses) {
   barGrad.setAttribute('id', 'grad-expense-daily-bar');
   barGrad.setAttribute('x1', '0%'); barGrad.setAttribute('y1', '0%');
   barGrad.setAttribute('x2', '0%'); barGrad.setAttribute('y2', '100%');
-  
+
   const stop1 = createSVGElement('stop'); stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', 'var(--color-accent)');
   const stop2 = createSVGElement('stop'); stop2.setAttribute('offset', '100%'); stop2.setAttribute('stop-color', 'var(--color-accent-dark)');
   barGrad.appendChild(stop1); barGrad.appendChild(stop2);
@@ -6694,7 +7288,7 @@ function renderExpenseDailyTrendChart(monthlyExpenses) {
   for (let i = 0; i < numDays; i++) {
     const dayVal = dailyTotals[i];
     if (dayVal === 0) continue;
-    
+
     const barHeight = (dayVal / maxVal) * chartHeight;
     const x = margin.left + i * daySpace + (daySpace - barWidth) / 2;
     const y = margin.top + chartHeight - barHeight;
@@ -6706,7 +7300,7 @@ function renderExpenseDailyTrendChart(monthlyExpenses) {
     rect.setAttribute('height', Math.max(2, barHeight).toString());
     rect.setAttribute('rx', Math.min(3, barWidth / 2).toString());
     rect.setAttribute('fill', 'url(#grad-expense-daily-bar)');
-    
+
     rect.style.transition = 'opacity 0.2s ease, filter 0.2s ease';
     rect.style.cursor = 'pointer';
 
@@ -7664,7 +8258,7 @@ function generatePDFReport() {
 
       <footer class="report-footer">
         <p>This report was generated locally inside your web browser. Moyeniz does not store, transmit, or process your portfolio data on external servers.</p>
-        <p style="margin-top: 4px; font-weight: 500; color: var(--color-primary);">deep5050.github.io/Moyeniz/ &copy; ${now.getFullYear()}</p>
+        <p style="margin-top: 4px; font-weight: 500; color: var(--color-primary);">dpnkrpl.github.io/moyeniz/ &copy; ${now.getFullYear()}</p>
       </footer>
     </body>
     </html>
@@ -7925,7 +8519,7 @@ function initSettingsHandlers() {
         monthlyBudgets = {};
         saveToStorage();
         renderSettings();
-        
+
         const activeTab = document.querySelector('.nav-link.active').getAttribute('data-tab');
         if (activeTab === 'dashboard') renderDashboard();
       }
@@ -7953,7 +8547,7 @@ function initSettingsHandlers() {
         expenseCategories = [];
         globalBudget = 40000;
         monthlyBudgets = {};
-        
+
         renderSettings();
 
         // Redirect to dashboard
