@@ -2398,13 +2398,32 @@ function showNetWorthTooltip(event, title, netWorth, assets, liabilities, salary
     tooltip.appendChild(row);
   });
 
+  positionTooltip(tooltip, event);
+}
+
+function positionTooltip(tooltip, event) {
   const container = document.querySelector('.main-wrapper');
+  if (!container) return;
   const rect = container.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
+
+  let x = event.clientX - rect.left + container.scrollLeft;
+  let y = event.clientY - rect.top + container.scrollTop;
+
+  const tooltipWidth = tooltip.offsetWidth || 180;
+  const tooltipHeight = tooltip.offsetHeight || 100;
+
+  const minX = tooltipWidth / 2 + 10;
+  const maxX = container.scrollWidth - (tooltipWidth / 2) - 10;
+  x = Math.max(minX, Math.min(maxX, x));
+
+  if (y - tooltipHeight - 12 < container.scrollTop) {
+    tooltip.style.transform = 'translate(-50%, 12px) scale(0.97)';
+  } else {
+    tooltip.style.transform = 'translate(-50%, -100%) scale(0.97)';
+  }
 
   tooltip.style.left = x + 'px';
-  tooltip.style.top = (y - 12) + 'px';
+  tooltip.style.top = y + 'px';
   tooltip.style.opacity = '1';
 }
 
@@ -2459,20 +2478,12 @@ function showTooltip(event, title, invested, current, pl, pct, customLabels = nu
   r3.appendChild(r3_val);
   tooltip.appendChild(r3);
 
-  // Position tooltip relative to container boundaries
-  const container = document.querySelector('.main-wrapper');
-  const rect = container.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-
-  tooltip.style.left = x + 'px';
-  tooltip.style.top = (y - 12) + 'px';
-  tooltip.style.opacity = '1';
+  positionTooltip(tooltip, event);
 }
 
 function hideTooltip() {
   const tooltip = document.getElementById('chart-tooltip');
-  tooltip.style.opacity = '0';
+  if (tooltip) tooltip.style.opacity = '0';
 }
 
 // Generate Financial Insights & Wealth Health Rating
@@ -5143,14 +5154,7 @@ function showCustomTooltip(event, title, label1, val1, label2, val2, label3, val
     tooltip.appendChild(row);
   });
 
-  const container = document.querySelector('.main-wrapper');
-  const rect = container.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-
-  tooltip.style.left = x + 'px';
-  tooltip.style.top = (y - 12) + 'px';
-  tooltip.style.opacity = '1';
+  positionTooltip(tooltip, event);
 }
 
 function openSalaryModal(sObj = null) {
